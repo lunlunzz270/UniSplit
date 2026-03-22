@@ -21,15 +21,39 @@
 
     <main class="container">
         <h1>Login</h1>
-        <form class="form-card">
+        <form class="form-card" id="loginForm">
             <label>Email</label>
-            <input type="email" placeholder="Enter your email">
+            <input type="email" id="email" placeholder="Enter your email">
 
             <label>Password</label>
-            <input type="password" placeholder="Enter your password">
+            <input type="password" id="password" placeholder="Enter your password">
 
+            <p id="errorMsg" style="color:red;"></p>
             <button type="submit" class="btn">Login</button>
+            <p>Don't have an account? <a href="register.html">Register</a></p>
         </form>
     </main>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            const res = await fetch('http://127.0.0.1:5000/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.setItem('user', JSON.stringify(data));
+                window.location.href = 'dashboard.html';
+            } else {
+                document.getElementById('errorMsg').textContent = data.error;
+            }
+        });
+    </script>
 </body>
 </html>
