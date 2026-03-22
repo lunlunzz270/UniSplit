@@ -1,1 +1,17 @@
+# Python 忽略配置
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+.env
+
+# 前端忽略配置
+node_modules/
+dist/
+build/
+
+# IDE 忽略配置
+.idea/
+.vscode/
 .DS_Store
