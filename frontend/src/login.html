@@ -15,23 +15,64 @@
             <a href="add_expense.html">Add Expense</a>
             <a href="history.html">History</a>
             <a href="report.html">Report</a>
-            <a href="login.html">Login</a>
+            <a href="login.html" class="active">Login</a>
         </div>
     </nav>
 
     <main class="container">
-        <h1>Login</h1>
-        <form class="form-card" id="loginForm">
-            <label>Email</label>
-            <input type="email" id="email" placeholder="Enter your email">
+        <section class="auth-page">
+            <div class="auth-left">
+                <span class="hero-badge">Secure Account Access</span>
+                <h1>Welcome back to UniSplit</h1>
+                <p>
+                    Log in to manage shared expenses, track balances, and stay updated on
+                    group activity across trips, roommates, and events.
+                </p>
 
-            <label>Password</label>
-            <input type="password" id="password" placeholder="Enter your password">
+                <div class="auth-feature-list">
+                    <div class="auth-feature-card">
+                        <h3>Track shared balances</h3>
+                        <p>Keep your group expenses organized in one place.</p>
+                    </div>
+                    <div class="auth-feature-card">
+                        <h3>Review recent activity</h3>
+                        <p>See who added expenses and who still needs to settle.</p>
+                    </div>
+                    <div class="auth-feature-card">
+                        <h3>Access reports quickly</h3>
+                        <p>View expense summaries and payment insights anytime.</p>
+                    </div>
+                </div>
+            </div>
 
-            <p id="errorMsg" style="color:red;"></p>
-            <button type="submit" class="btn">Login</button>
-            <p>Don't have an account? <a href="register.html">Register</a></p>
-        </form>
+            <div class="auth-right">
+                <form class="form-card login-card" id="loginForm">
+                    <div class="form-header">
+                        <h2>Login</h2>
+                        <p>Enter your account details to continue.</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" placeholder="Enter your email">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" placeholder="Enter your password">
+                    </div>
+
+                    <p id="errorMsg" class="error-message"></p>
+
+                    <button type="submit" class="btn btn-full">Login</button>
+
+                    <p class="auth-switch">
+                        Don't have an account?
+                        <a href="register.html">Register</a>
+                    </p>
+                </form>
+            </div>
+        </section>
     </main>
 
     <script>
