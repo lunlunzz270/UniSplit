@@ -11,7 +11,7 @@
         <div class="logo">UniSplit</div>
         <div class="nav-links">
             <a href="index.html">Home</a>
-            <a href="dashboard.html">Dashboard</a>
+            <a href="dashboard.html" class="active">Dashboard</a>
             <a href="add_expense.html">Add Expense</a>
             <a href="history.html">History</a>
             <a href="report.html">Report</a>
@@ -20,26 +20,183 @@
     </nav>
 
     <main class="container">
-        <h1>Dashboard</h1>
-
-        <div class="card-grid">
-            <div class="card">
-                <h3>Total Balance</h3>
-                <p>$48.50 owed to you</p>
+        <section class="hero-section">
+            <div class="hero-text">
+                <span class="hero-badge">Smart Shared Expense Tracking</span>
+                <h1>Manage group spending with clarity and less stress.</h1>
+                <p>
+                    Track balances, monitor recent expenses, and settle debts faster across trips,
+                    roommates, and shared activities.
+                </p>
+                <div class="hero-actions">
+                    <a href="add_expense.html" class="btn-primary">Add New Expense</a>
+                    <a href="report.html" class="btn-secondary">View Reports</a>
+                </div>
             </div>
 
-            <div class="card">
-                <h3>Your Groups</h3>
-                <p>Trip to NYC</p>
-                <p>Roommates</p>
+            <div class="hero-panel">
+                <div class="mini-stat">
+                    <span class="mini-label">Net Balance</span>
+                    <h3>$48.50</h3>
+                    <p class="positive-text">You are owed overall</p>
+                </div>
+                <div class="mini-stat">
+                    <span class="mini-label">Pending Settlements</span>
+                    <h3>3</h3>
+                    <p>2 due soon</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="stats-grid">
+            <div class="stat-card">
+                <p class="stat-label">Total Balance</p>
+                <h2>$48.50</h2>
+                <span class="tag positive">Positive</span>
             </div>
 
-            <div class="card">
-                <h3>Recent Activity</h3>
-                <p>Alice added Dinner - $60</p>
-                <p>You paid Rent - $500</p>
+            <div class="stat-card">
+                <p class="stat-label">Monthly Spending</p>
+                <h2>$326.40</h2>
+                <span class="tag neutral">This month</span>
             </div>
-        </div>
+
+            <div class="stat-card">
+                <p class="stat-label">Active Groups</p>
+                <h2>3</h2>
+                <span class="tag neutral">Trip / Rent / Events</span>
+            </div>
+
+            <div class="stat-card">
+                <p class="stat-label">Open Expenses</p>
+                <h2>8</h2>
+                <span class="tag warning">Needs review</span>
+            </div>
+        </section>
+
+        <section class="dashboard-layout">
+            <div class="main-column">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Group Overview</h2>
+                        <a href="history.html">See all</a>
+                    </div>
+
+                    <div class="group-list">
+                        <div class="group-item">
+                            <div class="group-left">
+                                <div class="group-icon">T</div>
+                                <div>
+                                    <h4>Trip to NYC</h4>
+                                    <p>4 members · Hotels, food, transportation</p>
+                                </div>
+                            </div>
+                            <div class="group-right">
+                                <span class="amount positive-text">+$22.00</span>
+                                <small>owed to you</small>
+                            </div>
+                        </div>
+
+                        <div class="group-item">
+                            <div class="group-left">
+                                <div class="group-icon">R</div>
+                                <div>
+                                    <h4>Roommates</h4>
+                                    <p>3 members · Rent, utilities, shared groceries</p>
+                                </div>
+                            </div>
+                            <div class="group-right">
+                                <span class="amount negative-text">-$12.50</span>
+                                <small>you owe</small>
+                            </div>
+                        </div>
+
+                        <div class="group-item">
+                            <div class="group-left">
+                                <div class="group-icon">S</div>
+                                <div>
+                                    <h4>Spring Break Plan</h4>
+                                    <p>5 members · Tickets, meals, activities</p>
+                                </div>
+                            </div>
+                            <div class="group-right">
+                                <span class="amount positive-text">+$39.00</span>
+                                <small>owed to you</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Recent Activity</h2>
+                        <a href="history.html">View history</a>
+                    </div>
+
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div>
+                                <h4>Dinner expense added</h4>
+                                <p>Alice recorded a $60.00 dinner split for Trip to NYC.</p>
+                            </div>
+                            <span>2h ago</span>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div>
+                                <h4>Rent payment logged</h4>
+                                <p>A $500.00 rent payment was added under Roommates.</p>
+                            </div>
+                            <span>Today</span>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div>
+                                <h4>Settlement completed</h4>
+                                <p>Bob settled $25.00 for the shared hotel booking.</p>
+                            </div>
+                            <span>Yesterday</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="side-column">
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Quick Actions</h2>
+                    </div>
+
+                    <div class="quick-actions">
+                        <a href="add_expense.html" class="quick-btn">+ Add Expense</a>
+                        <a href="report.html" class="quick-btn">Open Report</a>
+                        <a href="history.html" class="quick-btn">Transaction History</a>
+                        <a href="login.html" class="quick-btn">Account Settings</a>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="panel-header">
+                        <h2>Upcoming Reminders</h2>
+                    </div>
+
+                    <ul class="reminder-list">
+                        <li>Roommates utility split due in 2 days</li>
+                        <li>Trip hotel balance reminder scheduled for Friday</li>
+                        <li>Monthly summary report available tomorrow</li>
+                    </ul>
+                </div>
+
+                <div class="panel highlight-panel">
+                    <h2>Expense Insight</h2>
+                    <p>Your highest spending category this month is travel and shared meals.</p>
+                    <a href="report.html" class="btn-primary full-width">Check Analytics</a>
+                </div>
+            </div>
+        </section>
     </main>
 </body>
 </html>
