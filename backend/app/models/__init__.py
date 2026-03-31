@@ -1,4 +1,4 @@
-from app.core import db
+from backend.app.core import db
 
 class User(db.Model):
     __tablename__ = 'users'
