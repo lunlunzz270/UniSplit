@@ -10,24 +10,53 @@
     <nav class="navbar">
         <div class="logo">UniSplit</div>
         <div class="nav-links">
-            <a href="index.html">Home</a>
+            <a href="index.html" class="active">Home</a>
+            <a href="login.html">Login</a>
+            <a href="register.html">Register</a>
             <a href="dashboard.html">Dashboard</a>
             <a href="add_expense.html">Add Expense</a>
             <a href="history.html">History</a>
             <a href="report.html">Report</a>
-            <a href="login.html">Login</a>
         </div>
     </nav>
 
     <main class="container">
-        <div class="hero">
-            <h1>Welcome to UniSplit</h1>
-            <p>Track shared expenses and settle balances with your group easily.</p>
-            <div class="button-group">
+        <section class="simple-home">
+            <span class="hero-badge">Shared Expense Management for Students</span>
+            <h1>Split bills, track balances, and stay organized.</h1>
+            <p>
+                UniSplit helps students manage shared expenses for roommates, trips,
+                and group activities in one clean and simple platform.
+            </p>
+
+            <div class="button-group" style="display: flex; gap: 14px; margin-top: 28px; justify-content: center; flex-wrap: wrap;">
                 <a class="btn" href="register.html">Get Started</a>
                 <a class="btn secondary" href="login.html">Login</a>
             </div>
-        </div>
+        </section>
+
+        <section class="simple-feature-row">
+            <div class="simple-feature-card">
+                <h3>Easy expense tracking</h3>
+                <p>
+                    Add shared expenses quickly and keep all spending records in one place.
+                </p>
+            </div>
+
+            <div class="simple-feature-card">
+                <h3>Clear group balances</h3>
+                <p>
+                    See who owes money, who paid already, and what still needs to be settled.
+                </p>
+            </div>
+
+            <div class="simple-feature-card">
+                <h3>Useful reports</h3>
+                <p>
+                    Review spending history and simple summaries for better financial planning.
+                </p>
+            </div>
+        </section>
     </main>
 </body>
 </html>
