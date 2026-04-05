@@ -1,7 +1,7 @@
 from backend.app.core.database import SessionLocal
 from backend.app.models.users import User
-from backend.app.models.group import Group
-from backend.app.models.expense import Expense
+from backend.app.models.groups import Group
+from backend.app.models.expenses import Expense
 
 
 def test_database_mapping():
