@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import Optional
 from decimal import Decimal
 
@@ -15,5 +15,4 @@ class SettlementRead(SettlementBase):
     id: int
     group_id: int
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
