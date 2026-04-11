@@ -11,13 +11,14 @@
         <div class="logo">UniSplit</div>
         <div class="nav-links">
             <a href="index.html">Home</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="add_expense.html">Add Expense</a>
-            <a href="history.html" class="active">History</a>
-            <a href="report.html">Report</a>
-            <a href="analysis.html">Analysis</a>
-            <a href="settle_up.html">Settle Up</a>
+            <a href="register.html">Register</a>
             <a href="login.html">Login</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="add_expense.html" >Add Expense</a>
+            <a href="insights.html">Expense Insights</a>
+            <a href="membership.html">Membership Purchase</a>
+            <a href="history.html"class="active">Transaction History</a>
+            <a href="report.html">Reports</a>
         </div>
     </nav>
 
@@ -119,7 +120,7 @@
             if (group) params.append('group_name', group);
 
             try {
-                const res = await fetch(`http://127.0.0.1:5000/api/expenses?${params.toString()}`);
+                const res = await fetch(`/api/expenses?${params.toString()}`);
                 const data = await res.json();
 
                 if (!res.ok) {

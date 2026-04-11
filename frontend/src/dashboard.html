@@ -1,21 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniSplit - Dashboard</title>
     <link rel="stylesheet" href="./css/style.css">
 </head>
+
 <body>
     <nav class="navbar">
         <div class="logo">UniSplit</div>
         <div class="nav-links">
             <a href="index.html">Home</a>
-            <a href="dashboard.html" class="active">Dashboard</a>
-            <a href="add_expense.html">Add Expense</a>
-            <a href="history.html">History</a>
-            <a href="report.html">Report</a>
+            <a href="register.html">Register</a>
             <a href="login.html">Login</a>
+            <a href="dashboard.html"class="active">Dashboard</a>
+            <a href="add_expense.html">Add Expense</a>
+            <a href="insights.html">Expense Insights</a>
+            <a href="membership.html">Membership Purchase</a>
+            <a href="history.html">Transaction History</a>
+            <a href="report.html">Reports</a>
         </div>
     </nav>
 
@@ -37,13 +42,13 @@
             <div class="hero-panel">
                 <div class="mini-stat">
                     <span class="mini-label">Net Balance</span>
-                    <h3 id="netBalanceValue">$0.00</h3>
-                    <p id="netBalanceCaption" class="positive-text">Loading account data</p>
+                    <h3>$48.50</h3>
+                    <p class="positive-text">You are owed overall</p>
                 </div>
                 <div class="mini-stat">
                     <span class="mini-label">Pending Settlements</span>
-                    <h3 id="pendingSettlementsValue">0</h3>
-                    <p id="pendingSettlementsCaption">From recent expense history</p>
+                    <h3>3</h3>
+                    <p>2 due soon</p>
                 </div>
             </div>
         </section>
@@ -51,26 +56,26 @@
         <section class="stats-grid">
             <div class="stat-card">
                 <p class="stat-label">Total Balance</p>
-                <h2 id="totalBalanceValue">$0.00</h2>
-                <span id="totalBalanceTag" class="tag neutral">Loading</span>
+                <h2>$48.50</h2>
+                <span class="tag positive">Positive</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Monthly Spending</p>
-                <h2 id="monthlySpendingValue">$0.00</h2>
+                <h2>$326.40</h2>
                 <span class="tag neutral">This month</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Active Groups</p>
-                <h2 id="activeGroupsValue">0</h2>
-                <span id="activeGroupsTag" class="tag neutral">No groups yet</span>
+                <h2>3</h2>
+                <span class="tag neutral">Trip / Rent / Events</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Open Expenses</p>
-                <h2 id="openExpensesValue">0</h2>
-                <span id="openExpensesTag" class="tag warning">Needs review</span>
+                <h2>8</h2>
+                <span class="tag warning">Needs review</span>
             </div>
         </section>
 
@@ -82,8 +87,49 @@
                         <a href="history.html">See all</a>
                     </div>
 
-                    <p id="dashboardMessage" class="form-hint">Loading groups and balances...</p>
-                    <div class="group-list" id="groupList"></div>
+                    <div class="group-list">
+                        <div class="group-item">
+                            <div class="group-left">
+                                <div class="group-icon">T</div>
+                                <div>
+                                    <h4>Trip to NYC</h4>
+                                    <p>4 members · Hotels, food, transportation</p>
+                                </div>
+                            </div>
+                            <div class="group-right">
+                                <span class="amount positive-text">+$22.00</span>
+                                <small>owed to you</small>
+                            </div>
+                        </div>
+
+                        <div class="group-item">
+                            <div class="group-left">
+                                <div class="group-icon">R</div>
+                                <div>
+                                    <h4>Roommates</h4>
+                                    <p>3 members · Rent, utilities, shared groceries</p>
+                                </div>
+                            </div>
+                            <div class="group-right">
+                                <span class="amount negative-text">-$12.50</span>
+                                <small>you owe</small>
+                            </div>
+                        </div>
+
+                        <div class="group-item">
+                            <div class="group-left">
+                                <div class="group-icon">S</div>
+                                <div>
+                                    <h4>Spring Break Plan</h4>
+                                    <p>5 members · Tickets, meals, activities</p>
+                                </div>
+                            </div>
+                            <div class="group-right">
+                                <span class="amount positive-text">+$39.00</span>
+                                <small>owed to you</small>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="panel">
@@ -92,7 +138,34 @@
                         <a href="history.html">View history</a>
                     </div>
 
-                    <div class="activity-list" id="activityList"></div>
+                    <div class="activity-list">
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div>
+                                <h4>Dinner expense added</h4>
+                                <p>Alice recorded a $60.00 dinner split for Trip to NYC.</p>
+                            </div>
+                            <span>2h ago</span>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div>
+                                <h4>Rent payment logged</h4>
+                                <p>A $500.00 rent payment was added under Roommates.</p>
+                            </div>
+                            <span>Today</span>
+                        </div>
+
+                        <div class="activity-item">
+                            <div class="activity-dot"></div>
+                            <div>
+                                <h4>Settlement completed</h4>
+                                <p>Bob settled $25.00 for the shared hotel booking.</p>
+                            </div>
+                            <span>Yesterday</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -124,7 +197,7 @@
 
                 <div class="panel highlight-panel">
                     <h2>Expense Insight</h2>
-                    <p id="expenseInsightText">Your recent spending summary will appear here.</p>
+                    <p>Your highest spending category this month is travel and shared meals.</p>
                     <a href="report.html" class="btn-primary full-width">Check Analytics</a>
                 </div>
             </div>
@@ -297,4 +370,5 @@
         window.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
 </body>
+
 </html>
