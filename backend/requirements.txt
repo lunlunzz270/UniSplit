@@ -1,4 +1,6 @@
 flask
-flask-sqlalchemy
 bcrypt
 flask-cors
+sqlalchemy
+python-dotenv
+email-validator

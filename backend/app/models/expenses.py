@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, ForeignKey, Text
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Numeric, ForeignKey, Text, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
@@ -23,6 +23,7 @@ class Expense(Base):
 
 class ExpenseParticipant(Base):
     __tablename__ = "expense_participants"
+    __table_args__ = (UniqueConstraint("expense_id", "user_id", name="uq_expense_user"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     expense_id = Column(Integer, ForeignKey("expenses.id", ondelete="CASCADE"), nullable=False)

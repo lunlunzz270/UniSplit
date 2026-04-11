@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
@@ -20,6 +20,7 @@ class Group(Base):
 
 class GroupMember(Base):
     __tablename__ = "group_members"
+    __table_args__ = (UniqueConstraint("group_id", "user_id", name="uq_group_user"),)
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     group_id = Column(Integer, ForeignKey("groups.id", ondelete="CASCADE"), nullable=False)
