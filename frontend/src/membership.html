@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSplit - Membership Purchase</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">UniSplit</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="register.html">Register</a>
+            <a href="login.html">Login</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="add_expense.html">Add Expense</a>
+            <a href="insights.html">Expense Insights</a>
+            <a href="membership.html" class="active">Membership Purchase</a>
+            <a href="history.html">Transaction History</a>
+            <a href="report.html">Reports</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="page-hero">
+            <div>
+                <span class="hero-badge">Premium Access & Payments</span>
+                <h1>Membership Purchase</h1>
+                <p>
+                    Compare free and premium features, choose a plan, and complete payment
+                    through the recharge channel below.
+                </p>
+            </div>
+        </section>
+
+        <section class="membership-comparison">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Free vs Premium</h2>
+                </div>
+
+                <div class="compare-table">
+                    <div class="compare-head">Feature</div>
+                    <div class="compare-head">Free User</div>
+                    <div class="compare-head">Premium Member</div>
+
+                    <div class="compare-cell">Current expense tracking</div>
+                    <div class="compare-cell">Yes</div>
+                    <div class="compare-cell">Yes</div>
+
+                    <div class="compare-cell">Limited dashboard access</div>
+                    <div class="compare-cell">Yes</div>
+                    <div class="compare-cell">Yes</div>
+
+                    <div class="compare-cell">Full transaction history</div>
+                    <div class="compare-cell">No</div>
+                    <div class="compare-cell">Yes</div>
+
+                    <div class="compare-cell">Advanced expense insights</div>
+                    <div class="compare-cell">No</div>
+                    <div class="compare-cell">Yes</div>
+
+                    <div class="compare-cell">Download reports</div>
+                    <div class="compare-cell">No</div>
+                    <div class="compare-cell">Yes</div>
+
+                    <div class="compare-cell">Priority reminders</div>
+                    <div class="compare-cell">No</div>
+                    <div class="compare-cell">Yes</div>
+
+                    <div class="compare-cell">Premium group tools</div>
+                    <div class="compare-cell">No</div>
+                    <div class="compare-cell">Yes</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="membership-grid">
+            <div class="membership-card">
+                <h3>Free</h3>
+                <p class="price">$0 <span>/ month</span></p>
+                <ul>
+                    <li>Track shared expenses</li>
+                    <li>Basic dashboard overview</li>
+                    <li>Limited access to reports</li>
+                </ul>
+                <button class="btn secondary-btn">Current Free Plan</button>
+            </div>
+
+            <div class="membership-card featured-plan">
+                <div class="plan-badge">Recommended</div>
+                <h3>Premium Monthly</h3>
+                <p class="price">$9.99 <span>/ month</span></p>
+                <ul>
+                    <li>Full history access</li>
+                    <li>Advanced expense insights</li>
+                    <li>Priority reminders</li>
+                    <li>Premium reporting tools</li>
+                </ul>
+                <button class="btn">Choose Premium</button>
+            </div>
+
+            <div class="membership-card">
+                <h3>Premium Yearly</h3>
+                <p class="price">$99 <span>/ year</span></p>
+                <ul>
+                    <li>Everything in monthly plan</li>
+                    <li>Lower yearly cost</li>
+                    <li>Long-term premium access</li>
+                    <li>Best value for active users</li>
+                </ul>
+                <button class="btn">Choose Yearly</button>
+            </div>
+        </section>
+
+        <section class="panel recharge-panel">
+            <div class="panel-header">
+                <h2>Recharge Channel</h2>
+            </div>
+
+            <form class="recharge-form">
+                <div class="recharge-grid">
+                    <div class="input-group">
+                        <label for="plan">Selected Plan</label>
+                        <select id="plan">
+                            <option>Premium Monthly - $9.99</option>
+                            <option>Premium Yearly - $99</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="amount">Recharge Amount</label>
+                        <input type="number" id="amount" placeholder="Enter amount">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="method">Payment Method</label>
+                        <select id="method">
+                            <option>Credit / Debit Card</option>
+                            <option>PayPal</option>
+                            <option>Apple Pay</option>
+                            <option>Google Pay</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="email">Billing Email</label>
+                        <input type="email" id="email" placeholder="Enter billing email">
+                    </div>
+                </div>
+
+                <div class="payment-methods">
+                    <span class="pay-tag">Visa</span>
+                    <span class="pay-tag">Mastercard</span>
+                    <span class="pay-tag">PayPal</span>
+                    <span class="pay-tag">Apple Pay</span>
+                    <span class="pay-tag">Google Pay</span>
+                </div>
+
+                <div class="recharge-actions">
+                    <button type="submit" class="btn-primary">Proceed to Payment</button>
+                    <button type="button" class="btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </section>
+    </main>
+</body>
+</html>
