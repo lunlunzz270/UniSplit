@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 from ..models.expenses import Settlement
 from ..schemas.settlements import SettlementCreate
+from .activity_logs import ActivityLogRepository
 
 
 class SettlementRepository:
@@ -14,9 +15,19 @@ class SettlementRepository:
             payer_id=settlement_in.payer_id,
             payee_id=settlement_in.payee_id,
             amount=settlement_in.amount,
-            note=settlement_in.note
+            note=settlement_in.note,
         )
         self.db.add(db_settlement)
+        self.db.flush()
+
+        ActivityLogRepository(self.db).create_log(
+            group_id=group_id,
+            user_id=settlement_in.payer_id,
+            action_type="settlement_recorded",
+            description=f"Settlement of {settlement_in.amount} recorded",
+            ref_id=db_settlement.id,
+        )
+
         self.db.commit()
         self.db.refresh(db_settlement)
         return db_settlement

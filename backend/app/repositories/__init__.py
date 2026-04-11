@@ -2,6 +2,7 @@ from .users import UserRepository
 from .groups import GroupRepository
 from .expenses import ExpenseRepository
 from .settlements import SettlementRepository
+from .activity_logs import ActivityLogRepository
 
 from bcrypt import checkpw, gensalt, hashpw
 
@@ -24,6 +25,7 @@ def create_user(name: str, email: str, password: str):
         user = UserRepository(db).create_user(
             UserCreate(full_name=name, email=email, password=hashed_password)
         )
+        db.commit()
         return user
     finally:
         db.close()

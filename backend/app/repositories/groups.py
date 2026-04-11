@@ -1,6 +1,9 @@
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+
 from ..models.groups import Group, GroupMember
 from ..schemas.groups import GroupCreate
+from .activity_logs import ActivityLogRepository
 
 
 class GroupRepository:
@@ -9,18 +12,36 @@ class GroupRepository:
 
     def create_group(self, group_in: GroupCreate, creator_id: int) -> Group:
         """Create a new group and automatically assign the creator as the group ADMIN."""
-        db_group = Group(
-            name=group_in.name,
-            description=group_in.description,
-            created_by=creator_id
-        )
-        self.db.add(db_group)
-        self.db.commit()
-        self.db.refresh(db_group)
+        try:
+            db_group = Group(
+                name=group_in.name,
+                description=group_in.description,
+                created_by=creator_id,
+            )
+            self.db.add(db_group)
+            self.db.flush()
 
-        # Automatically add the creator to the group
-        self.add_user_to_group(group_id=db_group.id, user_id=creator_id, role="ADMIN")
-        return db_group
+            db_member = GroupMember(
+                group_id=db_group.id,
+                user_id=creator_id,
+                role="ADMIN",
+            )
+            self.db.add(db_member)
+
+            ActivityLogRepository(self.db).create_log(
+                group_id=db_group.id,
+                user_id=creator_id,
+                action_type="group_created",
+                description=f"Group '{db_group.name}' created",
+                ref_id=db_group.id,
+            )
+
+            self.db.commit()
+            self.db.refresh(db_group)
+            return db_group
+        except SQLAlchemyError:
+            self.db.rollback()
+            raise
 
     def add_user_to_group(self, group_id: int, user_id: int, role: str = "MEMBER") -> GroupMember:
         """Add a user to a group via the bridge table."""

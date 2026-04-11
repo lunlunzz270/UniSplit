@@ -1,7 +1,11 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy import func
+
 from ..models.expenses import Expense, ExpenseParticipant
+from ..models.groups import GroupMember
 from ..schemas.expenses import ExpenseCreate
+from .activity_logs import ActivityLogRepository
 
 
 class ExpenseRepository:
@@ -11,6 +15,25 @@ class ExpenseRepository:
     def create_expense_with_splits(self, group_id: int, expense_in: ExpenseCreate) -> Expense:
         """Use a database transaction to save both the main expense and split details simultaneously."""
         try:
+            participant_ids = [p.user_id for p in expense_in.participants]
+            if len(participant_ids) != len(set(participant_ids)):
+                raise ValueError("Duplicate participants are not allowed")
+
+            group_member_ids = {
+                row[0]
+                for row in self.db.query(GroupMember.user_id)
+                .filter(GroupMember.group_id == group_id)
+                .all()
+            }
+            if not set(participant_ids).issubset(group_member_ids):
+                raise ValueError("All participants must belong to the group")
+            if expense_in.paid_by not in group_member_ids:
+                raise ValueError("Payer must belong to the group")
+
+            total_share = sum(p.share for p in expense_in.participants)
+            if total_share != expense_in.amount:
+                raise ValueError("Participant shares must add up to the expense amount")
+
             # 1. Create the main expense record
             db_expense = Expense(
                 group_id=group_id,
@@ -34,6 +57,14 @@ class ExpenseRepository:
                 )
                 self.db.add(db_participant)
 
+            ActivityLogRepository(self.db).create_log(
+                group_id=group_id,
+                user_id=expense_in.paid_by,
+                action_type="expense_added",
+                description=f"Expense '{expense_in.description}' added",
+                ref_id=db_expense.id,
+            )
+
             # 3. If all steps succeed, commit the entire transaction
             self.db.commit()
             self.db.refresh(db_expense)
@@ -44,6 +75,9 @@ class ExpenseRepository:
             # to maintain ledger consistency.
             self.db.rollback()
             raise e
+        except ValueError:
+            self.db.rollback()
+            raise
 
     def get_group_expenses(self, group_id: int):
         """Fetch all expense history for a specific group."""
