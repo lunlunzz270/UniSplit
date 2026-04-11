@@ -7,12 +7,9 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 # load_dotenv() will automatically locate the .env file in that same directory.
 load_dotenv()
 
-# Retrieve the database URL from environment variables
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL")
-
-# Add a safety check to prevent silent errors if the environment variable fails to load
-if not SQLALCHEMY_DATABASE_URL:
-    raise ValueError("DATABASE_URL environment variable not found. Please check your .env file!")
+# Retrieve the database URL from environment variables.
+# Fall back to a local SQLite file so the app can run without extra setup.
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///unisplit.db")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

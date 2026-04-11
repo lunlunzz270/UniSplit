@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from backend.app.models.expenses import Settlement
-from backend.app.schemas.settlements import SettlementCreate
+from ..models.expenses import Settlement
+from ..schemas.settlements import SettlementCreate
 
 
 class SettlementRepository:

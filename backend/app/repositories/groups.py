@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
-from backend.app.models.groups import Group, GroupMember
-from backend.app.schemas.groups import GroupCreate
+from ..models.groups import Group, GroupMember
+from ..schemas.groups import GroupCreate
 
 
 class GroupRepository:

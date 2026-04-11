@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
-from backend.app.models.expenses import Expense, ExpenseParticipant
-from backend.app.schemas.expenses import ExpenseCreate
+from ..models.expenses import Expense, ExpenseParticipant
+from ..schemas.expenses import ExpenseCreate
 
 
 class ExpenseRepository:

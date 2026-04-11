@@ -1,17 +1,21 @@
+import os
+import sys
+
 from flask import Flask, jsonify
 from flask_cors import CORS
-from app.core import init_db, db
-from app.routers import auth_bp
+
+if __package__ is None or __package__ == "":
+    sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+
+from backend.app.core.database import Base, engine
+from backend.app.routers import auth_bp
+import backend.app.models  # noqa: F401
 
 app = Flask(__name__)
 CORS(app)
-
-init_db(app)
-
 app.register_blueprint(auth_bp)
 
-with app.app_context():
-    db.create_all()
+Base.metadata.create_all(bind=engine)
 
 @app.route('/api/dashboard')
 def get_dashboard_data():
