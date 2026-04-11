@@ -12,7 +12,7 @@
         <div class="nav-links">
             <a href="index.html">Home</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="add_expense.html">Add Expense</a>
+            <a href="add_expense.html" class="active">Add Expense</a>
             <a href="history.html">History</a>
             <a href="report.html">Report</a>
             <a href="login.html">Login</a>
@@ -20,22 +20,139 @@
     </nav>
 
     <main class="container">
-        <h1>Add Expense</h1>
-        <form class="form-card">
-            <label>Description</label>
-            <input type="text" placeholder="Dinner, groceries, Uber...">
+        <section class="page-header-card">
+            <span class="hero-badge">Record shared spending</span>
+            <h1>Add expense</h1>
+            <p>Submit a shared cost, split it equally, and keep the group ledger up to date.</p>
+        </section>
 
-            <label>Amount</label>
-            <input type="number" placeholder="0.00">
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Expense form</h2>
+                <span id="currentUserBadge" class="status neutral">Loading account</span>
+            </div>
 
-            <label>Payer</label>
-            <input type="text" placeholder="Who paid?">
+            <form class="form-card full-form" id="addExpenseForm">
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="groupName">Group name</label>
+                        <input type="text" id="groupName" placeholder="Trip to NYC / Roommates">
+                    </div>
 
-            <label>Participants</label>
-            <input type="text" placeholder="Enter participants">
+                    <div class="input-group">
+                        <label for="category">Category</label>
+                        <select id="category">
+                            <option value="Food">Food</option>
+                            <option value="Travel">Travel</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
 
-            <button type="submit" class="btn">Add Expense</button>
-        </form>
+                <div class="input-group">
+                    <label for="description">Description</label>
+                    <input type="text" id="description" placeholder="Dinner, groceries, Uber...">
+                </div>
+
+                <div class="form-grid">
+                    <div class="input-group">
+                        <label for="amount">Amount</label>
+                        <input type="number" id="amount" placeholder="0.00" min="0" step="0.01">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="payerEmail">Paid by</label>
+                        <input type="email" id="payerEmail" readonly>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="participants">Participants</label>
+                    <textarea id="participants" placeholder="Enter participant emails separated by commas or new lines. Include the payer if they share the cost."></textarea>
+                    <p class="form-hint">The app will split the amount equally across all listed participants.</p>
+                </div>
+
+                <p id="expenseMessage" class="error-message"></p>
+
+                <div class="button-row">
+                    <button type="submit" class="btn">Save expense</button>
+                    <a href="history.html" class="btn-secondary">View history</a>
+                </div>
+            </form>
+        </section>
     </main>
+
+    <script>
+        const currentUserBadge = document.getElementById('currentUserBadge');
+        const payerEmailInput = document.getElementById('payerEmail');
+        const expenseMessage = document.getElementById('expenseMessage');
+        const expenseForm = document.getElementById('addExpenseForm');
+
+        const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+        if (currentUser && currentUser.email) {
+            payerEmailInput.value = currentUser.email;
+            currentUserBadge.textContent = `Signed in as ${currentUser.name || currentUser.full_name || currentUser.email}`;
+        } else {
+            currentUserBadge.textContent = 'No account loaded';
+            expenseMessage.textContent = 'Please log in before adding an expense.';
+        }
+
+        expenseForm.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            expenseMessage.textContent = '';
+
+            if (!currentUser || !currentUser.email) {
+                expenseMessage.textContent = 'Please log in before adding an expense.';
+                return;
+            }
+
+            const groupName = document.getElementById('groupName').value.trim();
+            const description = document.getElementById('description').value.trim();
+            const amount = document.getElementById('amount').value.trim();
+            const category = document.getElementById('category').value;
+            const payerEmail = payerEmailInput.value.trim().toLowerCase();
+            const participantEmails = document.getElementById('participants').value
+                .split(/[\n,]/)
+                .map((item) => item.trim().toLowerCase())
+                .filter(Boolean);
+
+            if (!groupName || !description || !amount || !category || !payerEmail || !participantEmails.length) {
+                expenseMessage.textContent = 'Fill in the group, description, amount, payer, and participants.';
+                return;
+            }
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/expenses', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        group_name: groupName,
+                        description,
+                        amount,
+                        category,
+                        payer_email: payerEmail,
+                        participant_emails: participantEmails,
+                    }),
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    expenseMessage.textContent = data.error || 'Failed to save expense.';
+                    return;
+                }
+
+                localStorage.setItem('expenseSuccess', `Saved "${description}" in ${groupName}.`);
+                window.location.href = 'history.html';
+            } catch (error) {
+                expenseMessage.textContent = 'Could not connect to the server.';
+            }
+        });
+    </script>
 </body>
 </html>

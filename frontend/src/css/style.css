@@ -721,6 +721,12 @@ body {
     gap: 18px;
 }
 
+.report-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+}
+
 .form-card select,
 .form-card textarea,
 .input-group select,
@@ -836,11 +842,35 @@ body {
     margin-bottom: 10px;
 }
 
+.report-notes {
+    display: grid;
+    gap: 16px;
+}
+
+.form-hint {
+    color: var(--subtle);
+    font-size: 13px;
+    line-height: 1.6;
+    margin-top: -8px;
+    margin-bottom: 8px;
+}
+
+.inline-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.inline-status input[readonly] {
+    opacity: 0.9;
+}
+
 @media (max-width: 1100px) {
     .two-column-layout,
     .form-grid,
     .history-filter-grid,
-    .report-balance-grid {
+    .report-balance-grid,
+    .report-grid {
         grid-template-columns: 1fr;
     }
 }

@@ -10,6 +10,15 @@ class GroupRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def get_group_by_name(self, name: str) -> Group | None:
+        return self.db.query(Group).filter(Group.name == name).first()
+
+    def get_or_create_group_by_name(self, group_in: GroupCreate, creator_id: int) -> Group:
+        existing = self.get_group_by_name(group_in.name)
+        if existing:
+            return existing
+        return self.create_group(group_in, creator_id)
+
     def create_group(self, group_in: GroupCreate, creator_id: int) -> Group:
         """Create a new group and automatically assign the creator as the group ADMIN."""
         try:
@@ -45,6 +54,18 @@ class GroupRepository:
 
     def add_user_to_group(self, group_id: int, user_id: int, role: str = "MEMBER") -> GroupMember:
         """Add a user to a group via the bridge table."""
+        existing = (
+            self.db.query(GroupMember)
+            .filter(GroupMember.group_id == group_id, GroupMember.user_id == user_id)
+            .first()
+        )
+        if existing:
+            if role and existing.role != role:
+                existing.role = role
+                self.db.commit()
+                self.db.refresh(existing)
+            return existing
+
         db_member = GroupMember(
             group_id=group_id,
             user_id=user_id,
