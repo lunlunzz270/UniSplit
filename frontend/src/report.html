@@ -14,28 +14,136 @@
             <a href="dashboard.html">Dashboard</a>
             <a href="add_expense.html">Add Expense</a>
             <a href="history.html">History</a>
-            <a href="report.html">Report</a>
+            <a href="report.html" class="active">Report</a>
             <a href="login.html">Login</a>
         </div>
     </nav>
 
     <main class="container">
-        <h1>Reports</h1>
+        <section class="page-header-card">
+            <span class="hero-badge">Insights & summaries</span>
+            <h1>Reports</h1>
+            <p>See a lightweight summary of the latest expense history.</p>
+        </section>
 
-        <div class="card-grid">
-            <div class="card">
-                <h3>Total Expenses</h3>
-                <p>$1,240</p>
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Overview</h2>
+                <span id="reportStatus" class="status neutral">Loading</span>
             </div>
-            <div class="card">
-                <h3>Top Spending Category</h3>
-                <p>Food</p>
+
+            <div class="report-grid">
+                <div class="stat-card">
+                    <p class="stat-label">Total Expenses</p>
+                    <h2 id="reportTotalExpenses">$0.00</h2>
+                    <span class="tag neutral">All recorded expenses</span>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Top Spending Category</p>
+                    <h2 id="reportTopCategory">N/A</h2>
+                    <span class="tag neutral">By total amount</span>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Most Active Group</p>
+                    <h2 id="reportTopGroup">N/A</h2>
+                    <span class="tag neutral">By transaction count</span>
+                </div>
             </div>
-            <div class="card">
-                <h3>Most Active Group</h3>
-                <p>Spring Break Trip</p>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Trend Notes</h2>
+                <a href="history.html">Open history</a>
             </div>
-        </div>
+
+            <div id="reportNotes" class="report-notes">
+                <div class="empty-state-card">
+                    <h3>Loading report data...</h3>
+                    <p>The summary cards will update once the history API returns data.</p>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <script>
+        const reportStatus = document.getElementById('reportStatus');
+        const reportNotes = document.getElementById('reportNotes');
+
+        function formatAmount(amount) {
+            return `$${Number(amount || 0).toFixed(2)}`;
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        async function loadReport() {
+            try {
+                const res = await fetch('http://127.0.0.1:5000/api/expenses');
+                const data = await res.json();
+                const expenses = Array.isArray(data) ? data : (data.expenses || []);
+
+                const categoryTotals = new Map();
+                const groupCounts = new Map();
+                let totalExpenses = 0;
+
+                expenses.forEach((expense) => {
+                    totalExpenses += Number(expense.amount || 0);
+
+                    const category = expense.category || 'Other';
+                    categoryTotals.set(category, (categoryTotals.get(category) || 0) + Number(expense.amount || 0));
+
+                    const groupName = expense.group_name || 'Unknown Group';
+                    groupCounts.set(groupName, (groupCounts.get(groupName) || 0) + 1);
+                });
+
+                const topCategory = Array.from(categoryTotals.entries()).sort((left, right) => right[1] - left[1])[0];
+                const topGroup = Array.from(groupCounts.entries()).sort((left, right) => right[1] - left[1])[0];
+                const recent = expenses.slice(0, 3);
+
+                document.getElementById('reportTotalExpenses').textContent = formatAmount(totalExpenses);
+                document.getElementById('reportTopCategory').textContent = topCategory ? topCategory[0] : 'N/A';
+                document.getElementById('reportTopGroup').textContent = topGroup ? topGroup[0] : 'N/A';
+
+                reportStatus.textContent = expenses.length ? 'Updated from history data' : 'No history yet';
+                reportStatus.className = `status ${expenses.length ? 'positive' : 'neutral'}`;
+
+                reportNotes.innerHTML = expenses.length
+                    ? `
+                        <div class="empty-state-card">
+                            <h3>Recent transactions</h3>
+                            <p>${recent.map((expense) => `${escapeHtml(expense.description || 'Untitled')} in ${escapeHtml(expense.group_name || 'a group')} for ${formatAmount(expense.amount)}`).join('<br>')}</p>
+                        </div>
+                        <div class="empty-state-card">
+                            <h3>Category summary</h3>
+                            <p>${Array.from(categoryTotals.entries()).map(([category, amount]) => `${escapeHtml(category)}: ${formatAmount(amount)}`).join('<br>')}</p>
+                        </div>
+                    `
+                    : `
+                        <div class="empty-state-card">
+                            <h3>No report data yet</h3>
+                            <p>Add an expense first so the summary cards can populate.</p>
+                        </div>
+                    `;
+            } catch (error) {
+                reportStatus.textContent = 'Load failed';
+                reportStatus.className = 'status warning';
+                reportNotes.innerHTML = `
+                    <div class="empty-state-card">
+                        <h3>Could not load report data</h3>
+                        <p>Make sure the backend is running and try again.</p>
+                    </div>
+                `;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadReport);
+    </script>
 </body>
 </html>

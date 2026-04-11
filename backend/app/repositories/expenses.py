@@ -1,9 +1,11 @@
 from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import func
+from sqlalchemy import or_
 
 from ..models.expenses import Expense, ExpenseParticipant
-from ..models.groups import GroupMember
+from ..models.groups import Group, GroupMember
+from ..models.users import User
 from ..schemas.expenses import ExpenseCreate
 from .activity_logs import ActivityLogRepository
 
@@ -82,3 +84,58 @@ class ExpenseRepository:
     def get_group_expenses(self, group_id: int):
         """Fetch all expense history for a specific group."""
         return self.db.query(Expense).filter(Expense.group_id == group_id).order_by(Expense.created_at.desc()).all()
+
+    def list_expenses(self, search: str = "", category: str = "", group_name: str = ""):
+        """Fetch expenses joined with payer and group names for the history page."""
+        query = (
+            self.db.query(Expense)
+            .options(
+                joinedload(Expense.group),
+                joinedload(Expense.payer),
+                joinedload(Expense.participants).joinedload(ExpenseParticipant.user),
+            )
+            .join(Group, Expense.group_id == Group.id)
+            .join(User, Expense.paid_by == User.id)
+        )
+
+        if search:
+            like = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Expense.description.ilike(like),
+                    User.full_name.ilike(like),
+                    Group.name.ilike(like),
+                )
+            )
+
+        if category:
+            query = query.filter(Expense.category == category)
+
+        if group_name:
+            query = query.filter(Group.name.ilike(f"%{group_name}%"))
+
+        rows = query.order_by(Expense.created_at.desc()).all()
+        return [
+            {
+                "id": expense.id,
+                "description": expense.description,
+                "amount": float(expense.amount),
+                "category": expense.category,
+                "group_id": expense.group_id,
+                "group_name": expense.group.name if expense.group else None,
+                "payer": expense.payer.full_name if expense.payer else None,
+                "date": expense.created_at.isoformat() if expense.created_at else None,
+                "notes": "",
+                "participants": [
+                    {
+                        "id": participant.id,
+                        "user_id": participant.user_id,
+                        "name": participant.user.full_name if participant.user else None,
+                        "share": float(participant.share),
+                        "is_settled": participant.is_settled,
+                    }
+                    for participant in expense.participants
+                ],
+            }
+            for expense in rows
+        ]

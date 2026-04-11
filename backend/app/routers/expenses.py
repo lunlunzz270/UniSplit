@@ -1,62 +1,59 @@
-from flask import Blueprint, jsonify, request
-from sqlalchemy import or_
+from decimal import Decimal, InvalidOperation
 
-from ..core.database import SessionLocal
-from ..models.expenses import Expense, Settlement
-from ..models.groups import Group
-from ..models.users import User
+from flask import Blueprint, jsonify, request
+
+from ..services import list_expenses as list_expenses_service, record_expense
 
 expenses_bp = Blueprint("expenses", __name__)
 
 
 @expenses_bp.route("/api/expenses", methods=["GET"])
-def list_expenses():
+def get_expense_history():
     search = request.args.get("search", "").strip()
     category = request.args.get("category", "").strip()
     group_name = request.args.get("group_name", "").strip()
+    expenses = list_expenses_service(search=search, category=category, group_name=group_name)
+    return jsonify({"expenses": expenses}), 200
 
-    db = SessionLocal()
+
+@expenses_bp.route("/api/expenses", methods=["POST"])
+def create_expense():
+    data = request.get_json(silent=True) or {}
+    group_name = (data.get("group_name") or "").strip()
+    description = (data.get("description") or "").strip()
+    category = (data.get("category") or "").strip()
+    payer_email = (data.get("payer_email") or "").strip().lower()
+    participant_emails = data.get("participant_emails") or []
+
     try:
-        query = (
-            db.query(Expense, Group.name.label("group_name"), User.full_name.label("payer_name"))
-            .join(Group, Expense.group_id == Group.id)
-            .join(User, Expense.paid_by == User.id)
+        amount = Decimal(str(data.get("amount", "")).strip())
+    except (InvalidOperation, ValueError):
+        return jsonify({"error": "Invalid amount"}), 400
+
+    if not group_name or not description or not category or not payer_email:
+        return jsonify({"error": "Group, description, category, payer, and amount are required"}), 400
+
+    if isinstance(participant_emails, str):
+        participant_emails = [item.strip() for item in participant_emails.replace("\n", ",").split(",")]
+
+    try:
+        expense = record_expense(
+            group_name=group_name,
+            description=description,
+            amount=amount,
+            category=category,
+            payer_email=payer_email,
+            participant_emails=participant_emails,
         )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
-        if search:
-            like = f"%{search}%"
-            query = query.filter(
-                or_(
-                    Expense.description.ilike(like),
-                    User.full_name.ilike(like),
-                    Group.name.ilike(like),
-                )
-            )
-
-        if category:
-            query = query.filter(Expense.category == category)
-
-        if group_name:
-            query = query.filter(Group.name.ilike(f"%{group_name}%"))
-
-        rows = query.order_by(Expense.created_at.desc()).all()
-
-        expenses = []
-        for expense, group_name_value, payer_name in rows:
-            expenses.append(
-                {
-                    "id": expense.id,
-                    "description": expense.description,
-                    "amount": float(expense.amount),
-                    "category": expense.category,
-                    "group_id": expense.group_id,
-                    "group_name": group_name_value,
-                    "payer": payer_name,
-                    "date": expense.created_at.isoformat() if expense.created_at else None,
-                    "notes": "",
-                }
-            )
-
-        return jsonify({"expenses": expenses}), 200
-    finally:
-        db.close()
+    return jsonify(
+        {
+            "id": expense.id,
+            "group_id": expense.group_id,
+            "description": expense.description,
+            "amount": float(expense.amount),
+            "category": expense.category,
+        }
+    ), 201
