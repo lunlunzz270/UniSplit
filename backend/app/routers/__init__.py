@@ -17,7 +17,7 @@ def register():
         return jsonify({'error': 'Email already registered'}), 400
 
     user = create_user(name, email, password)
-    return jsonify({'id': user.id, 'name': user.name, 'email': user.email}), 201
+    return jsonify({'id': user.id, 'name': user.full_name, 'email': user.email}), 201
 
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
@@ -29,4 +29,4 @@ def login():
     if not user or not verify_password(password, user.password):
         return jsonify({'error': 'Invalid email or password'}), 401
 
-    return jsonify({'id': user.id, 'name': user.name, 'email': user.email}), 200
+    return jsonify({'id': user.id, 'name': user.full_name, 'email': user.email}), 200

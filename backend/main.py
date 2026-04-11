@@ -12,7 +12,10 @@ from backend.app.routers import auth_bp
 import backend.app.models  # noqa: F401
 
 app = Flask(__name__)
-CORS(app)
+
+# Allow any origin for local development.
+# Keep credentials disabled so wildcard CORS remains valid.
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 app.register_blueprint(auth_bp)
 
 Base.metadata.create_all(bind=engine)
