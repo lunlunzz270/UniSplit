@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSplit - Expense Insights</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">UniSplit</div>
+        <div class="nav-links">
+            <a href="index.html">Home</a>
+            <a href="register.html">Register</a>
+            <a href="login.html">Login</a>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="add_expense.html">Add Expense</a>
+            <a href="insights.html" class="active">Expense Insights</a>
+            <a href="membership.html">Membership Purchase</a>
+            <a href="history.html">Transaction History</a>
+            <a href="report.html">Reports</a>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="page-hero">
+            <div>
+                <span class="hero-badge">Analytics & Spending Review</span>
+                <h1>Expense Insights</h1>
+                <p>
+                    Explore personal and group expense patterns, compare categories,
+                    and identify spending trends that help users make better financial decisions.
+                </p>
+            </div>
+        </section>
+
+        <section class="insight-stats">
+            <div class="stat-card">
+                <p class="stat-label">Total Tracked</p>
+                <h2>$1,240</h2>
+                <span class="tag neutral">Across all groups</span>
+            </div>
+
+            <div class="stat-card">
+                <p class="stat-label">Largest Category</p>
+                <h2>Food</h2>
+                <span class="tag warning">34% of total</span>
+            </div>
+
+            <div class="stat-card">
+                <p class="stat-label">Top Group</p>
+                <h2>Spring Trip</h2>
+                <span class="tag neutral">Most active</span>
+            </div>
+
+            <div class="stat-card">
+                <p class="stat-label">Monthly Average</p>
+                <h2>$326</h2>
+                <span class="tag positive">Stable trend</span>
+            </div>
+        </section>
+
+        <section class="insight-layout">
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Category Breakdown</h2>
+                </div>
+
+                <div class="insight-list">
+                    <div class="insight-row">
+                        <div>
+                            <h4>Food & Dining</h4>
+                            <p>Shared meals, groceries, coffee, snacks</p>
+                        </div>
+                        <span>$420</span>
+                    </div>
+
+                    <div class="insight-row">
+                        <div>
+                            <h4>Transportation</h4>
+                            <p>Gas, rideshare, train, parking</p>
+                        </div>
+                        <span>$285</span>
+                    </div>
+
+                    <div class="insight-row">
+                        <div>
+                            <h4>Housing & Utilities</h4>
+                            <p>Rent, internet, electricity, water</p>
+                        </div>
+                        <span>$310</span>
+                    </div>
+
+                    <div class="insight-row">
+                        <div>
+                            <h4>Entertainment</h4>
+                            <p>Tickets, movies, activities, subscriptions</p>
+                        </div>
+                        <span>$225</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <h2>Spending Trends</h2>
+                </div>
+
+                <div class="trend-box">
+                    <div class="trend-bar">
+                        <span style="width: 78%;"></span>
+                    </div>
+                    <p>Food spending increased this month due to more shared dining expenses.</p>
+                </div>
+
+                <div class="trend-box">
+                    <div class="trend-bar">
+                        <span style="width: 56%;"></span>
+                    </div>
+                    <p>Transportation costs stayed moderate across most groups.</p>
+                </div>
+
+                <div class="trend-box">
+                    <div class="trend-bar">
+                        <span style="width: 64%;"></span>
+                    </div>
+                    <p>Travel activities remain the main cost driver for group expenses.</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="panel premium-note">
+            <div class="panel-header">
+                <h2>Member-only analytics</h2>
+            </div>
+            <p>
+                Premium members can unlock full historical analysis, more detailed category comparisons,
+                and advanced visual summaries. Free users can view only limited insights.
+            </p>
+            <a href="membership.html" class="btn-primary">Upgrade for More Insights</a>
+        </section>
+    </main>
+</body>
+</html>
