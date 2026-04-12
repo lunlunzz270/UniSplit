@@ -13,8 +13,9 @@ function normalizeUser(user) {
         name: user.name || user.full_name || '',
         full_name: user.full_name || user.name || '',
         email: user.email || '',
+        is_admin: user.is_admin || false,
         session_token: user.session_token || user.token || session?.token || '',
-        session_expires_at: user.session_expires_at || session?.expires_at || '',
+        session_expires_at: user.session_expires_at || user.expires_at || session?.expires_at || '',
     };
 }
 
@@ -128,98 +129,108 @@ function syncNavbarAuthState() {
     const currentPage = getCurrentPageName();
     const signedIn = Boolean(currentUser);
 
-    document.querySelectorAll('.navbar .nav-links').forEach((navLinks) => {
-        navLinks.innerHTML = '';
-        navLinks.style.display = 'flex';
-        navLinks.style.alignItems = 'center';
-        navLinks.style.flex = '1 1 auto';
-        navLinks.style.minWidth = '0';
-        navLinks.style.width = 'auto';
-        navLinks.style.gap = '22px';
+    const navLinksNodes = document.querySelectorAll('.navbar .nav-links');
+    if (navLinksNodes.length > 0) {
+        navLinksNodes.forEach((navLinks) => {
+            navLinks.innerHTML = '';
+            navLinks.style.display = 'flex';
+            navLinks.style.alignItems = 'center';
+            navLinks.style.flex = '1 1 auto';
+            navLinks.style.minWidth = '0';
+            navLinks.style.width = 'auto';
+            navLinks.style.gap = '22px';
 
-        const leftGroup = document.createElement('div');
-        leftGroup.className = 'nav-group nav-left';
-        const rightGroup = document.createElement('div');
-        rightGroup.className = 'nav-group nav-right';
+            const leftGroup = document.createElement('div');
+            leftGroup.className = 'nav-group nav-left';
+            const rightGroup = document.createElement('div');
+            rightGroup.className = 'nav-group nav-right';
 
-        leftGroup.appendChild(createNavbarLink(null, {
-            href: 'index.html',
-            label: 'Home',
-            active: isActiveHref('index.html', currentPage),
-        }));
+            leftGroup.appendChild(createNavbarLink(null, {
+                href: 'index.html',
+                label: 'Home',
+                active: isActiveHref('index.html', currentPage),
+            }));
 
-        if (signedIn) {
-            const visibleOrder = [
-                'dashboard.html',
-                'add_expense.html',
-                'history.html',
-                'report.html',
-            ];
+            if (signedIn) {
+                const visibleOrder = [
+                    'dashboard.html',
+                    'add_expense.html',
+                    'history.html',
+                    'insights.html',
+                    'report.html',
+                    'membership.html',
+                ];
 
-            visibleOrder.forEach((href) => {
-                const labels = {
-                    'dashboard.html': 'Dashboard',
-                    'add_expense.html': 'Add Expense',
-                    'history.html': 'Transaction History',
-                    'report.html': 'Reports',
-                };
+                visibleOrder.forEach((href) => {
+                    const labels = {
+                        'dashboard.html': 'Dashboard',
+                        'add_expense.html': 'Add Expense',
+                        'history.html': 'Transaction History',
+                        'insights.html': 'Expense Insights',
+                        'report.html': 'Reports',
+                        'membership.html': 'Membership',
+                    };
 
-                leftGroup.appendChild(createNavbarLink(null, {
-                    href,
-                    label: labels[href],
-                    active: isActiveHref(href, currentPage),
+                    leftGroup.appendChild(createNavbarLink(null, {
+                        href,
+                        label: labels[href],
+                        active: isActiveHref(href, currentPage),
+                    }));
+                });
+
+                rightGroup.appendChild(createNavbarLink(null, {
+                    href: '#',
+                    label: 'Logout',
+                    active: false,
+                    onClick: async (event) => {
+                        event.preventDefault();
+                        await logoutCurrentUser();
+                    },
                 }));
-            });
+            } else {
+                rightGroup.appendChild(createNavbarLink(null, {
+                    href: 'register.html',
+                    label: 'Register',
+                    active: isActiveHref('register.html', currentPage),
+                }));
 
-            rightGroup.appendChild(createNavbarLink(null, {
-                href: '#',
-                label: 'Logout',
-                active: false,
-                onClick: async (event) => {
+                rightGroup.appendChild(createNavbarLink(null, {
+                    href: 'login.html',
+                    label: 'Login',
+                    active: isActiveHref('login.html', currentPage),
+                }));
+            }
+
+            navLinks.appendChild(leftGroup);
+            navLinks.appendChild(rightGroup);
+        });
+    }
+
+    const simpleHome = document.querySelector('.simple-home');
+    if (simpleHome) {
+        const heroLoginLink = simpleHome.querySelector('.button-group a[href="login.html"]');
+        if (heroLoginLink) {
+            if (signedIn) {
+                const logoutHeroLink = heroLoginLink.cloneNode(false);
+                logoutHeroLink.textContent = 'Logout';
+                logoutHeroLink.href = '#';
+                logoutHeroLink.classList.remove('secondary');
+                logoutHeroLink.classList.add('secondary');
+                logoutHeroLink.dataset.authAction = 'logout';
+                logoutHeroLink.addEventListener('click', async (event) => {
                     event.preventDefault();
                     await logoutCurrentUser();
-                },
-            }));
-        } else {
-            rightGroup.appendChild(createNavbarLink(null, {
-                href: 'register.html',
-                label: 'Register',
-                active: isActiveHref('register.html', currentPage),
-            }));
-
-            rightGroup.appendChild(createNavbarLink(null, {
-                href: 'login.html',
-                label: 'Login',
-                active: isActiveHref('login.html', currentPage),
-            }));
-        }
-
-        navLinks.appendChild(leftGroup);
-        navLinks.appendChild(rightGroup);
-    });
-
-    const heroLoginLink = document.querySelector('.simple-home .button-group a[href="login.html"]');
-    if (heroLoginLink) {
-        if (signedIn) {
-            const logoutHeroLink = heroLoginLink.cloneNode(false);
-            logoutHeroLink.textContent = 'Logout';
-            logoutHeroLink.href = '#';
-            logoutHeroLink.classList.remove('secondary');
-            logoutHeroLink.classList.add('secondary');
-            logoutHeroLink.dataset.authAction = 'logout';
-            logoutHeroLink.addEventListener('click', async (event) => {
-                event.preventDefault();
-                await logoutCurrentUser();
-            });
-            heroLoginLink.replaceWith(logoutHeroLink);
-        } else if (heroLoginLink.dataset.authAction === 'logout') {
-            const loginHeroLink = heroLoginLink.cloneNode(false);
-            loginHeroLink.textContent = 'Login';
-            loginHeroLink.href = 'login.html';
-            loginHeroLink.classList.add('secondary');
-            loginHeroLink.dataset.authAction = '';
-            loginHeroLink.addEventListener('click', () => {});
-            heroLoginLink.replaceWith(loginHeroLink);
+                });
+                heroLoginLink.replaceWith(logoutHeroLink);
+            } else if (heroLoginLink.dataset.authAction === 'logout') {
+                const loginHeroLink = heroLoginLink.cloneNode(false);
+                loginHeroLink.textContent = 'Login';
+                loginHeroLink.href = 'login.html';
+                loginHeroLink.classList.add('secondary');
+                loginHeroLink.dataset.authAction = '';
+                loginHeroLink.addEventListener('click', () => {});
+                heroLoginLink.replaceWith(loginHeroLink);
+            }
         }
     }
 

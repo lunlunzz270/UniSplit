@@ -1,7 +1,7 @@
 USE unisplit;
 
 CREATE TABLE IF NOT EXISTS sessions (
-    id          INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    id          VARCHAR(255) PRIMARY KEY,
     user_id     INT UNSIGNED    NOT NULL,
     token       VARCHAR(512)    NOT NULL UNIQUE,
     expires_at  DATETIME        NOT NULL,

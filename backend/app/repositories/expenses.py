@@ -85,8 +85,8 @@ class ExpenseRepository:
         """Fetch all expense history for a specific group."""
         return self.db.query(Expense).filter(Expense.group_id == group_id).order_by(Expense.created_at.desc()).all()
 
-    def list_expenses(self, search: str = "", category: str = "", group_name: str = ""):
-        """Fetch expenses joined with payer and group names for the history page."""
+    def list_expenses(self, user_id: int | None = None, is_admin: bool = False, search: str = "", category: str = "", group_name: str = ""):
+        """Fetch expenses joined with payer and group names. Regular users only see their own expenses."""
         query = (
             self.db.query(Expense)
             .options(
@@ -97,6 +97,15 @@ class ExpenseRepository:
             .join(Group, Expense.group_id == Group.id)
             .join(User, Expense.paid_by == User.id)
         )
+
+        if not is_admin and user_id is not None:
+            # For non-admin, filter expenses where user is the payer OR a participant
+            query = query.outerjoin(ExpenseParticipant, Expense.id == ExpenseParticipant.expense_id).filter(
+                or_(
+                    Expense.paid_by == user_id,
+                    ExpenseParticipant.user_id == user_id
+                )
+            ).distinct()
 
         if search:
             like = f"%{search}%"

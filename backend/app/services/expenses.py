@@ -27,10 +27,16 @@ def create_expense_with_splits(group_id: int, expense_in: ExpenseCreate):
         db.close()
 
 
-def list_expenses(search: str = "", category: str = "", group_name: str = ""):
+def list_expenses(user_id: int | None = None, is_admin: bool = False, search: str = "", category: str = "", group_name: str = ""):
     db = SessionLocal()
     try:
-        return ExpenseRepository(db).list_expenses(search=search, category=category, group_name=group_name)
+        return ExpenseRepository(db).list_expenses(
+            user_id=user_id,
+            is_admin=is_admin,
+            search=search,
+            category=category,
+            group_name=group_name
+        )
     finally:
         db.close()
 
