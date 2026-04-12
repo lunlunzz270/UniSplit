@@ -3,8 +3,16 @@ from decimal import Decimal, InvalidOperation
 from flask import Blueprint, jsonify, request
 
 from ..services import list_expenses as list_expenses_service, record_expense
+from ..services.auth import get_current_user_from_token
 
 expenses_bp = Blueprint("expenses", __name__)
+
+
+def _extract_session_token():
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        return auth_header.removeprefix("Bearer ").strip()
+    return request.headers.get("X-Session-Token")
 
 
 @expenses_bp.route("/api/expenses", methods=["GET"])
@@ -35,6 +43,16 @@ def create_expense():
 
     if isinstance(participant_emails, str):
         participant_emails = [item.strip() for item in participant_emails.replace("\n", ",").split(",")]
+
+    session_token = _extract_session_token()
+    current = get_current_user_from_token(session_token) if session_token else None
+    if session_token and not current:
+        return jsonify({"error": "Session expired or invalid"}), 401
+    if current:
+        current_user = current[0]
+        if payer_email and payer_email != current_user.email.lower():
+            return jsonify({"error": "Payer must match the authenticated user"}), 403
+        payer_email = current_user.email.lower()
 
     try:
         expense = record_expense(

@@ -78,8 +78,18 @@
         </section>
     </main>
 
-    <script src="./js/app.js"></script>
+    <script src="./js/app.js?v=10"></script>
     <script>
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Login status',
+            loginHref: 'register.html',
+            dashboardHref: 'dashboard.html'
+        });
+        if (currentUser) {
+            document.getElementById('errorMsg').textContent = `You are signed in as ${window.UniSplitApp.getUserDisplayName(currentUser)}. Use logout to switch accounts.`;
+            document.getElementById('errorMsg').style.color = '#8ff0b0';
+        }
+
         document.getElementById('loginForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;

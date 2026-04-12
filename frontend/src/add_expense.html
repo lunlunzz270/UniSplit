@@ -89,14 +89,19 @@
         </section>
     </main>
 
-    <script src="./js/app.js"></script>
+    <script src="./js/app.js?v=10"></script>
     <script>
         const currentUserBadge = document.getElementById('currentUserBadge');
         const payerEmailInput = document.getElementById('payerEmail');
         const expenseMessage = document.getElementById('expenseMessage');
         const expenseForm = document.getElementById('addExpenseForm');
 
-        const currentUser = window.UniSplitApp.getCurrentUser();
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Expense entry access',
+            requireLogin: true,
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
 
         if (currentUser && currentUser.email) {
             payerEmailInput.value = currentUser.email;
@@ -146,7 +151,7 @@
             }
 
             try {
-                const res = await fetch(window.UniSplitApp.apiUrl('/api/expenses'), {
+                const res = await window.UniSplitApp.apiFetch('/api/expenses', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({

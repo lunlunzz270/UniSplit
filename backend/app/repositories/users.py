@@ -1,4 +1,9 @@
+from datetime import datetime
+from uuid import uuid4
+
 from sqlalchemy.orm import Session
+
+from ..models.users import Session as UserSession
 from ..models.users import User
 from ..schemas.users import UserCreate
 
@@ -26,3 +31,35 @@ class UserRepository:
         self.db.commit()
         self.db.refresh(db_user) # Refresh to get the database-generated auto-increment ID
         return db_user
+
+    def create_session(self, user_id: int, token: str, expires_at: datetime, session_id: str | None = None) -> UserSession:
+        db_session = UserSession(
+            id=session_id or uuid4().hex,
+            user_id=user_id,
+            token=token,
+            expires_at=expires_at,
+        )
+        self.db.add(db_session)
+        self.db.commit()
+        self.db.refresh(db_session)
+        return db_session
+
+    def get_session_by_token(self, token: str) -> UserSession | None:
+        return self.db.query(UserSession).filter(UserSession.token == token).first()
+
+    def delete_session_by_token(self, token: str) -> bool:
+        session = self.get_session_by_token(token)
+        if not session:
+            return False
+        self.db.delete(session)
+        self.db.commit()
+        return True
+
+    def delete_sessions_for_user(self, user_id: int) -> int:
+        sessions = self.db.query(UserSession).filter(UserSession.user_id == user_id).all()
+        count = len(sessions)
+        for session in sessions:
+            self.db.delete(session)
+        if count:
+            self.db.commit()
+        return count

@@ -77,10 +77,16 @@
         </section>
     </main>
 
-    <script src="./js/app.js"></script>
+    <script src="./js/app.js?v=10"></script>
     <script>
         const historyList = document.getElementById('historyList');
         const historyMessage = document.getElementById('historyMessage');
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'History access',
+            requireLogin: true,
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
 
         function formatAmount(amount) {
             const num = Number(amount || 0);
@@ -108,6 +114,12 @@
         }
 
         async function loadHistory() {
+            if (!currentUser) {
+                historyMessage.textContent = 'Please log in to view transaction history.';
+                historyList.innerHTML = '<div class="empty-state-card"><h3>Login required</h3><p>Sign in to see your shared expense history.</p></div>';
+                return;
+            }
+
             historyMessage.textContent = '';
             historyList.innerHTML = '<div class="panel"><p>Loading history...</p></div>';
 
@@ -121,7 +133,7 @@
             if (group) params.append('group_name', group);
 
             try {
-                const res = await fetch(`${window.UniSplitApp.apiUrl('/api/expenses')}?${params.toString()}`);
+                const res = await window.UniSplitApp.apiFetch(`/api/expenses?${params.toString()}`);
                 const data = await res.json();
 
                 if (!res.ok) {

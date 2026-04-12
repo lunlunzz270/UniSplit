@@ -13,11 +13,21 @@ class GroupRepository:
     def get_group_by_name(self, name: str) -> Group | None:
         return self.db.query(Group).filter(Group.name == name).first()
 
+    def get_group_by_id(self, group_id: int) -> Group | None:
+        return self.db.query(Group).filter(Group.id == group_id).first()
+
     def get_or_create_group_by_name(self, group_in: GroupCreate, creator_id: int) -> Group:
         existing = self.get_group_by_name(group_in.name)
         if existing:
             return existing
         return self.create_group(group_in, creator_id)
+
+    def get_group_member(self, group_id: int, user_id: int) -> GroupMember | None:
+        return (
+            self.db.query(GroupMember)
+            .filter(GroupMember.group_id == group_id, GroupMember.user_id == user_id)
+            .first()
+        )
 
     def create_group(self, group_in: GroupCreate, creator_id: int) -> Group:
         """Create a new group and automatically assign the creator as the group ADMIN."""
@@ -52,17 +62,20 @@ class GroupRepository:
             self.db.rollback()
             raise
 
-    def add_user_to_group(self, group_id: int, user_id: int, role: str = "MEMBER") -> GroupMember:
+    def add_user_to_group(
+        self,
+        group_id: int,
+        user_id: int,
+        role: str = "MEMBER",
+        commit: bool = True,
+    ) -> GroupMember:
         """Add a user to a group via the bridge table."""
-        existing = (
-            self.db.query(GroupMember)
-            .filter(GroupMember.group_id == group_id, GroupMember.user_id == user_id)
-            .first()
-        )
+        existing = self.get_group_member(group_id, user_id)
         if existing:
             if role and existing.role != role:
                 existing.role = role
-                self.db.commit()
+                if commit:
+                    self.db.commit()
                 self.db.refresh(existing)
             return existing
 
@@ -72,9 +85,34 @@ class GroupRepository:
             role=role
         )
         self.db.add(db_member)
-        self.db.commit()
+        self.db.flush()
+        if commit:
+            self.db.commit()
         self.db.refresh(db_member)
         return db_member
+
+    def remove_user_from_group(self, group_id: int, user_id: int, commit: bool = True) -> bool:
+        member = self.get_group_member(group_id, user_id)
+        if not member:
+            return False
+        self.db.delete(member)
+        if commit:
+            self.db.commit()
+        return True
+
+    def count_group_admins(self, group_id: int) -> int:
+        return (
+            self.db.query(GroupMember)
+            .filter(GroupMember.group_id == group_id, GroupMember.role == "ADMIN")
+            .count()
+        )
+
+    def is_group_admin(self, group_id: int, user_id: int) -> bool:
+        group = self.get_group_by_id(group_id)
+        if group and group.created_by == user_id:
+            return True
+        member = self.get_group_member(group_id, user_id)
+        return bool(member and member.role == "ADMIN")
 
     def get_user_groups(self, user_id: int):
         """Fetch all groups a user is participating in (using a SQL JOIN)."""

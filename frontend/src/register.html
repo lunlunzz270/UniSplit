@@ -40,8 +40,18 @@
         </form>
     </main>
 
-    <script src="./js/app.js"></script>
+    <script src="./js/app.js?v=10"></script>
     <script>
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Registration status',
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
+        if (currentUser) {
+            document.getElementById('errorMsg').textContent = `You are already signed in as ${window.UniSplitApp.getUserDisplayName(currentUser)}.`;
+            document.getElementById('errorMsg').style.color = '#8ff0b0';
+        }
+
         document.getElementById('registerForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             const name = document.getElementById('name').value;
@@ -56,7 +66,8 @@
 
             const data = await res.json();
             if (res.ok) {
-                window.location.href = 'login.html';
+                window.UniSplitApp.setCurrentUser(data);
+                window.location.href = 'dashboard.html';
             } else {
                 document.getElementById('errorMsg').textContent = data.error;
             }

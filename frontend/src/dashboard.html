@@ -42,40 +42,42 @@
             <div class="hero-panel">
                 <div class="mini-stat">
                     <span class="mini-label">Net Balance</span>
-                    <h3>$48.50</h3>
-                    <p class="positive-text">You are owed overall</p>
+                    <h3 id="netBalanceValue">$48.50</h3>
+                    <p id="netBalanceCaption" class="positive-text">You are owed overall</p>
                 </div>
                 <div class="mini-stat">
                     <span class="mini-label">Pending Settlements</span>
-                    <h3>3</h3>
-                    <p>2 due soon</p>
+                    <h3 id="pendingSettlementsValue">3</h3>
+                    <p id="pendingSettlementsCaption">2 due soon</p>
                 </div>
             </div>
         </section>
 
+        <p id="dashboardMessage" class="error-message"></p>
+
         <section class="stats-grid">
             <div class="stat-card">
                 <p class="stat-label">Total Balance</p>
-                <h2>$48.50</h2>
-                <span class="tag positive">Positive</span>
+                <h2 id="totalBalanceValue">$48.50</h2>
+                <span id="totalBalanceTag" class="tag positive">Positive</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Monthly Spending</p>
-                <h2>$326.40</h2>
+                <h2 id="monthlySpendingValue">$326.40</h2>
                 <span class="tag neutral">This month</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Active Groups</p>
-                <h2>3</h2>
-                <span class="tag neutral">Trip / Rent / Events</span>
+                <h2 id="activeGroupsValue">3</h2>
+                <span id="activeGroupsTag" class="tag neutral">Trip / Rent / Events</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Open Expenses</p>
-                <h2>8</h2>
-                <span class="tag warning">Needs review</span>
+                <h2 id="openExpensesValue">8</h2>
+                <span id="openExpensesTag" class="tag warning">Needs review</span>
             </div>
         </section>
 
@@ -87,7 +89,7 @@
                         <a href="history.html">See all</a>
                     </div>
 
-                    <div class="group-list">
+                    <div class="group-list" id="groupList">
                         <div class="group-item">
                             <div class="group-left">
                                 <div class="group-icon">T</div>
@@ -138,7 +140,7 @@
                         <a href="history.html">View history</a>
                     </div>
 
-                    <div class="activity-list">
+                    <div class="activity-list" id="activityList">
                         <div class="activity-item">
                             <div class="activity-dot"></div>
                             <div>
@@ -197,19 +199,24 @@
 
                 <div class="panel highlight-panel">
                     <h2>Expense Insight</h2>
-                    <p>Your highest spending category this month is travel and shared meals.</p>
+                    <p id="expenseInsightText">Your highest spending category this month is travel and shared meals.</p>
                     <a href="report.html" class="btn-primary full-width">Check Analytics</a>
                 </div>
             </div>
         </section>
     </main>
 
-    <script src="./js/app.js"></script>
+    <script src="./js/app.js?v=10"></script>
     <script>
         const dashboardMessage = document.getElementById('dashboardMessage');
         const groupList = document.getElementById('groupList');
         const activityList = document.getElementById('activityList');
-        const currentUser = window.UniSplitApp.getCurrentUser();
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Dashboard access',
+            requireLogin: true,
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
 
         function formatAmount(amount) {
             const value = Number(amount || 0);
@@ -283,8 +290,16 @@
         }
 
         async function loadDashboard() {
+            if (!currentUser) {
+                dashboardMessage.textContent = 'Please log in to view the dashboard.';
+                groupList.innerHTML = '<div class="empty-state-card"><h3>Login required</h3><p>You need an account before dashboard data can load.</p></div>';
+                activityList.innerHTML = '<div class="empty-state-card"><h3>Login required</h3><p>You need an account before recent activity can load.</p></div>';
+                document.getElementById('expenseInsightText').textContent = 'Log in to see personalized expense insights.';
+                return;
+            }
+
             try {
-                const res = await fetch(window.UniSplitApp.apiUrl('/api/expenses'));
+                const res = await window.UniSplitApp.apiFetch('/api/expenses');
                 const data = await res.json();
                 const expenses = window.UniSplitApp.normalizeExpenseList(data);
                 const userId = currentUser && currentUser.id ? Number(currentUser.id) : null;

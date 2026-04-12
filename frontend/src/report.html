@@ -69,10 +69,16 @@
         </section>
     </main>
 
-    <script src="./js/app.js"></script>
+    <script src="./js/app.js?v=10"></script>
     <script>
         const reportStatus = document.getElementById('reportStatus');
         const reportNotes = document.getElementById('reportNotes');
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Report access',
+            requireLogin: true,
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
 
         function formatAmount(amount) {
             return `$${Number(amount || 0).toFixed(2)}`;
@@ -88,8 +94,20 @@
         }
 
         async function loadReport() {
+            if (!currentUser) {
+                reportStatus.textContent = 'Login required';
+                reportStatus.className = 'status warning';
+                reportNotes.innerHTML = `
+                    <div class="empty-state-card">
+                        <h3>Please log in first</h3>
+                        <p>Sign in to view expense summaries and trends.</p>
+                    </div>
+                `;
+                return;
+            }
+
             try {
-                const res = await fetch(window.UniSplitApp.apiUrl('/api/expenses'));
+                const res = await window.UniSplitApp.apiFetch('/api/expenses');
                 const data = await res.json();
                 const expenses = window.UniSplitApp.normalizeExpenseList(data);
 
