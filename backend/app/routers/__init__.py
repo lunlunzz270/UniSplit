@@ -1,6 +1,9 @@
 from flask import Blueprint, request, jsonify
 from ..services import get_user_by_email, create_user, verify_password
 from .expenses import expenses_bp
+from .groups import groups_bp
+from .settlements import settlements_bp
+from .activity_logs import activity_logs_bp
 
 auth_bp = Blueprint('auth', __name__)
 

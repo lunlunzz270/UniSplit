@@ -5,6 +5,10 @@ __pycache__/
 venv/
 env/
 .env
+backend/*.db
+backend/*.sqlite3
+backend/instance/*.db
+backend/instance/*.sqlite3
 
 # 前端忽略配置
 node_modules/

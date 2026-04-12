@@ -25,3 +25,11 @@ class ActivityLogRepository:
         self.db.add(log)
         self.db.flush()
         return log
+
+    def get_group_logs(self, group_id: int):
+        return (
+            self.db.query(ActivityLog)
+            .filter(ActivityLog.group_id == group_id)
+            .order_by(ActivityLog.created_at.desc())
+            .all()
+        )

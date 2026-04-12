@@ -89,20 +89,30 @@
         </section>
     </main>
 
+    <script src="./js/app.js"></script>
     <script>
         const currentUserBadge = document.getElementById('currentUserBadge');
         const payerEmailInput = document.getElementById('payerEmail');
         const expenseMessage = document.getElementById('expenseMessage');
         const expenseForm = document.getElementById('addExpenseForm');
 
-        const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        const currentUser = window.UniSplitApp.getCurrentUser();
 
         if (currentUser && currentUser.email) {
             payerEmailInput.value = currentUser.email;
             currentUserBadge.textContent = `Signed in as ${currentUser.name || currentUser.full_name || currentUser.email}`;
+            expenseForm.querySelector('button[type="submit"]').disabled = false;
         } else {
             currentUserBadge.textContent = 'No account loaded';
             expenseMessage.textContent = 'Please log in before adding an expense.';
+            expenseForm.querySelector('button[type="submit"]').disabled = true;
+        }
+
+        function normalizeEmails(rawValue) {
+            return rawValue
+                .split(/[\n,]/)
+                .map((item) => item.trim().toLowerCase())
+                .filter(Boolean);
         }
 
         expenseForm.addEventListener('submit', async (event) => {
@@ -116,27 +126,33 @@
 
             const groupName = document.getElementById('groupName').value.trim();
             const description = document.getElementById('description').value.trim();
-            const amount = document.getElementById('amount').value.trim();
+            const amountValue = Number(document.getElementById('amount').value);
             const category = document.getElementById('category').value;
             const payerEmail = payerEmailInput.value.trim().toLowerCase();
-            const participantEmails = document.getElementById('participants').value
-                .split(/[\n,]/)
-                .map((item) => item.trim().toLowerCase())
-                .filter(Boolean);
+            const participantEmails = [...new Set(normalizeEmails(document.getElementById('participants').value))];
 
-            if (!groupName || !description || !amount || !category || !payerEmail || !participantEmails.length) {
+            if (!Number.isFinite(amountValue) || amountValue <= 0) {
+                expenseMessage.textContent = 'Amount must be greater than 0.';
+                return;
+            }
+
+            if (!groupName || !description || !category || !payerEmail || !participantEmails.length) {
                 expenseMessage.textContent = 'Fill in the group, description, amount, payer, and participants.';
                 return;
             }
 
+            if (!participantEmails.includes(payerEmail)) {
+                participantEmails.unshift(payerEmail);
+            }
+
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/expenses', {
+                const res = await fetch(window.UniSplitApp.apiUrl('/api/expenses'), {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         group_name: groupName,
                         description,
-                        amount,
+                        amount: amountValue.toFixed(2),
                         category,
                         payer_email: payerEmail,
                         participant_emails: participantEmails,

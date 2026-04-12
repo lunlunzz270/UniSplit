@@ -115,6 +115,20 @@ def test_create_group_and_auto_admin(db_session):
     assert member_record.role == "ADMIN", "The creator must be assigned the ADMIN role automatically"
 
 
+def test_add_user_to_group_is_idempotent_and_updates_role(db_session):
+    user_repo = UserRepository(db_session)
+    group_repo = GroupRepository(db_session)
+
+    user = user_repo.create_user(UserCreate(full_name="Role User", email="role@test.com", password="pwd"))
+    group = group_repo.create_group(GroupCreate(name="Role Group"), creator_id=user.id)
+
+    member = group_repo.add_user_to_group(group.id, user.id, role="MEMBER")
+    updated = group_repo.add_user_to_group(group.id, user.id, role="ADMIN")
+
+    assert member.id == updated.id
+    assert updated.role == "ADMIN"
+
+
 # ==========================================
 # 4. ExpenseRepository Tests (Critical Financial Logic)
 # ==========================================
@@ -172,6 +186,32 @@ def test_create_expense_with_splits_transaction(db_session):
     assert group_expenses[0].description == "Pizza Night"
 
 
+def test_create_expense_with_splits_rejects_outsider_participant(db_session):
+    user_repo = UserRepository(db_session)
+    group_repo = GroupRepository(db_session)
+    expense_repo = ExpenseRepository(db_session)
+
+    payer = user_repo.create_user(UserCreate(full_name="Payer", email="payer3@test.com", password="123"))
+    insider = user_repo.create_user(UserCreate(full_name="Insider", email="insider3@test.com", password="123"))
+    outsider = user_repo.create_user(UserCreate(full_name="Outsider", email="outsider3@test.com", password="123"))
+    group = group_repo.create_group(GroupCreate(name="Validation Group"), creator_id=payer.id)
+    group_repo.add_user_to_group(group.id, insider.id)
+
+    expense_data = ExpenseCreate(
+        amount=Decimal("20.00"),
+        category="Dining",
+        description="Lunch",
+        paid_by=payer.id,
+        participants=[
+            ExpenseParticipantBase(user_id=insider.id, share=Decimal("10.00")),
+            ExpenseParticipantBase(user_id=outsider.id, share=Decimal("10.00")),
+        ],
+    )
+
+    with pytest.raises(ValueError, match="All participants must belong to the group"):
+        expense_repo.create_expense_with_splits(group.id, expense_data)
+
+
 # ==========================================
 # 5. SettlementRepository Tests
 # ==========================================
@@ -210,3 +250,15 @@ def test_create_and_get_settlements(db_session):
     assert len(history) == 1
     assert history[0].payer_id == payer.id
     assert history[0].payee_id == payee.id
+
+
+def test_settlement_history_empty_for_new_group(db_session):
+    user_repo = UserRepository(db_session)
+    group_repo = GroupRepository(db_session)
+    settle_repo = SettlementRepository(db_session)
+
+    payer = user_repo.create_user(UserCreate(full_name="Payer", email="payer4@test.com", password="123"))
+    group = group_repo.create_group(GroupCreate(name="Empty Group"), creator_id=payer.id)
+
+    history = settle_repo.get_group_settlements(group.id)
+    assert history == []

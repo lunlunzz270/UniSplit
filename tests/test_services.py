@@ -70,3 +70,29 @@ def test_record_expense_creates_group_and_splits(monkeypatch):
     verify_db.close()
 
     db.close()
+
+
+def test_record_expense_deduplicates_participants(monkeypatch):
+    session_factory = _build_test_sessionmaker()
+    monkeypatch.setattr("backend.app.services.expenses.SessionLocal", session_factory)
+
+    db = session_factory()
+    repo = UserRepository(db)
+    payer = repo.create_user(UserCreate(full_name="Payer", email="payer2@example.com", password="pwd"))
+    teammate = repo.create_user(UserCreate(full_name="Teammate", email="teammate2@example.com", password="pwd"))
+
+    expense = record_expense(
+        group_name="Sprint5 Dinner",
+        description="Pizza",
+        amount=Decimal("30.00"),
+        category="Food",
+        payer_email=payer.email,
+        participant_emails=[payer.email, teammate.email, teammate.email],
+    )
+
+    verify_db = session_factory()
+    saved_expense = verify_db.query(Expense).filter_by(id=expense.id).first()
+    assert saved_expense is not None
+    assert len(saved_expense.participants) == 2
+    verify_db.close()
+    db.close()

@@ -77,6 +77,7 @@
         </section>
     </main>
 
+    <script src="./js/app.js"></script>
     <script>
         const historyList = document.getElementById('historyList');
         const historyMessage = document.getElementById('historyMessage');
@@ -120,7 +121,7 @@
             if (group) params.append('group_name', group);
 
             try {
-                const res = await fetch(`/api/expenses?${params.toString()}`);
+                const res = await fetch(`${window.UniSplitApp.apiUrl('/api/expenses')}?${params.toString()}`);
                 const data = await res.json();
 
                 if (!res.ok) {
@@ -129,7 +130,7 @@
                     return;
                 }
 
-                const records = Array.isArray(data) ? data : (data.expenses || []);
+                const records = window.UniSplitApp.normalizeExpenseList(data);
 
                 if (!records.length) {
                     historyList.innerHTML = `

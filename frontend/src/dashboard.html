@@ -204,11 +204,12 @@
         </section>
     </main>
 
+    <script src="./js/app.js"></script>
     <script>
         const dashboardMessage = document.getElementById('dashboardMessage');
         const groupList = document.getElementById('groupList');
         const activityList = document.getElementById('activityList');
-        const currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+        const currentUser = window.UniSplitApp.getCurrentUser();
 
         function formatAmount(amount) {
             const value = Number(amount || 0);
@@ -283,9 +284,9 @@
 
         async function loadDashboard() {
             try {
-                const res = await fetch('http://127.0.0.1:5000/api/expenses');
+                const res = await fetch(window.UniSplitApp.apiUrl('/api/expenses'));
                 const data = await res.json();
-                const expenses = Array.isArray(data) ? data : (data.expenses || []);
+                const expenses = window.UniSplitApp.normalizeExpenseList(data);
                 const userId = currentUser && currentUser.id ? Number(currentUser.id) : null;
                 const currentMonth = new Date().toISOString().slice(0, 7);
 
