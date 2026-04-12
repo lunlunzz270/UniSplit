@@ -1,15 +1,10 @@
 from datetime import datetime, timedelta
-from secrets import token_urlsafe
-from uuid import uuid4
-
 from bcrypt import checkpw, gensalt, hashpw
-
 from ..core.database import SessionLocal
 from ..repositories.users import UserRepository
 from ..schemas.users import UserCreate
-
-SESSION_TTL_DAYS = 7
-
+from ..core.auth import create_access_token, ADMIN_DOMAIN
+from ..models.users import Session, User
 
 def get_user_by_email(email: str):
     db = SessionLocal()
@@ -20,11 +15,16 @@ def get_user_by_email(email: str):
 
 
 def create_user(name: str, email: str, password: str):
+    """
+    Create a new user. Automatically set is_admin status based on the email domain.
+    """
     db = SessionLocal()
     try:
+        is_admin = email.lower().endswith(ADMIN_DOMAIN)
         hashed_password = hashpw(password.encode("utf-8"), gensalt()).decode("utf-8")
         user = UserRepository(db).create_user(
-            UserCreate(full_name=name, email=email, password=hashed_password)
+            UserCreate(full_name=name, email=email, password=hashed_password),
+            is_admin=is_admin
         )
         return user
     finally:
@@ -38,74 +38,89 @@ def verify_password(password: str, hashed_password: str) -> bool:
         return False
 
 
-def create_session_for_user(user_id: int, ttl_days: int = SESSION_TTL_DAYS):
+def authenticate_user(email: str, password: str):
+    """
+    Validates credentials and returns a Token along with user details and admin status.
+    """
+    user = get_user_by_email(email)
+    if user and verify_password(password, user.password):
+        token = create_access_token(user.id, user.email)
+        return {
+            "token": token,
+            "is_admin": user.is_admin,
+            "user": {
+                "id": user.id,
+                "name": user.full_name,
+                "email": user.email
+            }
+        }
+    return None
+
+def create_session_for_user(user_id: int):
+    """
+    Create a new database session for the user and generate a JWT token.
+    """
     db = SessionLocal()
     try:
-        user_repo = UserRepository(db)
-        user_repo.delete_sessions_for_user(user_id)
-        session = user_repo.create_session(
-            user_id=user_id,
-            token=token_urlsafe(32),
-            expires_at=datetime.now() + timedelta(days=ttl_days),
-            session_id=uuid4().hex,
-        )
+        repo = UserRepository(db)
+        user = repo.get_user_by_id(user_id)
+        if not user:
+            return None
+        
+        token = create_access_token(user.id, user.email)
+        # Session expires in 1 day
+        expires_at = datetime.utcnow() + timedelta(days=1)
+        session = repo.create_session(user_id, token, expires_at)
         return session
     finally:
         db.close()
 
-
-def get_current_user_from_token(session_token: str):
-    if not session_token:
-        return None
-
+def get_current_user_from_token(token: str):
+    """
+    Validate session token and return (User, Session) tuple if valid.
+    """
     db = SessionLocal()
     try:
-        user_repo = UserRepository(db)
-        session = user_repo.get_session_by_token(session_token)
+        repo = UserRepository(db)
+        session = repo.get_session_by_token(token)
         if not session:
             return None
-
-        if session.expires_at <= datetime.now():
-            user_repo.delete_session_by_token(session_token)
+        
+        # Check expiration
+        if session.expires_at < datetime.utcnow():
+            repo.delete_session_by_token(token)
             return None
-
-        user = user_repo.get_user_by_id(session.user_id)
-        if not user or not user.is_active:
+            
+        user = repo.get_user_by_id(session.user_id)
+        if not user:
             return None
-
+            
         return user, session
     finally:
         db.close()
 
-
-def logout_session(session_token: str) -> bool:
-    if not session_token:
-        return False
-
+def logout_session(token: str):
+    """
+    Remove the session associated with the token.
+    """
     db = SessionLocal()
     try:
-        return UserRepository(db).delete_session_by_token(session_token)
+        return UserRepository(db).delete_session_by_token(token)
     finally:
         db.close()
 
-
-def serialize_session(session):
+def serialize_user(user: User, session: Session = None):
+    """
+    Format user and session data for API responses.
+    """
     return {
-        "id": session.id,
-        "token": session.token,
-        "expires_at": session.expires_at.isoformat() if session.expires_at else None,
-        "created_at": session.created_at.isoformat() if session.created_at else None,
-    }
-
-
-def serialize_user(user, session=None):
-    payload = {
         "id": user.id,
         "name": user.full_name,
         "email": user.email,
+        "is_admin": user.is_admin,
+        "is_active": user.is_active,
+        "session": {
+            "token": session.token,
+            "expires_at": session.expires_at.isoformat() if session.expires_at else None
+        } if session else None
     }
-    if session is not None:
-        payload["session"] = serialize_session(session)
-        payload["session_token"] = session.token
-        payload["session_expires_at"] = session.expires_at.isoformat() if session.expires_at else None
-    return payload

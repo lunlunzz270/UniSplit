@@ -42,7 +42,7 @@ def test_auth_and_expense_routes(api_client):
     assert expense.status_code == 201
     assert expense.get_json()["description"] == "Airport taxi"
 
-    history = api_client.get("/api/expenses")
+    history = api_client.get("/api/expenses", headers={"Authorization": f"Bearer {session_token}"})
     assert history.status_code == 200
     records = history.get_json()["expenses"]
     assert len(records) == 1
@@ -117,6 +117,7 @@ def test_group_settlement_and_activity_log_routes(api_client):
 
     settlement_res = api_client.post(
         f"/api/groups/{group_id}/settlements",
+        headers={"Authorization": f"Bearer {teammate['session']['token']}"},
         json={
             "payer_id": teammate["id"],
             "payee_id": creator["id"],
@@ -125,9 +126,9 @@ def test_group_settlement_and_activity_log_routes(api_client):
         },
     )
     assert settlement_res.status_code == 201
-    assert settlement_res.get_json()["amount"] == 12.5
+    assert settlement_res.get_json()["amount"] == 12.50
 
-    logs = api_client.get(f"/api/groups/{group_id}/activity-logs")
+    logs = api_client.get(f"/api/groups/{group_id}/activity-logs", headers={"Authorization": f"Bearer {creator['session']['token']}"})
     assert logs.status_code == 200
     actions = [item["action_type"] for item in logs.get_json()["activity_logs"]]
     assert "group_created" in actions

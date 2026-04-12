@@ -17,10 +17,28 @@ def _extract_session_token():
 
 @expenses_bp.route("/api/expenses", methods=["GET"])
 def get_expense_history():
+    session_token = _extract_session_token()
+    if not session_token:
+        return jsonify({"error": "Session token is required"}), 401
+
+    current = get_current_user_from_token(session_token)
+    if not current:
+        return jsonify({"error": "Session expired or invalid"}), 401
+    
+    current_user, _ = current
+    
     search = request.args.get("search", "").strip()
     category = request.args.get("category", "").strip()
     group_name = request.args.get("group_name", "").strip()
-    expenses = list_expenses_service(search=search, category=category, group_name=group_name)
+    
+    # Pass current user info to the service to filter data
+    expenses = list_expenses_service(
+        user_id=current_user.id,
+        is_admin=current_user.is_admin,
+        search=search,
+        category=category,
+        group_name=group_name
+    )
     return jsonify({"expenses": expenses}), 200
 
 

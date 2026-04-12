@@ -19,13 +19,14 @@ class UserRepository:
         """Fetch a single user by their ID."""
         return self.db.query(User).filter(User.id == user_id).first()
 
-    def create_user(self, user_in: UserCreate) -> User:
+    def create_user(self, user_in: UserCreate, is_admin: bool = False) -> User:
         """Create and save a new ORM User object from Schema data."""
         # Note: user_in.password should already be hashed by the Service layer before reaching here
         db_user = User(
             full_name=user_in.full_name,
             email=str(user_in.email),
-            password=user_in.password
+            password=user_in.password,
+            is_admin=is_admin
         )
         self.db.add(db_user)
         self.db.commit()

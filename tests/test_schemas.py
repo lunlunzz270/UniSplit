@@ -65,21 +65,23 @@ def test_login_request_valid():
 class MockUserORM:
     """Mock ORM object to test from_attributes conversion."""
 
-    def __init__(self, id, full_name, email, is_active):
+    def __init__(self, id, full_name, email, is_active, is_admin=False):
         self.id = id
         self.full_name = full_name
         self.email = email
         self.is_active = is_active
+        self.is_admin = is_admin
 
 
 def test_user_response_from_orm():
     """Test that UserResponse successfully parses an ORM object."""
-    mock_db_user = MockUserORM(id=1, full_name="Alice", email="alice@example.com", is_active=True)
+    mock_db_user = MockUserORM(id=1, full_name="Alice", email="alice@example.com", is_active=True, is_admin=True)
     user_resp = UserResponse.model_validate(mock_db_user)
 
     assert user_resp.id == 1
     assert user_resp.full_name == "Alice"
     assert user_resp.is_active is True
+    assert user_resp.is_admin is True
 
 
 # ==========================================
