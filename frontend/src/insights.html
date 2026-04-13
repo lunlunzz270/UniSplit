@@ -10,15 +10,7 @@
     <nav class="navbar">
         <div class="logo">UniSplit</div>
         <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="register.html">Register</a>
-            <a href="login.html">Login</a>
-            <a href="dashboard.html">Dashboard</a>
-            <a href="add_expense.html">Add Expense</a>
-            <a href="insights.html" class="active">Expense Insights</a>
-            <a href="membership.html">Membership Purchase</a>
-            <a href="history.html">Transaction History</a>
-            <a href="report.html">Reports</a>
+            <!-- Populated by app.js -->
         </div>
     </nav>
 
@@ -27,36 +19,35 @@
             <div>
                 <span class="hero-badge">Analytics & Spending Review</span>
                 <h1>Expense Insights</h1>
-                <p>
-                    Explore personal and group expense patterns, compare categories,
-                    and identify spending trends that help users make better financial decisions.
+                <p id="insightHeroText">
+                    Loading your financial analysis...
                 </p>
             </div>
         </section>
 
         <section class="insight-stats">
             <div class="stat-card">
-                <p class="stat-label">Total Tracked</p>
-                <h2>$1,240</h2>
-                <span class="tag neutral">Across all groups</span>
+                <p class="stat-label">Total Volume</p>
+                <h2 id="insightTotalTracked">$0.00</h2>
+                <span id="insightTotalTag" class="tag neutral">Calculating...</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Largest Category</p>
-                <h2>Food</h2>
-                <span class="tag warning">34% of total</span>
+                <h2 id="insightTopCategory">N/A</h2>
+                <span id="insightTopTag" class="tag warning">0% of total</span>
             </div>
 
             <div class="stat-card">
-                <p class="stat-label">Top Group</p>
-                <h2>Spring Trip</h2>
-                <span class="tag neutral">Most active</span>
+                <p class="stat-label">Transaction Count</p>
+                <h2 id="insightCount">0</h2>
+                <span class="tag neutral">Records found</span>
             </div>
 
             <div class="stat-card">
-                <p class="stat-label">Monthly Average</p>
-                <h2>$326</h2>
-                <span class="tag positive">Stable trend</span>
+                <p class="stat-label">Categories Used</p>
+                <h2 id="insightCategoryCount">0</h2>
+                <span class="tag positive">Diversity</span>
             </div>
         </section>
 
@@ -66,79 +57,156 @@
                     <h2>Category Breakdown</h2>
                 </div>
 
-                <div class="insight-list">
-                    <div class="insight-row">
-                        <div>
-                            <h4>Food & Dining</h4>
-                            <p>Shared meals, groceries, coffee, snacks</p>
-                        </div>
-                        <span>$420</span>
-                    </div>
-
-                    <div class="insight-row">
-                        <div>
-                            <h4>Transportation</h4>
-                            <p>Gas, rideshare, train, parking</p>
-                        </div>
-                        <span>$285</span>
-                    </div>
-
-                    <div class="insight-row">
-                        <div>
-                            <h4>Housing & Utilities</h4>
-                            <p>Rent, internet, electricity, water</p>
-                        </div>
-                        <span>$310</span>
-                    </div>
-
-                    <div class="insight-row">
-                        <div>
-                            <h4>Entertainment</h4>
-                            <p>Tickets, movies, activities, subscriptions</p>
-                        </div>
-                        <span>$225</span>
+                <div class="insight-list" id="categoryBreakdownList">
+                    <div class="empty-state-card">
+                        <p>Fetching real-time data...</p>
                     </div>
                 </div>
             </div>
 
             <div class="panel">
                 <div class="panel-header">
-                    <h2>Spending Trends</h2>
+                    <h2>Spending Analysis</h2>
                 </div>
 
-                <div class="trend-box">
-                    <div class="trend-bar">
-                        <span style="width: 78%;"></span>
+                <div id="spendingAnalysisNotes">
+                    <div class="trend-box">
+                        <p>Recording your history to generate trends.</p>
                     </div>
-                    <p>Food spending increased this month due to more shared dining expenses.</p>
-                </div>
-
-                <div class="trend-box">
-                    <div class="trend-bar">
-                        <span style="width: 56%;"></span>
-                    </div>
-                    <p>Transportation costs stayed moderate across most groups.</p>
-                </div>
-
-                <div class="trend-box">
-                    <div class="trend-bar">
-                        <span style="width: 64%;"></span>
-                    </div>
-                    <p>Travel activities remain the main cost driver for group expenses.</p>
                 </div>
             </div>
         </section>
 
-        <section class="panel premium-note">
+        <section class="panel premium-note" id="premiumNoteSection">
             <div class="panel-header">
-                <h2>Member-only analytics</h2>
+                <h2>Advanced Analytics</h2>
             </div>
             <p>
-                Premium members can unlock full historical analysis, more detailed category comparisons,
-                and advanced visual summaries. Free users can view only limited insights.
+                Unlock predictive spending analysis and downloadable PDF reports with Premium.
             </p>
-            <a href="membership.html" class="btn-primary">Upgrade for More Insights</a>
+            <a href="membership.html" class="btn-primary">View Membership Plans</a>
         </section>
     </main>
+
+    <script src="./js/app.js?v=11"></script>
+    <script>
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Insights access',
+            requireLogin: true,
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
+
+        function formatAmount(amount) {
+            return `$${Number(amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+
+        function formatCategory(cat) {
+            const map = {
+                'food_dining': 'Food & Dining',
+                'transportation': 'Transportation',
+                'groceries': 'Groceries',
+                'entertainment': 'Entertainment',
+                'other': 'Other'
+            };
+            return map[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' ') : 'Other');
+        }
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        async function loadInsights() {
+            if (!currentUser) return;
+
+            const heroText = document.getElementById('insightHeroText');
+            const totalTag = document.getElementById('insightTotalTag');
+            
+            // Set initial contextual text
+            if (currentUser.is_admin) {
+                heroText.textContent = "Global system-wide expense analysis. You are viewing data for all users.";
+                totalTag.textContent = "System Total";
+                document.getElementById('premiumNoteSection').style.display = 'none';
+            } else {
+                heroText.textContent = "Review your personal spending patterns and group contributions.";
+                totalTag.textContent = "Your Total";
+            }
+
+            try {
+                const res = await window.UniSplitApp.apiFetch('/api/expenses/summary');
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || 'Server error');
+                }
+                
+                const data = await res.json();
+                const total = data.total_amount || 0;
+                const count = data.count || 0;
+                const categoryData = data.by_category || {};
+                
+                if (count === 0) {
+                    document.getElementById('categoryBreakdownList').innerHTML = `
+                        <div class="empty-state-card">
+                            <h3>No transactions yet</h3>
+                            <p>Once you add expenses in groups, your spending breakdown will appear here.</p>
+                            <a href="add_expense.html" class="btn" style="margin-top:10px; display:inline-block;">Add First Expense</a>
+                        </div>`;
+                    return;
+                }
+
+                // Sort categories by amount
+                const sortedCats = Object.entries(categoryData).sort((a, b) => b[1] - a[1]);
+                const topCat = sortedCats[0];
+
+                // Update UI Stats
+                document.getElementById('insightTotalTracked').textContent = formatAmount(total);
+                document.getElementById('insightCount').textContent = count;
+                document.getElementById('insightTopCategory').textContent = formatCategory(topCat[0]);
+                document.getElementById('insightTopTag').textContent = `${((topCat[1]/total)*100).toFixed(1)}% of total volume`;
+                document.getElementById('insightCategoryCount').textContent = Object.keys(categoryData).length;
+
+                // Update Detailed List
+                document.getElementById('categoryBreakdownList').innerHTML = sortedCats.map(([name, amt]) => {
+                    const percentage = total > 0 ? ((amt / total) * 100).toFixed(1) : 0;
+                    return `
+                        <div class="insight-row">
+                            <div>
+                                <h4>${escapeHtml(formatCategory(name))}</h4>
+                                <p>${percentage}% of volume</p>
+                            </div>
+                            <span>${formatAmount(amt)}</span>
+                        </div>
+                    `;
+                }).join('');
+
+                // Update Summary Note
+                document.getElementById('spendingAnalysisNotes').innerHTML = `
+                    <div class="trend-box">
+                        <div class="trend-bar"><span style="width: 100%;"></span></div>
+                        <p><strong>Primary Driver:</strong> Your highest spending is in <strong>${escapeHtml(formatCategory(topCat[0]))}</strong>.</p>
+                    </div>
+                    <div class="trend-box">
+                        <div class="trend-bar"><span style="width: ${Math.min(100, (count/5)*100)}%;"></span></div>
+                        <p><strong>Database Activity:</strong> Total of ${count} records processed for this view.</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                console.error("Insights Error:", error);
+                document.getElementById('categoryBreakdownList').innerHTML = `
+                    <div class="empty-state-card">
+                        <p style="color: #ffb3b3;">Error loading data: ${error.message}</p>
+                        <button onclick="location.reload()" class="btn-secondary">Retry</button>
+                    </div>`;
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', loadInsights);
+    </script>
 </body>
 </html>
