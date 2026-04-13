@@ -45,13 +45,11 @@
                     <div class="input-group">
                         <label for="category">Category</label>
                         <select id="category">
-                            <option value="Food">Food</option>
-                            <option value="Travel">Travel</option>
-                            <option value="Housing">Housing</option>
-                            <option value="Utilities">Utilities</option>
-                            <option value="Entertainment">Entertainment</option>
-                            <option value="Shopping">Shopping</option>
-                            <option value="Other">Other</option>
+                            <option value="food_dining">Food & Dining</option>
+                            <option value="transportation">Transportation</option>
+                            <option value="groceries">Groceries</option>
+                            <option value="entertainment">Entertainment</option>
+                            <option value="other">Other</option>
                         </select>
                     </div>
                 </div>
@@ -122,7 +120,9 @@
 
         expenseForm.addEventListener('submit', async (event) => {
             event.preventDefault();
+            const submitBtn = expenseForm.querySelector('button[type="submit"]');
             expenseMessage.textContent = '';
+            expenseMessage.className = 'error-message';
 
             if (!currentUser || !currentUser.email) {
                 expenseMessage.textContent = 'Please log in before adding an expense.';
@@ -131,24 +131,35 @@
 
             const groupName = document.getElementById('groupName').value.trim();
             const description = document.getElementById('description').value.trim();
-            const amountValue = Number(document.getElementById('amount').value);
+            const amountInput = document.getElementById('amount');
+            const amountValue = Number(amountInput.value);
             const category = document.getElementById('category').value;
             const payerEmail = payerEmailInput.value.trim().toLowerCase();
-            const participantEmails = [...new Set(normalizeEmails(document.getElementById('participants').value))];
-
-            if (!Number.isFinite(amountValue) || amountValue <= 0) {
-                expenseMessage.textContent = 'Amount must be greater than 0.';
-                return;
-            }
-
-            if (!groupName || !description || !category || !payerEmail || !participantEmails.length) {
-                expenseMessage.textContent = 'Fill in the group, description, amount, payer, and participants.';
-                return;
-            }
-
+            
+            // Get unique participants, ensure payer is included
+            let participantEmails = normalizeEmails(document.getElementById('participants').value);
             if (!participantEmails.includes(payerEmail)) {
-                participantEmails.unshift(payerEmail);
+                participantEmails.push(payerEmail);
             }
+            participantEmails = [...new Set(participantEmails)];
+
+            if (!amountValue || amountValue <= 0) {
+                expenseMessage.textContent = 'Please enter a valid amount greater than 0.';
+                return;
+            }
+
+            if (!groupName || !description) {
+                expenseMessage.textContent = 'Group name and description are required.';
+                return;
+            }
+
+            if (participantEmails.length < 1) {
+                expenseMessage.textContent = 'At least one participant (could be just you) is required.';
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Saving...';
 
             try {
                 const res = await window.UniSplitApp.apiFetch('/api/expenses', {
@@ -168,13 +179,23 @@
 
                 if (!res.ok) {
                     expenseMessage.textContent = data.error || 'Failed to save expense.';
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Save expense';
                     return;
                 }
 
-                localStorage.setItem('expenseSuccess', `Saved "${description}" in ${groupName}.`);
-                window.location.href = 'history.html';
+                // Success
+                expenseMessage.className = 'success-message'; // You might need to add this CSS
+                expenseMessage.textContent = 'Expense saved successfully! Redirecting...';
+                
+                setTimeout(() => {
+                    window.location.href = 'history.html';
+                }, 1000);
+
             } catch (error) {
-                expenseMessage.textContent = 'Could not connect to the server.';
+                expenseMessage.textContent = 'Connection error. Is the backend running?';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Save expense';
             }
         });
     </script>

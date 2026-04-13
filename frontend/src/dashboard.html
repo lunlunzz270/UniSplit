@@ -1,26 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniSplit - Dashboard</title>
     <link rel="stylesheet" href="./css/style.css">
 </head>
-
 <body>
     <nav class="navbar">
         <div class="logo">UniSplit</div>
         <div class="nav-links">
-            <a href="index.html">Home</a>
-            <a href="register.html">Register</a>
-            <a href="login.html">Login</a>
-            <a href="dashboard.html"class="active">Dashboard</a>
-            <a href="add_expense.html">Add Expense</a>
-            <a href="insights.html">Expense Insights</a>
-            <a href="membership.html">Membership Purchase</a>
-            <a href="history.html">Transaction History</a>
-            <a href="report.html">Reports</a>
+            <!-- Populated by app.js -->
         </div>
     </nav>
 
@@ -28,56 +18,55 @@
         <section class="hero-section">
             <div class="hero-text">
                 <span class="hero-badge">Smart Shared Expense Tracking</span>
-                <h1>Manage group spending with clarity and less stress.</h1>
+                <h1>Manage group spending with clarity.</h1>
                 <p>
-                    Track balances, monitor recent expenses, and settle debts faster across trips,
-                    roommates, and shared activities.
+                    Track balances and monitor recent activity across all your shared groups.
                 </p>
                 <div class="hero-actions">
                     <a href="add_expense.html" class="btn-primary">Add New Expense</a>
-                    <a href="report.html" class="btn-secondary">View Reports</a>
+                    <a href="insights.html" class="btn-secondary">View Analysis</a>
                 </div>
             </div>
 
             <div class="hero-panel">
                 <div class="mini-stat">
                     <span class="mini-label">Net Balance</span>
-                    <h3 id="netBalanceValue">$48.50</h3>
-                    <p id="netBalanceCaption" class="positive-text">You are owed overall</p>
+                    <h3 id="netBalanceValue">$0.00</h3>
+                    <p id="netBalanceCaption" class="neutral-text">Calculating...</p>
                 </div>
                 <div class="mini-stat">
-                    <span class="mini-label">Pending Settlements</span>
-                    <h3 id="pendingSettlementsValue">3</h3>
-                    <p id="pendingSettlementsCaption">2 due soon</p>
+                    <span class="mini-label">Pending Items</span>
+                    <h3 id="pendingSettlementsValue">0</h3>
+                    <p id="pendingSettlementsCaption">From history</p>
                 </div>
             </div>
         </section>
 
-        <p id="dashboardMessage" class="error-message"></p>
+        <p id="dashboardMessage" class="status neutral" style="margin-bottom: 20px; padding: 10px; display:none;"></p>
 
         <section class="stats-grid">
             <div class="stat-card">
                 <p class="stat-label">Total Balance</p>
-                <h2 id="totalBalanceValue">$48.50</h2>
-                <span id="totalBalanceTag" class="tag positive">Positive</span>
+                <h2 id="totalBalanceValue">$0.00</h2>
+                <span id="totalBalanceTag" class="tag neutral">Calculating</span>
             </div>
 
             <div class="stat-card">
-                <p class="stat-label">Monthly Spending</p>
-                <h2 id="monthlySpendingValue">$326.40</h2>
+                <p class="stat-label">Monthly Volume</p>
+                <h2 id="monthlySpendingValue">$0.00</h2>
                 <span class="tag neutral">This month</span>
             </div>
 
             <div class="stat-card">
                 <p class="stat-label">Active Groups</p>
-                <h2 id="activeGroupsValue">3</h2>
-                <span id="activeGroupsTag" class="tag neutral">Trip / Rent / Events</span>
+                <h2 id="activeGroupsValue">0</h2>
+                <span id="activeGroupsTag" class="tag neutral">Involved</span>
             </div>
 
             <div class="stat-card">
-                <p class="stat-label">Open Expenses</p>
-                <h2 id="openExpensesValue">8</h2>
-                <span id="openExpensesTag" class="tag warning">Needs review</span>
+                <p class="stat-label">Total Records</p>
+                <h2 id="openExpensesValue">0</h2>
+                <span id="openExpensesTag" class="tag neutral">Processed</span>
             </div>
         </section>
 
@@ -86,87 +75,20 @@
                 <div class="panel">
                     <div class="panel-header">
                         <h2>Group Overview</h2>
-                        <a href="history.html">See all</a>
+                        <a href="history.html">See history</a>
                     </div>
-
                     <div class="group-list" id="groupList">
-                        <div class="group-item">
-                            <div class="group-left">
-                                <div class="group-icon">T</div>
-                                <div>
-                                    <h4>Trip to NYC</h4>
-                                    <p>4 members · Hotels, food, transportation</p>
-                                </div>
-                            </div>
-                            <div class="group-right">
-                                <span class="amount positive-text">+$22.00</span>
-                                <small>owed to you</small>
-                            </div>
-                        </div>
-
-                        <div class="group-item">
-                            <div class="group-left">
-                                <div class="group-icon">R</div>
-                                <div>
-                                    <h4>Roommates</h4>
-                                    <p>3 members · Rent, utilities, shared groceries</p>
-                                </div>
-                            </div>
-                            <div class="group-right">
-                                <span class="amount negative-text">-$12.50</span>
-                                <small>you owe</small>
-                            </div>
-                        </div>
-
-                        <div class="group-item">
-                            <div class="group-left">
-                                <div class="group-icon">S</div>
-                                <div>
-                                    <h4>Spring Break Plan</h4>
-                                    <p>5 members · Tickets, meals, activities</p>
-                                </div>
-                            </div>
-                            <div class="group-right">
-                                <span class="amount positive-text">+$39.00</span>
-                                <small>owed to you</small>
-                            </div>
-                        </div>
+                        <div class="empty-state-card"><p>Loading groups...</p></div>
                     </div>
                 </div>
 
                 <div class="panel">
                     <div class="panel-header">
                         <h2>Recent Activity</h2>
-                        <a href="history.html">View history</a>
+                        <a href="history.html">View all</a>
                     </div>
-
                     <div class="activity-list" id="activityList">
-                        <div class="activity-item">
-                            <div class="activity-dot"></div>
-                            <div>
-                                <h4>Dinner expense added</h4>
-                                <p>Alice recorded a $60.00 dinner split for Trip to NYC.</p>
-                            </div>
-                            <span>2h ago</span>
-                        </div>
-
-                        <div class="activity-item">
-                            <div class="activity-dot"></div>
-                            <div>
-                                <h4>Rent payment logged</h4>
-                                <p>A $500.00 rent payment was added under Roommates.</p>
-                            </div>
-                            <span>Today</span>
-                        </div>
-
-                        <div class="activity-item">
-                            <div class="activity-dot"></div>
-                            <div>
-                                <h4>Settlement completed</h4>
-                                <p>Bob settled $25.00 for the shared hotel booking.</p>
-                            </div>
-                            <span>Yesterday</span>
-                        </div>
+                        <div class="empty-state-card"><p>Loading activity...</p></div>
                     </div>
                 </div>
             </div>
@@ -176,41 +98,29 @@
                     <div class="panel-header">
                         <h2>Quick Actions</h2>
                     </div>
-
                     <div class="quick-actions">
                         <a href="add_expense.html" class="quick-btn">+ Add Expense</a>
-                        <a href="report.html" class="quick-btn">Open Report</a>
+                        <a href="insights.html" class="quick-btn">Open Insights</a>
                         <a href="history.html" class="quick-btn">Transaction History</a>
-                        <a href="login.html" class="quick-btn">Account Settings</a>
+                        <a href="report.html" class="quick-btn">Summary Report</a>
                     </div>
-                </div>
-
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2>Upcoming Reminders</h2>
-                    </div>
-
-                    <ul class="reminder-list">
-                        <li>Roommates utility split due in 2 days</li>
-                        <li>Trip hotel balance reminder scheduled for Friday</li>
-                        <li>Monthly summary report available tomorrow</li>
-                    </ul>
                 </div>
 
                 <div class="panel highlight-panel">
-                    <h2>Expense Insight</h2>
-                    <p id="expenseInsightText">Your highest spending category this month is travel and shared meals.</p>
-                    <a href="report.html" class="btn-primary full-width">Check Analytics</a>
+                    <h2>Spending Insight</h2>
+                    <p id="expenseInsightText">Add some shared expenses to generate personalized spending patterns.</p>
+                    <a href="insights.html" class="btn-primary full-width">Check Analytics</a>
                 </div>
             </div>
         </section>
     </main>
 
-    <script src="./js/app.js?v=10"></script>
+    <script src="./js/app.js?v=12"></script>
     <script>
         const dashboardMessage = document.getElementById('dashboardMessage');
         const groupList = document.getElementById('groupList');
         const activityList = document.getElementById('activityList');
+        
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Dashboard access',
             requireLogin: true,
@@ -218,14 +128,10 @@
             dashboardHref: 'dashboard.html'
         });
 
-        function formatAmount(amount) {
+        function formatAmount(amount, showSign = true) {
             const value = Number(amount || 0);
-            const sign = value > 0 ? '+' : '';
-            return `${sign}$${Math.abs(value).toFixed(2)}`;
-        }
-
-        function getExpenseMonth(dateString) {
-            return (dateString || '').slice(0, 7);
+            const sign = (showSign && value > 0) ? '+' : '';
+            return `${sign}$${Math.abs(value).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
         }
 
         function escapeHtml(value) {
@@ -238,153 +144,121 @@
         }
 
         function calculateUserBalance(expense, userId) {
-            if (!userId) {
-                return 0;
-            }
-
+            if (!userId) return 0;
             let balance = 0;
             if (Number(expense.paid_by) === Number(userId)) {
                 balance += Number(expense.amount || 0);
             }
-
-            (expense.participants || []).forEach((participant) => {
-                if (Number(participant.user_id) === Number(userId)) {
-                    balance -= Number(participant.share || 0);
+            (expense.participants || []).forEach((p) => {
+                if (Number(p.user_id) === Number(userId)) {
+                    balance -= Number(p.share || 0);
                 }
             });
-
             return balance;
         }
 
-        function renderGroupItem(groupName, balance, expenseCount) {
-            const letter = (groupName || '?').trim().charAt(0).toUpperCase();
-            const positive = balance >= 0;
-            return `
-                <div class="group-item">
-                    <div class="group-left">
-                        <div class="group-icon">${escapeHtml(letter || '?')}</div>
-                        <div>
-                            <h4>${escapeHtml(groupName || 'Unnamed Group')}</h4>
-                            <p>${expenseCount} expense${expenseCount === 1 ? '' : 's'} recorded</p>
-                        </div>
-                    </div>
-                    <div class="group-right">
-                        <span class="amount ${positive ? 'positive-text' : 'negative-text'}">${formatAmount(balance)}</span>
-                        <small>${positive ? 'owed to you' : 'you owe'}</small>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderActivityItem(expense) {
-            return `
-                <div class="activity-item">
-                    <div class="activity-dot"></div>
-                    <div>
-                        <h4>${escapeHtml(expense.description || 'Untitled expense')}</h4>
-                        <p>${escapeHtml(expense.payer || 'Unknown')} paid ${formatAmount(expense.amount)} for ${escapeHtml(expense.group_name || 'a group')}.</p>
-                    </div>
-                    <span>${escapeHtml((expense.date || '').replace('T', ' ').slice(0, 16) || 'Recently')}</span>
-                </div>
-            `;
-        }
-
         async function loadDashboard() {
-            if (!currentUser) {
-                dashboardMessage.textContent = 'Please log in to view the dashboard.';
-                groupList.innerHTML = '<div class="empty-state-card"><h3>Login required</h3><p>You need an account before dashboard data can load.</p></div>';
-                activityList.innerHTML = '<div class="empty-state-card"><h3>Login required</h3><p>You need an account before recent activity can load.</p></div>';
-                document.getElementById('expenseInsightText').textContent = 'Log in to see personalized expense insights.';
-                return;
-            }
+            if (!currentUser) return;
 
             try {
                 const res = await window.UniSplitApp.apiFetch('/api/expenses');
                 const data = await res.json();
                 const expenses = window.UniSplitApp.normalizeExpenseList(data);
-                const userId = currentUser && currentUser.id ? Number(currentUser.id) : null;
+                const userId = currentUser.id;
                 const currentMonth = new Date().toISOString().slice(0, 7);
+
+                if (!expenses.length) {
+                    groupList.innerHTML = '<div class="empty-state-card"><h3>No groups active</h3><p>Create an expense to see group summaries.</p></div>';
+                    activityList.innerHTML = '<div class="empty-state-card"><h3>No activity</h3><p>Your history is empty.</p></div>';
+                    return;
+                }
 
                 const groupMap = new Map();
                 const categoryMap = new Map();
-                let totalBalance = 0;
-                let monthlySpending = 0;
-                let openExpenses = 0;
-                let pendingSettlements = 0;
+                let totalNetBalance = 0;
+                let monthlyVolume = 0;
+                
+                expenses.forEach(exp => {
+                    // Group tracking
+                    const gName = exp.group_name || 'Individual';
+                    const stats = groupMap.get(gName) || { total: 0, userBalance: 0, count: 0 };
+                    stats.total += Number(exp.amount || 0);
+                    stats.userBalance += calculateUserBalance(exp, userId);
+                    stats.count += 1;
+                    groupMap.set(gName, stats);
 
-                expenses.forEach((expense) => {
-                    const groupName = expense.group_name || 'Unknown Group';
-                    const groupStats = groupMap.get(groupName) || { total: 0, balance: 0, count: 0 };
-                    groupStats.total += Number(expense.amount || 0);
-                    groupStats.balance += calculateUserBalance(expense, userId);
-                    groupStats.count += 1;
-                    groupMap.set(groupName, groupStats);
+                    // Category tracking
+                    const cat = exp.category || 'other';
+                    categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(exp.amount || 0));
 
-                    const categoryName = expense.category || 'Other';
-                    categoryMap.set(categoryName, (categoryMap.get(categoryName) || 0) + Number(expense.amount || 0));
-
-                    const userBalance = calculateUserBalance(expense, userId);
-                    totalBalance += userBalance;
-                    if (userBalance !== 0) {
-                        openExpenses += 1;
-                    }
-
-                    if (getExpenseMonth(expense.date) === currentMonth) {
-                        monthlySpending += Number(expense.amount || 0);
-                    }
-
-                    if (userId) {
-                        const participant = (expense.participants || []).find((item) => Number(item.user_id) === userId);
-                        if (participant && !participant.is_settled && Number(participant.share || 0) > 0) {
-                            pendingSettlements += 1;
-                        }
+                    // Global stats
+                    totalNetBalance += calculateUserBalance(exp, userId);
+                    if ((exp.date || '').startsWith(currentMonth)) {
+                        monthlyVolume += Number(exp.amount || 0);
                     }
                 });
 
-                const sortedGroups = Array.from(groupMap.entries())
-                    .sort((left, right) => right[1].total - left[1].total)
-                    .slice(0, 3);
-                const recentExpenses = expenses.slice(0, 3);
-                const topCategory = Array.from(categoryMap.entries()).sort((left, right) => right[1] - left[1])[0];
+                // Update UI Stats
+                document.getElementById('netBalanceValue').textContent = formatAmount(totalNetBalance);
+                document.getElementById('netBalanceCaption').textContent = totalNetBalance >= 0 ? 'You are owed overall' : 'You owe across groups';
+                document.getElementById('netBalanceCaption').className = totalNetBalance >= 0 ? 'positive-text' : 'warning-text';
 
-                document.getElementById('netBalanceValue').textContent = formatAmount(totalBalance);
-                document.getElementById('netBalanceCaption').textContent = totalBalance >= 0 ? 'You are owed overall' : 'You owe across your groups';
-                document.getElementById('pendingSettlementsValue').textContent = String(pendingSettlements);
-                document.getElementById('pendingSettlementsCaption').textContent = pendingSettlements ? 'Unsettled participant shares' : 'No unsettled items found';
+                document.getElementById('totalBalanceValue').textContent = formatAmount(totalNetBalance);
+                const tag = document.getElementById('totalBalanceTag');
+                tag.textContent = totalNetBalance >= 0 ? 'Positive' : 'Owed';
+                tag.className = `tag ${totalNetBalance >= 0 ? 'positive' : 'warning'}`;
 
-                document.getElementById('totalBalanceValue').textContent = formatAmount(totalBalance);
-                document.getElementById('totalBalanceTag').textContent = totalBalance >= 0 ? 'Positive' : 'Negative';
-                document.getElementById('totalBalanceTag').className = `tag ${totalBalance >= 0 ? 'positive' : 'warning'}`;
+                document.getElementById('monthlySpendingValue').textContent = formatAmount(monthlyVolume, false);
+                document.getElementById('activeGroupsValue').textContent = groupMap.size;
+                document.getElementById('openExpensesValue').textContent = expenses.length;
 
-                document.getElementById('monthlySpendingValue').textContent = formatAmount(monthlySpending);
-                document.getElementById('activeGroupsValue').textContent = String(groupMap.size);
-                document.getElementById('activeGroupsTag').textContent = groupMap.size ? 'Tracked from history' : 'No groups yet';
-                document.getElementById('openExpensesValue').textContent = String(openExpenses);
-                document.getElementById('openExpensesTag').textContent = openExpenses ? 'Needs review' : 'All caught up';
-                document.getElementById('openExpensesTag').className = `tag ${openExpenses ? 'warning' : 'positive'}`;
+                // Render Groups
+                groupList.innerHTML = Array.from(groupMap.entries())
+                    .sort((a, b) => b[1].total - a[1].total)
+                    .slice(0, 5)
+                    .map(([name, s]) => `
+                        <div class="group-item">
+                            <div class="group-left">
+                                <div class="group-icon">${escapeHtml(name.charAt(0).toUpperCase())}</div>
+                                <div>
+                                    <h4>${escapeHtml(name)}</h4>
+                                    <p>${s.count} transactions</p>
+                                </div>
+                            </div>
+                            <div class="group-right">
+                                <span class="amount ${s.userBalance >= 0 ? 'positive-text' : 'negative-text'}">${formatAmount(s.userBalance)}</span>
+                                <small>${s.userBalance >= 0 ? 'owed to you' : 'you owe'}</small>
+                            </div>
+                        </div>
+                    `).join('');
 
-                dashboardMessage.textContent = expenses.length ? 'Dashboard is based on the latest expense history.' : 'No expenses found yet.';
-                groupList.innerHTML = sortedGroups.length
-                    ? sortedGroups.map(([name, stats]) => renderGroupItem(name, stats.balance, stats.count)).join('')
-                    : '<div class="empty-state-card"><h3>No groups yet</h3><p>Add an expense to start building group summaries.</p></div>';
+                // Render Activity
+                activityList.innerHTML = expenses.slice(0, 5).map(exp => `
+                    <div class="activity-item">
+                        <div class="activity-dot"></div>
+                        <div>
+                            <h4>${escapeHtml(exp.description)}</h4>
+                            <p><strong>${escapeHtml(exp.payer)}</strong> paid ${formatAmount(exp.amount, false)} in ${escapeHtml(exp.group_name)}</p>
+                        </div>
+                        <span>${(exp.date || '').slice(5, 10)}</span>
+                    </div>
+                `).join('');
 
-                activityList.innerHTML = recentExpenses.length
-                    ? recentExpenses.map(renderActivityItem).join('')
-                    : '<div class="empty-state-card"><h3>No recent activity</h3><p>Your latest expenses will appear here.</p></div>';
+                // Insight Text
+                const topCat = Array.from(categoryMap.entries()).sort((a, b) => b[1] - a[1])[0];
+                if (topCat) {
+                    const catName = topCat[0].replace('_', ' ');
+                    document.getElementById('expenseInsightText').textContent = `Your highest group spending this period is in ${catName}.`;
+                }
 
-                const insight = topCategory
-                    ? `Your highest spending category this month is ${topCategory[0].toLowerCase()} with ${formatAmount(topCategory[1])} recorded.`
-                    : 'Add some expenses to generate an insight summary.';
-                document.getElementById('expenseInsightText').textContent = insight;
-            } catch (error) {
-                dashboardMessage.textContent = 'Could not load dashboard data from the server.';
-                groupList.innerHTML = '<div class="empty-state-card"><h3>Load failed</h3><p>Refresh the page after the backend is running.</p></div>';
-                activityList.innerHTML = '<div class="empty-state-card"><h3>Load failed</h3><p>Refresh the page after the backend is running.</p></div>';
+            } catch (err) {
+                console.error("Dashboard Load Error:", err);
+                dashboardMessage.style.display = 'block';
+                dashboardMessage.textContent = "Failed to load real-time data.";
             }
         }
 
         window.addEventListener('DOMContentLoaded', loadDashboard);
     </script>
 </body>
-
 </html>
