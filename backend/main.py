@@ -1,5 +1,8 @@
 import os
 import sys
+import urllib.request
+import json
+import logging
 
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -9,20 +12,23 @@ if __package__ is None or __package__ == "":
 
 from backend.app.core.database import Base, engine, ensure_sqlite_compatibility
 from backend.app.routers import auth_bp, expenses_bp, groups_bp, settlements_bp, activity_logs_bp
+from backend.app.core.logging_config import setup_logging
 import backend.app.models  # noqa: F401
 
 app = Flask(__name__)
 
+# Initialize Security Logging
+security_logger = setup_logging(app)
+security_logger.info("SYSTEM_STARTUP | Success | UniSplit Backend is starting up")
+
 # Allow any origin for local development.
-# Keep credentials disabled so wildcard CORS remains valid.
 CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+# Register Blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(expenses_bp)
 app.register_blueprint(groups_bp)
 app.register_blueprint(settlements_bp)
-import urllib.request
-import json
-...
 app.register_blueprint(activity_logs_bp)
 
 @app.route('/api/currencies')
@@ -40,8 +46,6 @@ def get_currencies():
 
 Base.metadata.create_all(bind=engine)
 ensure_sqlite_compatibility()
-
-
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
