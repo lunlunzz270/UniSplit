@@ -4,3 +4,5 @@ flask-cors
 sqlalchemy
 python-dotenv
 email-validator
+pydantic
+PyJWT

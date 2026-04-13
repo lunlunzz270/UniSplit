@@ -3,8 +3,9 @@ import sys
 import urllib.request
 import json
 import logging
+from pathlib import Path
 
-from flask import Flask, jsonify, request
+from flask import Flask, abort, jsonify, request, send_from_directory
 from flask_cors import CORS
 
 if __package__ is None or __package__ == "":
@@ -16,6 +17,7 @@ from backend.app.core.logging_config import setup_logging
 import backend.app.models  # noqa: F401
 
 app = Flask(__name__)
+FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend" / "src"
 
 # Initialize Security Logging
 security_logger = setup_logging(app)
@@ -30,6 +32,23 @@ app.register_blueprint(expenses_bp)
 app.register_blueprint(groups_bp)
 app.register_blueprint(settlements_bp)
 app.register_blueprint(activity_logs_bp)
+
+
+@app.route("/")
+def serve_index():
+    return send_from_directory(FRONTEND_DIR, "index.html")
+
+
+@app.route("/<path:filename>")
+def serve_frontend_file(filename: str):
+    if filename.startswith("api/"):
+        abort(404)
+
+    candidate = FRONTEND_DIR / filename
+    if candidate.is_file():
+        return send_from_directory(FRONTEND_DIR, filename)
+
+    abort(404)
 
 @app.route('/api/currencies')
 def get_currencies():
@@ -48,4 +67,4 @@ Base.metadata.create_all(bind=engine)
 ensure_sqlite_compatibility()
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, host="0.0.0.0", port=5000)

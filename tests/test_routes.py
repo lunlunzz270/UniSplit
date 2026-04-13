@@ -215,3 +215,18 @@ def test_group_join_and_leave_routes(api_client):
         json={"user_id": teammate["id"]},
     )
     assert leave_again.status_code == 400
+def test_flask_serves_frontend_and_api_on_same_port(app_client):
+    index = app_client.get("/")
+    assert index.status_code == 200
+    assert b"UniSplit" in index.data
+
+    app_js = app_client.get("/js/app.js")
+    assert app_js.status_code == 200
+    assert b"API_BASE_URL" in app_js.data
+
+    register = app_client.post(
+        "/api/register",
+        json={"name": "Static User", "email": "static@example.com", "password": "pwd123"},
+    )
+    assert register.status_code == 201
+    assert register.get_json()["email"] == "static@example.com"

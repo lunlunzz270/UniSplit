@@ -1,0 +1,17 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: unisplit-backend
+    environment:
+      PYTHONUNBUFFERED: "1"
+      DATABASE_URL: sqlite:////app/backend/instance/unisplit.db
+    ports:
+      - "3000:5000"
+    volumes:
+      - backend-instance:/app/backend/instance
+    restart: unless-stopped
+
+volumes:
+  backend-instance:
