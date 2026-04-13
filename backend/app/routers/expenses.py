@@ -30,13 +30,17 @@ def get_expense_history():
     search = request.args.get("search", "").strip()
     category = request.args.get("category", "").strip()
     group_name = request.args.get("group_name", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
     
     expenses = list_expenses_service(
         user_id=current_user.id,
         is_admin=current_user.is_admin,
         search=search,
         category=category,
-        group_name=group_name
+        group_name=group_name,
+        start_date=start_date,
+        end_date=end_date
     )
     return jsonify({"expenses": expenses}), 200
 
