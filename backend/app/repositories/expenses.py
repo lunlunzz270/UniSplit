@@ -85,8 +85,8 @@ class ExpenseRepository:
         """Fetch all expense history for a specific group."""
         return self.db.query(Expense).filter(Expense.group_id == group_id).order_by(Expense.created_at.desc()).all()
 
-    def list_expenses(self, user_id: int | None = None, is_admin: bool = False, search: str = "", category: str = "", group_name: str = ""):
-        """Fetch expenses joined with payer and group names. Regular users only see their own expenses."""
+    def list_expenses(self, user_id: int | None = None, is_admin: bool = False, search: str = "", category: str = "", group_name: str = "", start_date: str = "", end_date: str = ""):
+        """Fetch expenses with optional filters, including date range."""
         query = (
             self.db.query(Expense)
             .options(
@@ -113,7 +113,7 @@ class ExpenseRepository:
                 or_(
                     Expense.description.ilike(like),
                     User.full_name.ilike(like),
-                    Group.name.ilike(like),
+                    Group.name.ilike(like)
                 )
             )
 
@@ -122,6 +122,13 @@ class ExpenseRepository:
 
         if group_name:
             query = query.filter(Group.name.ilike(f"%{group_name}%"))
+
+        if start_date:
+            query = query.filter(Expense.created_at >= start_date)
+
+        if end_date:
+            # Append 23:59:59 to include the full end day
+            query = query.filter(Expense.created_at <= f"{end_date} 23:59:59")
 
         rows = query.order_by(Expense.created_at.desc()).all()
         return [
