@@ -13,6 +13,28 @@ load_dotenv()
 DEFAULT_SQLITE_PATH = Path(__file__).resolve().parents[2] / "instance" / "unisplit.db"
 SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", f"sqlite:///{DEFAULT_SQLITE_PATH}")
 
+
+def _prepare_sqlite_storage(database_url: str) -> None:
+    """Create the parent directory for local SQLite files if needed."""
+    if not database_url.startswith("sqlite:"):
+        return
+
+    # Handle the common sqlite:///path/to/file.db form used by this project.
+    if database_url.startswith("sqlite:///") and not database_url.startswith("sqlite:////"):
+        db_path = Path(database_url.replace("sqlite:///", "", 1))
+        if db_path.parent:
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+        return
+
+    # Handle absolute sqlite:////path/to/file.db URLs as well.
+    if database_url.startswith("sqlite:////"):
+        db_path = Path("/" + database_url.replace("sqlite:////", "", 1).lstrip("/"))
+        if db_path.parent:
+            db_path.parent.mkdir(parents=True, exist_ok=True)
+
+
+_prepare_sqlite_storage(SQLALCHEMY_DATABASE_URL)
+
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
