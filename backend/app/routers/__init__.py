@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+import logging
 
 from ..services.auth import (
     create_session_for_user,
@@ -16,6 +17,7 @@ from .settlements import settlements_bp
 from .activity_logs import activity_logs_bp
 
 auth_bp = Blueprint('auth', __name__)
+security_logger = logging.getLogger("security")
 
 
 def _extract_session_token():
@@ -33,30 +35,35 @@ def _extract_session_token():
 def register():
     data = request.get_json(silent=True) or {}
     name = data.get('name')
-    email = data.get('email')
+    email = data.get('email', '').lower()
     password = data.get('password')
 
     if not name or not email or not password:
+        security_logger.warning(f"AUTH_REGISTER_FAIL | Failure | Missing fields for email: {email}")
         return jsonify({'error': 'All fields are required'}), 400
 
     if get_user_by_email(email):
+        security_logger.warning(f"AUTH_REGISTER_FAIL | Failure | Email already exists: {email}")
         return jsonify({'error': 'Email already registered'}), 400
 
     user = create_user(name, email, password)
     session = create_session_for_user(user.id)
+    security_logger.info(f"AUTH_REGISTER_SUCCESS | Success | User ID: {user.id} | Email: {email}")
     return jsonify(serialize_user(user, session)), 201
 
 @auth_bp.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json(silent=True) or {}
-    email = data.get('email')
+    email = data.get('email', '').lower()
     password = data.get('password')
 
     user = get_user_by_email(email)
     if not user or not verify_password(password, user.password):
+        security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Attempted email: {email}")
         return jsonify({'error': 'Invalid email or password'}), 401
 
     session = create_session_for_user(user.id)
+    security_logger.info(f"AUTH_LOGIN_SUCCESS | Success | User ID: {user.id} | Email: {email}")
     return jsonify(serialize_user(user, session)), 200
 
 
@@ -69,6 +76,7 @@ def current_user():
 
     current = get_current_user_from_token(session_token)
     if not current:
+        security_logger.warning(f"SESSION_AUTH_FAIL | Failure | Invalid token attempt")
         return jsonify({"error": "Session expired or invalid"}), 401
 
     user, session = current
@@ -82,8 +90,10 @@ def logout():
         return jsonify({"error": "Session token is required"}), 401
 
     if not logout_session(session_token):
+        security_logger.warning(f"AUTH_LOGOUT_FAIL | Failure | Token not found during logout")
         return jsonify({"error": "Session not found"}), 404
 
+    security_logger.info(f"AUTH_LOGOUT_SUCCESS | Success | Session invalidated")
     return jsonify({"message": "Logged out"}), 200
 
 
@@ -112,19 +122,14 @@ def join_group_route(group_id: int):
             return error_response, status_code
         user_id = current[0].id
     elif current and int(user_id) != current[0].id:
+        security_logger.warning(f"AUTHZ_VIOLATION | Failure | User {current[0].id} tried to join group as user {user_id}")
         return jsonify({"error": "user_id must match the authenticated user"}), 403
 
     try:
         member, created = join_group(group_id=group_id, user_id=int(user_id))
+        return jsonify({"member": member, "created": created}), (201 if created else 200)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-
-    return jsonify(
-        {
-            "member": member,
-            "created": created,
-        }
-    ), (201 if created else 200)
 
 
 @groups_bp.route("/api/groups/<int:group_id>/leave", methods=["POST", "DELETE"])
@@ -141,11 +146,11 @@ def leave_group_route(group_id: int):
             return error_response, status_code
         user_id = current[0].id
     elif current and int(user_id) != current[0].id:
+        security_logger.warning(f"AUTHZ_VIOLATION | Failure | User {current[0].id} tried to leave group as user {user_id}")
         return jsonify({"error": "user_id must match the authenticated user"}), 403
 
     try:
         result = leave_group(group_id=group_id, user_id=int(user_id))
+        return jsonify(result), 200
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-
-    return jsonify(result), 200
