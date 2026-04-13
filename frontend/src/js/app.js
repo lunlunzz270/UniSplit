@@ -178,6 +178,14 @@ function syncNavbarAuthState() {
                     }));
                 });
 
+                // Add Global Currency Action
+                rightGroup.appendChild(createNavbarLink(null, {
+                    href: '#',
+                    label: 'Currency',
+                    active: false,
+                    onClick: (e) => { e.preventDefault(); showCurrencyModal(); }
+                }));
+
                 rightGroup.appendChild(createNavbarLink(null, {
                     href: '#',
                     label: 'Logout',
@@ -396,6 +404,88 @@ function normalizeExpenseList(payload) {
     return [];
 }
 
+/* ===== CURRENCY MODAL LOGIC ===== */
+function initCurrencyModal() {
+    if (document.getElementById('currencyModalOverlay')) return;
+
+    const modalHtml = `
+        <div class="currency-modal-overlay" id="currencyModalOverlay">
+            <div class="currency-modal">
+                <div class="currency-modal-header">
+                    <h2>Live Exchange Rates</h2>
+                    <button class="close-modal" onclick="hideCurrencyModal()">&times;</button>
+                </div>
+                <div class="currency-controls">
+                    <input type="number" id="currencyAmount" class="currency-input" value="1.00" step="0.01">
+                    <select id="baseCurrency" class="currency-select">
+                        <option value="USD" selected>USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="CNY">CNY</option>
+                        <option value="GBP">GBP</option>
+                        <option value="JPY">JPY</option>
+                        <option value="AUD">AUD</option>
+                        <option value="CAD">CAD</option>
+                        <option value="HKD">HKD</option>
+                    </select>
+                </div>
+                <div class="rates-list" id="ratesList">
+                    <p style="text-align:center; opacity:0.6;">Loading latest rates...</p>
+                </div>
+                <div class="modal-footer">
+                    Data provided by Frankfurter API (European Central Bank)
+                </div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+
+    // Listen for changes
+    document.getElementById('baseCurrency').addEventListener('change', updateRates);
+    document.getElementById('currencyAmount').addEventListener('input', updateRates);
+}
+
+function showCurrencyModal() {
+    initCurrencyModal();
+    document.getElementById('currencyModalOverlay').style.display = 'flex';
+    updateRates();
+}
+
+function hideCurrencyModal() {
+    document.getElementById('currencyModalOverlay').style.display = 'none';
+}
+
+async function updateRates() {
+    const base = document.getElementById('baseCurrency').value;
+    const amount = parseFloat(document.getElementById('currencyAmount').value) || 1;
+    const list = document.getElementById('ratesList');
+
+    try {
+        // Now calling our own backend instead of external URL
+        const res = await fetch(window.UniSplitApp.apiUrl(`/api/currencies?from=${base}`));
+        const data = await res.json();
+        
+        if (data.rates) {
+            let html = '';
+            const sortedRates = Object.entries(data.rates).sort();
+            for (const [code, rate] of sortedRates) {
+                const converted = (rate * amount).toFixed(2);
+                html += `
+                    <div class="rate-item">
+                        <span class="rate-currency">${code}</span>
+                        <span class="rate-value">${converted}</span>
+                    </div>
+                `;
+            }
+            list.innerHTML = html;
+        } else if (data.error) {
+            throw new Error(data.error);
+        }
+    } catch (error) {
+        console.error("Currency Proxy Error:", error);
+        list.innerHTML = '<p style="color:#ff9d9d; text-align:center;">Could not sync with rates server.</p>';
+    }
+}
+
 window.UniSplitApp = {
     API_BASE_URL,
     normalizeUser,
@@ -414,12 +504,17 @@ window.UniSplitApp = {
     apiFetch,
     normalizeExpenseList,
     syncNavbarAuthState,
+    showCurrencyModal
 };
 
 if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', syncNavbarAuthState, { once: true });
+        document.addEventListener('DOMContentLoaded', () => {
+            syncNavbarAuthState();
+            initCurrencyModal();
+        }, { once: true });
     } else {
         syncNavbarAuthState();
+        initCurrencyModal();
     }
 }
