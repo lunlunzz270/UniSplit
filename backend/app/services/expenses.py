@@ -26,6 +26,31 @@ def create_expense_with_splits(group_id: int, expense_in: ExpenseCreate):
     finally:
         db.close()
 
+def respond_to_expense(expense_id: int, user_id: int, status: str, appeal_reason: str | None = None):
+    """Handle user response (accept/reject) to an expense split."""
+    db = SessionLocal()
+    try:
+        from ..repositories.activity_logs import ActivityLogRepository
+        expense_repo = ExpenseRepository(db)
+        
+        success = expense_repo.update_participant_status(expense_id, user_id, status, appeal_reason)
+        if not success:
+            raise ValueError("Expense or participant not found")
+
+        # Log the action
+        expense = db.query(Expense).filter(Expense.id == expense_id).first()
+        if expense:
+            action = "expense_appealed" if status == "rejected" else "expense_accepted"
+            ActivityLogRepository(db).create_log(
+                group_id=expense.group_id,
+                user_id=user_id,
+                action_type=action,
+                description=f"User {status} expense '{expense.description}'" + (f": {appeal_reason}" if appeal_reason else ""),
+                ref_id=expense_id
+            )
+        return success
+    finally:
+        db.close()
 
 def list_expenses(user_id: int | None = None, is_admin: bool = False, search: str = "", category: str = "", group_name: str = "", start_date: str = "", end_date: str = ""):
     db = SessionLocal()
@@ -60,6 +85,9 @@ def record_expense(
         payer = user_repo.get_user_by_email(payer_email)
         if not payer:
             raise ValueError("Payer must have an account first")
+        
+        if payer.is_admin:
+            raise ValueError("Administrative users are not allowed to participate in or pay for expenses.")
 
         participant_users = []
         seen_emails: set[str] = set()
@@ -71,6 +99,10 @@ def record_expense(
             user = user_repo.get_user_by_email(normalized)
             if not user:
                 raise ValueError(f"Participant not found: {normalized}")
+            
+            if user.is_admin:
+                raise ValueError(f"User {normalized} is an administrator and cannot be added to an expense.")
+            
             participant_users.append(user)
 
         if not participant_users:
