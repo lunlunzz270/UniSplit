@@ -13,6 +13,14 @@ def create_group(group_in: GroupCreate, creator_id: int):
         db.close()
 
 
+def get_group_by_id(group_id: int):
+    db = SessionLocal()
+    try:
+        return GroupRepository(db).get_group_by_id(group_id)
+    finally:
+        db.close()
+
+
 def add_user_to_group(group_id: int, user_id: int, role: str = "MEMBER"):
     db = SessionLocal()
     try:
