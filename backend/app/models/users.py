@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
@@ -40,6 +40,10 @@ class PasswordResetToken(Base):
     token = Column(String(255), nullable=False, unique=True)
     expires_at = Column(DateTime, nullable=False)
     used = Column(Boolean, default=False)
+    created_at = Column(DateTime, server_default=func.now())
+
+    user = relationship("User", back_populates="reset_tokens")
+n(Boolean, default=False)
     created_at = Column(DateTime, server_default=func.now())
 
     user = relationship("User", back_populates="reset_tokens")
