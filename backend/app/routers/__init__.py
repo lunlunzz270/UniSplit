@@ -10,6 +10,7 @@ from ..services.auth import (
     serialize_user,
     verify_password,
 )
+from ..services.redemption import redeem_code
 from ..services.groups import join_group, leave_group
 from .expenses import expenses_bp
 from .groups import groups_bp
@@ -81,6 +82,29 @@ def current_user():
 
     user, session = current
     return jsonify(serialize_user(user, session)), 200
+
+
+@auth_bp.route('/api/redeem', methods=['POST'])
+def redeem():
+    session_token = _extract_session_token()
+    if not session_token:
+        return jsonify({"error": "Session token is required"}), 401
+
+    current = get_current_user_from_token(session_token)
+    if not current:
+        return jsonify({"error": "Session expired or invalid"}), 401
+
+    user, _ = current
+    data = request.get_json(silent=True) or {}
+    code = data.get("code")
+    if not code:
+        return jsonify({"error": "Redemption code is required"}), 400
+
+    try:
+        result = redeem_code(user.id, code)
+        return jsonify(result), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
 
 @auth_bp.route('/api/logout', methods=['POST', 'DELETE'])

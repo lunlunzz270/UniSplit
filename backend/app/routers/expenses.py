@@ -2,7 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, jsonify, request
 
-from ..services import list_expenses as list_expenses_service, record_expense
+from ..services import list_expenses as list_expenses_service, record_expense, respond_to_expense
 from ..services.auth import get_current_user_from_token
 
 expenses_bp = Blueprint("expenses", __name__)
@@ -13,6 +13,36 @@ def _extract_session_token():
     if auth_header.startswith("Bearer "):
         return auth_header.removeprefix("Bearer ").strip()
     return request.headers.get("X-Session-Token") or request.headers.get("Authorization")
+
+
+@expenses_bp.route("/api/expenses/<int:expense_id>/respond", methods=["POST"])
+def respond_to_expense_route(expense_id: int):
+    session_token = _extract_session_token()
+    if not session_token:
+        return jsonify({"error": "Login required"}), 401
+
+    current = get_current_user_from_token(session_token)
+    if not current:
+        return jsonify({"error": "Session expired or invalid"}), 401
+    
+    current_user, _ = current
+    data = request.get_json(silent=True) or {}
+    status = data.get("status") # accepted or rejected
+    appeal_reason = data.get("appeal_reason")
+
+    if status not in ["accepted", "rejected"]:
+        return jsonify({"error": "Invalid status. Must be 'accepted' or 'rejected'"}), 400
+
+    try:
+        success = respond_to_expense(
+            expense_id=expense_id,
+            user_id=current_user.id,
+            status=status,
+            appeal_reason=appeal_reason
+        )
+        return jsonify({"success": success, "status": status}), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
 
 
 @expenses_bp.route("/api/expenses", methods=["GET"])
