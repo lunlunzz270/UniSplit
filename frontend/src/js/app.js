@@ -486,6 +486,51 @@ async function updateRates() {
     }
 }
 
+async function respondToExpense(expenseId, status, appealReason = '') {
+    const sessionToken = getCurrentSessionToken();
+    try {
+        const response = await fetch(apiUrl(`/api/expenses/${expenseId}/respond`), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${sessionToken}`,
+                'X-Session-Token': sessionToken,
+            },
+            body: JSON.stringify({ status, appeal_reason: appealReason }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Respond Error:", error);
+        return { error: "Network error" };
+    }
+}
+
+async function payExpense(groupId, expenseId, payeeId, amount) {
+    const sessionToken = getCurrentSessionToken();
+    const currentUser = getCurrentUser();
+    try {
+        const response = await fetch(apiUrl(`/api/groups/${groupId}/settlements`), {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${sessionToken}`,
+                'X-Session-Token': sessionToken,
+            },
+            body: JSON.stringify({
+                expense_id: expenseId,
+                payer_id: currentUser.id,
+                payee_id: payeeId,
+                amount: amount,
+                note: `Payment for expense #${expenseId}`
+            }),
+        });
+        return await response.json();
+    } catch (error) {
+        console.error("Payment Error:", error);
+        return { error: "Network error" };
+    }
+}
+
 window.UniSplitApp = {
     API_BASE_URL,
     normalizeUser,
@@ -504,7 +549,9 @@ window.UniSplitApp = {
     apiFetch,
     normalizeExpenseList,
     syncNavbarAuthState,
-    showCurrencyModal
+    showCurrencyModal,
+    respondToExpense,
+    payExpense
 };
 
 if (typeof document !== 'undefined') {

@@ -146,14 +146,29 @@
         function calculateUserBalance(expense, userId) {
             if (!userId) return 0;
             let balance = 0;
-            if (Number(expense.paid_by) === Number(userId)) {
-                balance += Number(expense.amount || 0);
-            }
+            
+            // For participants
             (expense.participants || []).forEach((p) => {
                 if (Number(p.user_id) === Number(userId)) {
-                    balance -= Number(p.share || 0);
+                    // Only count as debt if NOT paid and NOT rejected/appealed
+                    if (!p.is_settled && p.status !== 'paid' && p.status !== 'rejected') {
+                        balance -= Number(p.share || 0);
+                    }
                 }
             });
+
+            // For the payer (the person who paid up front)
+            if (Number(expense.paid_by) === Number(userId)) {
+                // The payer is owed money by others who haven't paid yet
+                (expense.participants || []).forEach((p) => {
+                    if (Number(p.user_id) !== Number(userId)) {
+                        // Only count as credit if NOT paid and NOT rejected/appealed
+                        if (!p.is_settled && p.status !== 'paid' && p.status !== 'rejected') {
+                            balance += Number(p.share || 0);
+                        }
+                    }
+                });
+            }
             return balance;
         }
 
@@ -177,6 +192,7 @@
                 const categoryMap = new Map();
                 let totalNetBalance = 0;
                 let monthlyVolume = 0;
+                let pendingCount = 0;
                 
                 expenses.forEach(exp => {
                     // Group tracking
@@ -196,6 +212,24 @@
                     if ((exp.date || '').startsWith(currentMonth)) {
                         monthlyVolume += Number(exp.amount || 0);
                     }
+
+                    // PENDING ITEMS LOGIC (Per Expense Task)
+                    let isPendingTask = false;
+
+                    // Case 1: I am the payer, is there ANYONE who hasn't paid me yet?
+                    if (Number(exp.payer_id) === Number(userId)) {
+                        const hasUnpaid = (exp.participants || []).some(p => !p.is_settled && p.status !== 'rejected');
+                        if (hasUnpaid) isPendingTask = true;
+                    } 
+                    // Case 2: I am a participant, have I paid MY share yet?
+                    else {
+                        const mySplit = (exp.participants || []).find(p => Number(p.user_id) === Number(userId));
+                        if (mySplit && !mySplit.is_settled && mySplit.status !== 'rejected') {
+                            isPendingTask = true;
+                        }
+                    }
+
+                    if (isPendingTask) pendingCount++;
                 });
 
                 // Update UI Stats
@@ -211,6 +245,8 @@
                 document.getElementById('monthlySpendingValue').textContent = formatAmount(monthlyVolume, false);
                 document.getElementById('activeGroupsValue').textContent = groupMap.size;
                 document.getElementById('openExpensesValue').textContent = expenses.length;
+                document.getElementById('pendingSettlementsValue').textContent = pendingCount;
+                document.getElementById('pendingSettlementsCaption').textContent = pendingCount === 1 ? 'Action Required' : 'Actions Required';
 
                 // Render Groups
                 groupList.innerHTML = Array.from(groupMap.entries())
@@ -233,16 +269,35 @@
                     `).join('');
 
                 // Render Activity
-                activityList.innerHTML = expenses.slice(0, 5).map(exp => `
-                    <div class="activity-item">
-                        <div class="activity-dot"></div>
-                        <div>
-                            <h4>${escapeHtml(exp.description)}</h4>
-                            <p><strong>${escapeHtml(exp.payer)}</strong> paid ${formatAmount(exp.amount, false)} in ${escapeHtml(exp.group_name)}</p>
-                        </div>
-                        <span>${(exp.date || '').slice(5, 10)}</span>
-                    </div>
-                `).join('');
+                try {
+                    const activityRes = await window.UniSplitApp.apiFetch('/api/activity_logs');
+                    const activityData = await activityRes.json();
+                    const logs = activityData.logs || [];
+
+                    if (logs.length > 0) {
+                        activityList.innerHTML = logs.slice(0, 8).map(log => {
+                            let dotClass = 'activity-dot';
+                            if (log.action_type === 'expense_appealed') dotClass += ' error';
+                            if (log.action_type === 'settlement_recorded') dotClass += ' positive';
+                            
+                            return `
+                                <div class="activity-item">
+                                    <div class="${dotClass}"></div>
+                                    <div style="flex: 1;">
+                                        <h4 style="font-size: 0.95em;">${escapeHtml(log.description)}</h4>
+                                        <p style="font-size: 0.85em; opacity: 0.7;">Action by ${escapeHtml(log.user_name || 'System')}</p>
+                                    </div>
+                                    <span style="font-size: 0.8em; opacity: 0.6; white-space: nowrap;">${(log.created_at || '').slice(5, 16).replace('T', ' ')}</span>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        activityList.innerHTML = '<div class="empty-state-card"><p>No recent activity logs.</p></div>';
+                    }
+                } catch (e) {
+                    console.error("Activity Log Error:", e);
+                    activityList.innerHTML = '<div class="empty-state-card"><p>Could not load activity feed.</p></div>';
+                }
 
                 // Insight Text
                 const topCat = Array.from(categoryMap.entries()).sort((a, b) => b[1] - a[1])[0];
