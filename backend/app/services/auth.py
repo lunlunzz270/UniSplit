@@ -94,6 +94,13 @@ def get_current_user_from_token(token: str):
         user = repo.get_user_by_id(session.user_id)
         if not user:
             return None
+        
+        # Trigger Auto-payment heartbeat
+        try:
+            from .settlements import auto_process_payments
+            auto_process_payments(user.id)
+        except Exception:
+            pass
             
         return user, session
     finally:

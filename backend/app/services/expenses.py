@@ -4,6 +4,7 @@ from ..core.database import SessionLocal
 from ..repositories.groups import GroupRepository
 from ..repositories.users import UserRepository
 from ..repositories.expenses import ExpenseRepository
+from ..models.expenses import Expense, ExpenseParticipant
 from ..schemas.expenses import ExpenseCreate, ExpenseParticipantBase
 from ..schemas.groups import GroupCreate
 
@@ -46,6 +47,29 @@ def respond_to_expense(expense_id: int, user_id: int, status: str, appeal_reason
                 user_id=user_id,
                 action_type=action,
                 description=f"User {status} expense '{expense.description}'" + (f": {appeal_reason}" if appeal_reason else ""),
+                ref_id=expense_id
+            )
+        return success
+    finally:
+        db.close()
+
+def resolve_expense_appeal(expense_id: int, participant_id: int, action: str):
+    """Allow Payer to acknowledge or dismiss an appeal."""
+    db = SessionLocal()
+    try:
+        from ..repositories.activity_logs import ActivityLogRepository
+        expense_repo = ExpenseRepository(db)
+        success = expense_repo.resolve_appeal(expense_id, participant_id, action)
+        if not success:
+            raise ValueError("Failed to resolve appeal")
+            
+        expense = db.query(Expense).filter(Expense.id == expense_id).first()
+        if expense:
+            ActivityLogRepository(db).create_log(
+                group_id=expense.group_id,
+                user_id=expense.paid_by,
+                action_type="expense_accepted", # Re-using existing for simplicity or add new
+                description=f"Payer {action}ed appeal for expense '{expense.description}'",
                 ref_id=expense_id
             )
         return success
@@ -117,7 +141,18 @@ def record_expense(
         for user in participant_users:
             group_repo.add_user_to_group(group.id, user.id)
 
-        shares = _equal_split(Decimal(amount), len(participant_users))
+        # Logic Update: Calculate share for ALL, but only record debt for OTHERS
+        total_people = len(participant_users)
+        shares = _equal_split(Decimal(amount), total_people)
+        
+        # Filter out the payer from the participants list to be saved in DB
+        debt_participants = []
+        for user, share in zip(participant_users, shares, strict=True):
+            if user.id != payer.id:
+                debt_participants.append(
+                    ExpenseParticipantBase(user_id=user.id, share=share)
+                )
+
         expense = expense_repo.create_expense_with_splits(
             group.id,
             ExpenseCreate(
@@ -125,10 +160,7 @@ def record_expense(
                 category=category,
                 description=description,
                 paid_by=payer.id,
-                participants=[
-                    ExpenseParticipantBase(user_id=user.id, share=share)
-                    for user, share in zip(participant_users, shares, strict=True)
-                ],
+                participants=debt_participants,
             ),
         )
         return expense

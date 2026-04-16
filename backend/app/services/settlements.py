@@ -6,6 +6,57 @@ from ..repositories.expenses import ExpenseRepository
 from ..schemas.settlements import SettlementCreate
 
 
+from datetime import datetime, timedelta
+from sqlalchemy import and_
+from ..models.expenses import ExpenseParticipant, Expense
+from ..models.users import User
+from ..core.database import SessionLocal
+
+def auto_process_payments(user_id: int):
+    """Scan all 'Accepted' bills for this user and auto-pay if they are older than 24h."""
+    db = SessionLocal()
+    try:
+        # 1. Find all accepted but unpaid splits for this user that are > 24h old
+        threshold = datetime.now() - timedelta(hours=24)
+        pending_splits = (
+            db.query(ExpenseParticipant)
+            .join(Expense, ExpenseParticipant.expense_id == Expense.id)
+            .filter(
+                and_(
+                    ExpenseParticipant.user_id == user_id,
+                    ExpenseParticipant.status == "accepted",
+                    ExpenseParticipant.is_settled == False,
+                    Expense.created_at <= threshold
+                )
+            ).all()
+        )
+
+        for split in pending_splits:
+            repo = SettlementRepository(db)
+            expense = db.query(Expense).get(split.expense_id)
+            if not expense: continue
+
+            # Try to pay. It will fail silently if balance is insufficient.
+            try:
+                from ..schemas.settlements import SettlementCreate
+                repo.create_settlement(
+                    expense.group_id, 
+                    SettlementCreate(
+                        expense_id=expense.id,
+                        payer_id=user_id,
+                        payee_id=expense.paid_by,
+                        amount=split.share,
+                        note="System Auto-Payment"
+                    )
+                )
+            except Exception:
+                # If balance is insufficient, skip this one
+                continue
+        
+        db.commit()
+    finally:
+        db.close()
+
 def create_settlement(group_id: int, settlement_in: SettlementCreate):
     db = SessionLocal()
     try:
