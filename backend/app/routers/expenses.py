@@ -2,7 +2,7 @@ from decimal import Decimal, InvalidOperation
 
 from flask import Blueprint, jsonify, request
 
-from ..services import list_expenses as list_expenses_service, record_expense, respond_to_expense
+from ..services import list_expenses as list_expenses_service, record_expense, respond_to_expense, resolve_expense_appeal
 from ..services.auth import get_current_user_from_token
 
 expenses_bp = Blueprint("expenses", __name__)
@@ -41,6 +41,29 @@ def respond_to_expense_route(expense_id: int):
             appeal_reason=appeal_reason
         )
         return jsonify({"success": success, "status": status}), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+@expenses_bp.route("/api/expenses/<int:expense_id>/resolve_appeal", methods=["POST"])
+def resolve_appeal_route(expense_id: int):
+    session_token = _extract_session_token()
+    if not session_token:
+        return jsonify({"error": "Login required"}), 401
+
+    current = get_current_user_from_token(session_token)
+    if not current:
+        return jsonify({"error": "Session expired or invalid"}), 401
+    
+    data = request.get_json(silent=True) or {}
+    participant_id = data.get("participant_id")
+    action = data.get("action") # acknowledge or dismiss
+
+    if not participant_id or action not in ["acknowledge", "dismiss"]:
+        return jsonify({"error": "participant_id and valid action required"}), 400
+
+    try:
+        success = resolve_expense_appeal(expense_id, participant_id, action)
+        return jsonify({"success": success}), 200
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 

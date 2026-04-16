@@ -10,7 +10,7 @@ from ..services.auth import (
     serialize_user,
     verify_password,
 )
-from ..services.redemption import redeem_code
+from ..services.redemption import redeem_code, buy_membership_with_balance
 from ..services.groups import join_group, leave_group
 from .expenses import expenses_bp
 from .groups import groups_bp
@@ -102,6 +102,23 @@ def redeem():
 
     try:
         result = redeem_code(user.id, code)
+        return jsonify(result), 200
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+
+@auth_bp.route('/api/membership/buy', methods=['POST'])
+def buy_membership():
+    session_token = _extract_session_token()
+    current = get_current_user_from_token(session_token) if session_token else None
+    if not current:
+        return jsonify({"error": "Session expired or invalid"}), 401
+
+    user, _ = current
+    data = request.get_json(silent=True) or {}
+    plan = data.get("plan") # monthly or yearly
+    try:
+        result = buy_membership_with_balance(user.id, plan)
         return jsonify(result), 200
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
