@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from ..schemas.groups import GroupCreate
-from ..services import add_user_to_group, can_manage_group, create_group, get_user_groups
+from ..services import add_user_to_group, can_manage_group, create_group, get_group_members, get_user_groups
 from ..services.auth import get_current_user_from_token
 
 groups_bp = Blueprint("groups", __name__)
@@ -22,6 +22,19 @@ def _member_to_dict(member):
         "group_id": member.group_id,
         "user_id": member.user_id,
         "role": member.role,
+    }
+
+
+def _group_member_to_dict(member):
+    user = getattr(member, "user", None)
+    return {
+        "id": member.id,
+        "group_id": member.group_id,
+        "user_id": member.user_id,
+        "role": member.role,
+        "full_name": getattr(user, "full_name", None),
+        "email": getattr(user, "email", None),
+        "is_admin": getattr(user, "is_admin", False),
     }
 
 
@@ -96,3 +109,22 @@ def add_group_member(group_id: int):
         return jsonify({"error": str(exc)}), 400
 
     return jsonify(_member_to_dict(member)), 201
+
+
+@groups_bp.route("/api/groups/<int:group_id>/members", methods=["GET"])
+def list_group_members_route(group_id: int):
+    session_token = _extract_session_token()
+    current = get_current_user_from_token(session_token) if session_token else None
+    if session_token and not current:
+        return jsonify({"error": "Session expired or invalid"}), 401
+    if not current:
+        return jsonify({"error": "Session token is required"}), 401
+
+    try:
+        members = get_group_members(group_id, current[0].id)
+    except ValueError as exc:
+        message = str(exc)
+        status_code = 404 if message == "Group not found" else 403
+        return jsonify({"error": message}), status_code
+
+    return jsonify({"members": [_group_member_to_dict(member) for member in members]}), 200

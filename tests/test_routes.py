@@ -215,6 +215,141 @@ def test_group_join_and_leave_routes(api_client):
         json={"user_id": teammate["id"]},
     )
     assert leave_again.status_code == 400
+
+
+def test_reminder_routes(api_client):
+    sender = api_client.post(
+        "/api/register",
+        json={"name": "Sender", "email": "sender@example.com", "password": "pwd123"},
+    ).get_json()
+    recipient = api_client.post(
+        "/api/register",
+        json={"name": "Recipient", "email": "recipient@example.com", "password": "pwd123"},
+    ).get_json()
+    outsider = api_client.post(
+        "/api/register",
+        json={"name": "Outsider", "email": "outsider@example.com", "password": "pwd123"},
+    ).get_json()
+
+    group_res = api_client.post(
+        "/api/groups",
+        json={"name": "Reminder Group", "description": "Reminder test", "creator_id": sender["id"]},
+    )
+    assert group_res.status_code == 201
+    group_id = group_res.get_json()["id"]
+
+    join_res = api_client.post(
+        f"/api/groups/{group_id}/join",
+        json={"user_id": recipient["id"]},
+    )
+    assert join_res.status_code in (200, 201)
+
+    reminder_res = api_client.post(
+        f"/api/groups/{group_id}/reminders",
+        headers={"Authorization": f"Bearer {sender['session']['token']}"},
+        json={"recipient_id": recipient["id"], "message": "Please settle up"},
+    )
+    assert reminder_res.status_code == 201
+    assert reminder_res.get_json()["recipient_id"] == recipient["id"]
+
+    reminder_list = api_client.get(
+        f"/api/groups/{group_id}/reminders",
+        headers={"Authorization": f"Bearer {sender['session']['token']}"},
+    )
+    assert reminder_list.status_code == 200
+    assert len(reminder_list.get_json()["reminders"]) == 1
+
+    outsider_res = api_client.post(
+        f"/api/groups/{group_id}/reminders",
+        headers={"Authorization": f"Bearer {outsider['session']['token']}"},
+        json={"recipient_id": recipient["id"], "message": "Blocked"},
+    )
+    assert outsider_res.status_code == 403
+
+
+def test_group_members_route(api_client):
+    owner = api_client.post(
+        "/api/register",
+        json={"name": "Owner", "email": "members.owner@example.com", "password": "pwd123"},
+    ).get_json()
+    member = api_client.post(
+        "/api/register",
+        json={"name": "Member", "email": "members.member@example.com", "password": "pwd123"},
+    ).get_json()
+    outsider = api_client.post(
+        "/api/register",
+        json={"name": "Outsider", "email": "members.outsider@example.com", "password": "pwd123"},
+    ).get_json()
+
+    group_res = api_client.post(
+        "/api/groups",
+        json={"name": "Members Group", "description": "Members test", "creator_id": owner["id"]},
+    )
+    assert group_res.status_code == 201
+    group_id = group_res.get_json()["id"]
+
+    join_res = api_client.post(
+        f"/api/groups/{group_id}/join",
+        json={"user_id": member["id"]},
+    )
+    assert join_res.status_code in (200, 201)
+
+    list_res = api_client.get(
+        f"/api/groups/{group_id}/members",
+        headers={"Authorization": f"Bearer {owner['session']['token']}"},
+    )
+    assert list_res.status_code == 200
+    members = list_res.get_json()["members"]
+    assert any(item["user_id"] == owner["id"] and item["email"] == owner["email"] for item in members)
+    assert any(item["user_id"] == member["id"] and item["full_name"] == "Member" for item in members)
+
+    outsider_res = api_client.get(
+        f"/api/groups/{group_id}/members",
+        headers={"Authorization": f"Bearer {outsider['session']['token']}"},
+    )
+    assert outsider_res.status_code == 403
+
+
+def test_admin_routes(api_client):
+    admin_user = api_client.post(
+        "/api/register",
+        json={"name": "Admin User", "email": "admin@unisplit.com", "password": "pwd123"},
+    ).get_json()
+    regular_user = api_client.post(
+        "/api/register",
+        json={"name": "Regular User", "email": "regular@example.com", "password": "pwd123"},
+    ).get_json()
+
+    admin_headers = {"Authorization": f"Bearer {admin_user['session']['token']}"}
+    user_headers = {"Authorization": f"Bearer {regular_user['session']['token']}"}
+
+    list_res = api_client.get("/api/admin/users", headers=admin_headers)
+    assert list_res.status_code == 200
+    users = list_res.get_json()["users"]
+    assert any(user["email"] == "regular@example.com" for user in users)
+
+    deny_res = api_client.get("/api/admin/users", headers=user_headers)
+    assert deny_res.status_code == 403
+
+    disable_res = api_client.post(f"/api/admin/users/{regular_user['id']}/disable", headers=admin_headers)
+    assert disable_res.status_code == 200
+    assert disable_res.get_json()["is_active"] is False
+
+    disabled_login = api_client.post(
+        "/api/login",
+        json={"email": "regular@example.com", "password": "pwd123"},
+    )
+    assert disabled_login.status_code == 401
+
+    disabled_me = api_client.get(
+        "/api/me",
+        headers=user_headers,
+    )
+    assert disabled_me.status_code == 401
+
+    restore_res = api_client.post(f"/api/admin/users/{regular_user['id']}/restore", headers=admin_headers)
+    assert restore_res.status_code == 200
+    assert restore_res.get_json()["is_active"] is True
 def test_flask_serves_frontend_and_api_on_same_port(app_client):
     index = app_client.get("/")
     assert index.status_code == 200

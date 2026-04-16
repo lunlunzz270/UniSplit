@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bcrypt import checkpw, gensalt, hashpw
 from ..core.database import SessionLocal
 from ..repositories.users import UserRepository
@@ -43,7 +43,7 @@ def authenticate_user(email: str, password: str):
     Validates credentials and returns a Token along with user details and admin status.
     """
     user = get_user_by_email(email)
-    if user and verify_password(password, user.password):
+    if user and user.is_active and verify_password(password, user.password):
         token = create_access_token(user.id, user.email)
         return {
             "token": token,
@@ -66,10 +66,12 @@ def create_session_for_user(user_id: int):
         user = repo.get_user_by_id(user_id)
         if not user:
             return None
+        if not user.is_active:
+            return None
         
         token = create_access_token(user.id, user.email)
         # Session expires in 1 day
-        expires_at = datetime.utcnow() + timedelta(days=1)
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=1)
         session = repo.create_session(user_id, token, expires_at)
         return session
     finally:
@@ -87,12 +89,15 @@ def get_current_user_from_token(token: str):
             return None
         
         # Check expiration
-        if session.expires_at < datetime.utcnow():
+        if session.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
             repo.delete_session_by_token(token)
             return None
             
         user = repo.get_user_by_id(session.user_id)
         if not user:
+            return None
+        if not user.is_active:
+            repo.delete_session_by_token(token)
             return None
             
         return user, session

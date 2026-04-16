@@ -1,5 +1,5 @@
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..models.groups import Group, GroupMember
 from ..schemas.groups import GroupCreate
@@ -117,3 +117,12 @@ class GroupRepository:
     def get_user_groups(self, user_id: int):
         """Fetch all groups a user is participating in (using a SQL JOIN)."""
         return self.db.query(Group).join(GroupMember).filter(GroupMember.user_id == user_id).all()
+
+    def get_group_members(self, group_id: int):
+        return (
+            self.db.query(GroupMember)
+            .options(joinedload(GroupMember.user))
+            .filter(GroupMember.group_id == group_id)
+            .order_by(GroupMember.id.asc())
+            .all()
+        )

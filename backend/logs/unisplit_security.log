@@ -1,0 +1,5 @@
+2026-04-16 14:44:56,073 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-16 14:44:56,413 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-16 14:45:11,907 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-16 14:45:15,200 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: abc2@qq.com
+2026-04-16 14:48:34,562 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up

@@ -15,6 +15,8 @@ from .expenses import expenses_bp
 from .groups import groups_bp
 from .settlements import settlements_bp
 from .activity_logs import activity_logs_bp
+from .reminders import reminders_bp
+from .admin import admin_bp
 
 auth_bp = Blueprint('auth', __name__)
 security_logger = logging.getLogger("security")
@@ -58,7 +60,7 @@ def login():
     password = data.get('password')
 
     user = get_user_by_email(email)
-    if not user or not verify_password(password, user.password):
+    if not user or not user.is_active or not verify_password(password, user.password):
         security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Attempted email: {email}")
         return jsonify({'error': 'Invalid email or password'}), 401
 

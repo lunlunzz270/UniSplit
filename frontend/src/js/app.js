@@ -159,6 +159,7 @@ function syncNavbarAuthState() {
                     'insights.html',
                     'report.html',
                     'membership.html',
+                    'reminders.html',
                 ];
 
                 visibleOrder.forEach((href) => {
@@ -169,6 +170,7 @@ function syncNavbarAuthState() {
                         'insights.html': 'Expense Insights',
                         'report.html': 'Reports',
                         'membership.html': 'Membership',
+                        'reminders.html': 'Reminders',
                     };
 
                     leftGroup.appendChild(createNavbarLink(null, {
@@ -185,6 +187,14 @@ function syncNavbarAuthState() {
                     active: false,
                     onClick: (e) => { e.preventDefault(); showCurrencyModal(); }
                 }));
+
+                if (currentUser?.is_admin) {
+                    rightGroup.appendChild(createNavbarLink(null, {
+                        href: 'admin.html',
+                        label: 'Admin',
+                        active: isActiveHref('admin.html', currentPage),
+                    }));
+                }
 
                 rightGroup.appendChild(createNavbarLink(null, {
                     href: '#',
