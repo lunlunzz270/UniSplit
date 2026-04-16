@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS expense_participants (
     expense_id       INT UNSIGNED    NOT NULL,
     user_id          INT UNSIGNED    NOT NULL,
     share            DECIMAL(10, 2)  NOT NULL,
-    status           ENUM('pending', 'accepted', 'rejected', 'paid') NOT NULL DEFAULT 'pending',
+    status           ENUM('pending', 'accepted', 'rejected', 'paid', 'appealed_acknowledged') NOT NULL DEFAULT 'pending',
     appeal_reason    TEXT            DEFAULT NULL,
     last_reminder_at DATETIME        DEFAULT NULL,
     reminder_count   INT             NOT NULL DEFAULT 0,
