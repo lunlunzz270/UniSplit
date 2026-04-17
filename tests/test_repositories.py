@@ -232,12 +232,12 @@ def test_create_and_get_settlements(db_session):
 
     # Prepare the payload representing a user clicking "Settle Up"
     settlement_data = SettlementCreate(
+        expense_id=1, # Mock ID
         payer_id=payer.id,
         payee_id=payee.id,
         amount=Decimal("25.50"),
         note="Venmo for utilities"
     )
-
     # 1. Create the settlement record
     created_settlement = settle_repo.create_settlement(group.id, settlement_data)
 

@@ -241,6 +241,7 @@ def test_expense_read_from_orm():
 def test_settlement_create_valid():
     """Test valid SettlementCreate input."""
     data = {
+        "expense_id": 1,
         "payer_id": 2,
         "payee_id": 1,
         "amount": Decimal("45.50"),
@@ -273,7 +274,7 @@ class MockSettlementORM:
 def test_settlement_read_from_orm():
     """Test SettlementRead from_attributes mapping."""
     mock_settlement = MockSettlementORM(
-        id=50, group_id=2, payer_id=3, payee_id=4, amount=Decimal("15.00"), note=None
+        id=50, group_id=2, expense_id=10, payer_id=3, payee_id=4, amount=Decimal("15.00"), note=None
     )
     settlement_read = SettlementRead.model_validate(mock_settlement)
 

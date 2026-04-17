@@ -117,8 +117,8 @@ def test_record_expense_creates_group_and_splits(monkeypatch):
     assert saved_expense is not None
     assert saved_expense.description == "Taxi"
     assert saved_expense.group.name == "Sprint4 Trip"
-    assert len(saved_expense.participants) == 2
-    verify_db.close()
+    # Logic: 2 emails (payer + participant) -> Only 1 debt record (the participant)
+    assert len(saved_expense.participants) == 1    verify_db.close()
 
     db.close()
 
@@ -144,6 +144,7 @@ def test_record_expense_deduplicates_participants(monkeypatch):
     verify_db = session_factory()
     saved_expense = verify_db.query(Expense).filter_by(id=expense.id).first()
     assert saved_expense is not None
-    assert len(saved_expense.participants) == 2
+    # [payer, teammate, teammate] -> only 1 participant record (the teammate)
+    assert len(saved_expense.participants) == 1
     verify_db.close()
     db.close()
