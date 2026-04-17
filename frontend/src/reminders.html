@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSplit - Reminders</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">UniSplit</div>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <section class="page-header-card">
+            <span class="hero-badge">Shared balance reminders</span>
+            <h1>Reminders</h1>
+            <p>Send a reminder to a group member and review reminders for a group.</p>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Send Reminder</h2>
+                <span id="reminderStatus" class="status neutral">Loading</span>
+            </div>
+
+            <form id="reminderForm" class="form-card">
+                <div class="input-group">
+                    <label for="groupSelect">Group</label>
+                    <select id="groupSelect"></select>
+                </div>
+                <div class="input-group">
+                    <label for="recipientSelect">Recipient</label>
+                    <select id="recipientSelect"></select>
+                </div>
+                <div class="input-group">
+                    <label for="reminderMessage">Message</label>
+                    <textarea id="reminderMessage" placeholder="Please settle your balance."></textarea>
+                </div>
+                <p id="reminderMessageBox" class="error-message"></p>
+                <button type="submit" class="btn">Send reminder</button>
+            </form>
+        </section>
+
+        <section class="panel" style="margin-top: 20px;">
+            <div class="panel-header">
+                <h2>Reminder History</h2>
+                <button id="refreshReminders" class="btn-secondary" type="button">Refresh</button>
+            </div>
+            <div id="reminderList" class="history-list"></div>
+        </section>
+    </main>
+
+    <script src="./js/app.js?v=15"></script>
+    <script>
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Reminder access',
+            requireLogin: true,
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
+
+        const reminderStatus = document.getElementById('reminderStatus');
+        const reminderList = document.getElementById('reminderList');
+        const reminderMessageBox = document.getElementById('reminderMessageBox');
+        const groupSelect = document.getElementById('groupSelect');
+        const recipientSelect = document.getElementById('recipientSelect');
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function renderReminder(item) {
+            return `
+                <div class="history-item">
+                    <div class="history-main">
+                        <div class="history-top-row">
+                            <h3>Reminder #${item.id}</h3>
+                        </div>
+                        <div class="history-meta">
+                            <span>Group: ${item.group_id}</span>
+                            <span>Sender: ${item.sender_id}</span>
+                            <span>Recipient: ${item.recipient_id}</span>
+                            <span>Date: ${item.created_at || 'N/A'}</span>
+                        </div>
+                        <p class="history-notes">${escapeHtml(item.message)}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadGroups() {
+            if (!currentUser) return;
+            const res = await window.UniSplitApp.apiFetch(`/api/users/${currentUser.id}/groups`);
+            const data = await res.json();
+            const groups = data.groups || [];
+            groupSelect.innerHTML = groups.map((group) => `<option value="${group.id}">${escapeHtml(group.name)} (#${group.id})</option>`).join('');
+            if (!groups.length) {
+                groupSelect.innerHTML = '<option value="">No groups found</option>';
+                recipientSelect.innerHTML = '<option value="">No group members</option>';
+                recipientSelect.disabled = true;
+                reminderList.innerHTML = '<div class="empty-state-card"><p>Select a group to view reminders.</p></div>';
+                return;
+            }
+
+            groupSelect.value = groupSelect.value || groups[0].id;
+            await loadRecipients();
+            await loadReminders();
+        }
+
+        async function loadRecipients() {
+            const groupId = groupSelect.value;
+            if (!groupId) {
+                recipientSelect.innerHTML = '<option value="">Select a group first</option>';
+                recipientSelect.disabled = true;
+                return;
+            }
+
+            const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/members`);
+            const data = await res.json();
+            const members = (data.members || []).filter((member) => Number(member.user_id) !== Number(currentUser.id));
+
+            if (!res.ok) {
+                recipientSelect.innerHTML = '<option value="">Failed to load members</option>';
+                recipientSelect.disabled = true;
+                reminderMessageBox.textContent = data.error || 'Failed to load group members.';
+                return;
+            }
+
+            if (!members.length) {
+                recipientSelect.innerHTML = '<option value="">No other members found</option>';
+                recipientSelect.disabled = true;
+                return;
+            }
+
+            recipientSelect.disabled = false;
+            recipientSelect.innerHTML = [
+                '<option value="">Select a recipient</option>',
+                ...members.map((member) => {
+                    const labelParts = [
+                        escapeHtml(member.full_name || `User ${member.user_id}`),
+                        member.email ? `(${escapeHtml(member.email)})` : '',
+                        `#${member.user_id}`,
+                    ].filter(Boolean);
+                    return `<option value="${member.user_id}">${labelParts.join(' ')}</option>`;
+                }),
+            ].join('');
+        }
+
+        async function loadReminders() {
+            const groupId = groupSelect.value;
+            if (!groupId) {
+                reminderList.innerHTML = '<div class="empty-state-card"><p>Select a group to view reminders.</p></div>';
+                return;
+            }
+            const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders`);
+            const data = await res.json();
+            const reminders = data.reminders || [];
+            if (!reminders.length) {
+                reminderList.innerHTML = '<div class="empty-state-card"><p>No reminders yet.</p></div>';
+                return;
+            }
+            reminderList.innerHTML = reminders.map(renderReminder).join('');
+        }
+
+        document.getElementById('reminderForm').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            reminderMessageBox.textContent = '';
+            const groupId = groupSelect.value;
+            const recipientId = Number(recipientSelect.value);
+            const message = document.getElementById('reminderMessage').value.trim();
+
+            if (!groupId || !recipientId || !message) {
+                reminderMessageBox.textContent = 'Group, recipient, and message are required.';
+                return;
+            }
+
+            const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ recipient_id: recipientId, message }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                reminderMessageBox.textContent = data.error || 'Failed to send reminder.';
+                return;
+            }
+
+            reminderMessageBox.style.color = '#8ff0b0';
+            reminderMessageBox.textContent = 'Reminder sent successfully.';
+            await loadReminders();
+        });
+
+        document.getElementById('refreshReminders').addEventListener('click', loadReminders);
+        groupSelect.addEventListener('change', async () => {
+            await loadRecipients();
+            await loadReminders();
+        });
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (!currentUser) return;
+            reminderStatus.textContent = `Signed in as ${window.UniSplitApp.getUserDisplayName(currentUser)}`;
+            await loadGroups();
+        });
+    </script>
+</body>
+</html>

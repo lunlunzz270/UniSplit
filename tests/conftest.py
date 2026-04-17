@@ -49,6 +49,8 @@ def api_client(monkeypatch, session_factory):
     monkeypatch.setattr("backend.app.services.groups.SessionLocal", session_factory)
     monkeypatch.setattr("backend.app.services.settlements.SessionLocal", session_factory)
     monkeypatch.setattr("backend.app.services.activity_logs.SessionLocal", session_factory)
+    monkeypatch.setattr("backend.app.services.reminders.SessionLocal", session_factory)
+    monkeypatch.setattr("backend.app.services.admin.SessionLocal", session_factory)
 
     from backend.main import app
 
@@ -76,12 +78,16 @@ def patched_sessionlocal(sqlite_session_factory, monkeypatch):
     from backend.app.services import expenses as expenses_service
     from backend.app.services import groups as groups_service
     from backend.app.services import settlements as settlements_service
+    from backend.app.services import reminders as reminders_service
+    from backend.app.services import admin as admin_service
 
     monkeypatch.setattr(database_module, "SessionLocal", sqlite_session_factory)
     monkeypatch.setattr(auth_service, "SessionLocal", sqlite_session_factory)
     monkeypatch.setattr(expenses_service, "SessionLocal", sqlite_session_factory)
     monkeypatch.setattr(groups_service, "SessionLocal", sqlite_session_factory)
     monkeypatch.setattr(settlements_service, "SessionLocal", sqlite_session_factory)
+    monkeypatch.setattr(reminders_service, "SessionLocal", sqlite_session_factory)
+    monkeypatch.setattr(admin_service, "SessionLocal", sqlite_session_factory)
     return sqlite_session_factory
 
 

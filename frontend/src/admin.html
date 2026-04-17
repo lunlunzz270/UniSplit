@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSplit - Admin</title>
+    <link rel="stylesheet" href="./css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">UniSplit</div>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <section class="page-header-card">
+            <span class="hero-badge">Admin Controls</span>
+            <h1>User Management</h1>
+            <p>Review users and disable or restore accounts.</p>
+        </section>
+
+        <section class="panel">
+            <div class="panel-header">
+                <h2>Account Status</h2>
+                <span id="adminStatus" class="status neutral">Loading</span>
+            </div>
+            <p id="adminMessage" class="error-message"></p>
+            <div id="userTable" class="history-list"></div>
+        </section>
+    </main>
+
+    <script src="./js/app.js?v=15"></script>
+    <script>
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Admin access',
+            requireLogin: true,
+            loginHref: 'login.html',
+            dashboardHref: 'dashboard.html'
+        });
+
+        const adminStatus = document.getElementById('adminStatus');
+        const adminMessage = document.getElementById('adminMessage');
+        const userTable = document.getElementById('userTable');
+
+        function escapeHtml(value) {
+            return String(value || '')
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function renderUser(user) {
+            return `
+                <div class="history-item">
+                    <div class="history-main">
+                        <div class="history-top-row">
+                            <h3>${escapeHtml(user.full_name)} (#${user.id})</h3>
+                            <span class="history-amount">${user.is_active ? 'Active' : 'Disabled'}</span>
+                        </div>
+                        <div class="history-meta">
+                            <span>Email: ${escapeHtml(user.email)}</span>
+                            <span>Admin: ${user.is_admin ? 'Yes' : 'No'}</span>
+                        </div>
+                    </div>
+                    <div class="button-row">
+                        <button class="btn-secondary" data-user-action="disable" data-user-id="${user.id}">Disable</button>
+                        <button class="btn" data-user-action="restore" data-user-id="${user.id}">Restore</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function loadUsers() {
+            if (!currentUser || !currentUser.is_admin) {
+                adminMessage.textContent = 'Admin access is required.';
+                userTable.innerHTML = '<div class="empty-state-card"><p>Permission denied.</p></div>';
+                return;
+            }
+
+            const res = await window.UniSplitApp.apiFetch('/api/admin/users');
+            const data = await res.json();
+            if (!res.ok) {
+                adminMessage.textContent = data.error || 'Failed to load users.';
+                return;
+            }
+
+            const users = data.users || [];
+            adminStatus.textContent = `Loaded ${users.length} users`;
+            userTable.innerHTML = users.map(renderUser).join('');
+
+            userTable.querySelectorAll('[data-user-action]').forEach((button) => {
+                button.addEventListener('click', async () => {
+                    const userId = button.dataset.userId;
+                    const action = button.dataset.userAction;
+                    const route = `/api/admin/users/${userId}/${action}`;
+                    const actionRes = await window.UniSplitApp.apiFetch(route, { method: 'POST' });
+                    const actionData = await actionRes.json();
+                    if (!actionRes.ok) {
+                        adminMessage.textContent = actionData.error || 'Action failed.';
+                        return;
+                    }
+                    adminMessage.style.color = '#8ff0b0';
+                    adminMessage.textContent = `User ${action}d successfully.`;
+                    await loadUsers();
+                });
+            });
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            if (!currentUser) return;
+            adminStatus.textContent = currentUser.is_admin ? 'Admin session active' : 'Not an admin';
+            await loadUsers();
+        });
+    </script>
+</body>
+</html>

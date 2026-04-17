@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from bcrypt import checkpw, gensalt, hashpw
 from ..core.database import SessionLocal
 from ..repositories.users import UserRepository

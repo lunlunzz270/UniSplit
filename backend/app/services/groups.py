@@ -37,6 +37,20 @@ def get_user_groups(user_id: int):
         db.close()
 
 
+def get_group_members(group_id: int, user_id: int):
+    db = SessionLocal()
+    try:
+        group_repo = GroupRepository(db)
+        group = group_repo.get_group_by_id(group_id)
+        if not group:
+            raise ValueError("Group not found")
+        if not group_repo.get_group_member(group_id, user_id):
+            raise ValueError("User must belong to the group")
+        return group_repo.get_group_members(group_id)
+    finally:
+        db.close()
+
+
 def can_manage_group(group_id: int, user_id: int) -> bool:
     db = SessionLocal()
     try:
