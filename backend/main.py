@@ -19,6 +19,15 @@ import backend.app.models  # noqa: F401
 app = Flask(__name__)
 FRONTEND_DIR = Path(__file__).resolve().parents[1] / "frontend" / "src"
 
+# Initialize database unless running in a test environment (where tests handle their own setup)
+if "PYTEST_CURRENT_TEST" not in os.environ:
+    try:
+        Base.metadata.create_all(bind=engine)
+        ensure_sqlite_compatibility()
+    except Exception as e:
+        print(f"DATABASE_INIT_FAIL | Error: {str(e)}")
+        # Don't re-raise yet, let the app try to start so we see it in logs
+
 # Initialize Security Logging
 security_logger = setup_logging(app)
 security_logger.info("SYSTEM_STARTUP | Success | UniSplit Backend is starting up")
@@ -64,13 +73,6 @@ def get_currencies():
     except Exception as e:
         print(f"DEBUG: Currency API Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
-
-import os
-
-# Initialize database unless running in a test environment (where tests handle their own setup)
-if "PYTEST_CURRENT_TEST" not in os.environ:
-    Base.metadata.create_all(bind=engine)
-    ensure_sqlite_compatibility()
 
 if __name__ == '__main__':
     app.run(debug=True, host="127.0.0.1", port=5000)

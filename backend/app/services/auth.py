@@ -110,7 +110,7 @@ def serialize_user(user: User, session: Session = None):
         "email": user.email,
         "is_admin": user.is_admin,
         "is_active": user.is_active,
-        "balance": float(user.balance),
+        "balance": float(user.balance) if user.balance is not None else 0.0,
         "is_vip": user.is_vip,
         "vip_expiry": user.vip_expiry.isoformat() if user.vip_expiry else None,
         "session": {

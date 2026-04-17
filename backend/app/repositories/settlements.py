@@ -21,6 +21,13 @@ class SettlementRepository:
             if not payer or not payee:
                 raise ValueError("Payer or Payee not found")
 
+            # Initialize balance if None
+            from decimal import Decimal
+            if payer.balance is None:
+                payer.balance = Decimal("0.00")
+            if payee.balance is None:
+                payee.balance = Decimal("0.00")
+
             # 2. Check sufficient balance
             if payer.balance < settlement_in.amount:
                 raise ValueError("Insufficient balance. Please recharge your wallet.")

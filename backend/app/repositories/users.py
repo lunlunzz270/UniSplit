@@ -21,12 +21,14 @@ class UserRepository:
 
     def create_user(self, user_in: UserCreate, is_admin: bool = False) -> User:
         """Create and save a new ORM User object from Schema data."""
+        from decimal import Decimal
         # Note: user_in.password should already be hashed by the Service layer before reaching here
         db_user = User(
             full_name=user_in.full_name,
             email=str(user_in.email),
             password=user_in.password,
-            is_admin=is_admin
+            is_admin=is_admin,
+            balance=Decimal("0.00")
         )
         self.db.add(db_user)
         self.db.commit()
@@ -38,6 +40,8 @@ class UserRepository:
         from decimal import Decimal
         user = self.get_user_by_id(user_id)
         if user:
+            if user.balance is None:
+                user.balance = Decimal("0.00")
             user.balance += Decimal(str(amount))
             self.db.commit()
             self.db.refresh(user)

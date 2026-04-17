@@ -35,6 +35,10 @@ def _prepare_sqlite_storage(database_url: str) -> None:
 
 _prepare_sqlite_storage(SQLALCHEMY_DATABASE_URL)
 
+# For debugging in CI: print the database type (obfuscate credentials)
+db_info = SQLALCHEMY_DATABASE_URL.split("@")[-1] if "@" in SQLALCHEMY_DATABASE_URL else SQLALCHEMY_DATABASE_URL
+print(f"DATABASE_CONNECTION | Info: Connecting to {db_info}")
+
 engine = create_engine(SQLALCHEMY_DATABASE_URL, echo=True)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, expire_on_commit=False, bind=engine)
 
