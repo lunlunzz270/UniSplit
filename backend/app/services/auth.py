@@ -32,6 +32,24 @@ def verify_password(password: str, hashed_password: str) -> bool:
     except Exception:
         return False
 
+def authenticate_user(email: str, password: str):
+    """
+    Validates credentials and returns a Token along with user details.
+    """
+    user = get_user_by_email(email)
+    if user and verify_password(password, user.password):
+        token = create_access_token(user.id, user.email)
+        return {
+            "token": token,
+            "is_admin": user.is_admin,
+            "user": {
+                "id": user.id,
+                "name": user.full_name,
+                "email": user.email
+            }
+        }
+    return None
+
 def create_session_for_user(user_id: int):
     db = SessionLocal()
     try:
@@ -62,12 +80,12 @@ def get_current_user_from_token(token: str):
         if not user:
             return None
 
-        # 1. Keep account security check from main
+        # Account security check from main
         if not user.is_active:
             repo.delete_session_by_token(token)
             return None
         
-        # 2. Keep auto-payment heartbeat from feat
+        # Auto-payment heartbeat from feat
         try:
             from .settlements import auto_process_payments
             auto_process_payments(user.id)
