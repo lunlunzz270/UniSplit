@@ -3,6 +3,7 @@ from typing import Optional
 from decimal import Decimal
 
 class SettlementBase(BaseModel):
+    expense_id: int
     payer_id: int
     payee_id: int
     amount: Decimal = Field(..., max_digits=10, decimal_places=2, gt=0)

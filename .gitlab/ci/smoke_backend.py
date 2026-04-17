@@ -24,6 +24,8 @@ def wait_for_server(timeout_seconds: int = 30) -> None:
 
 
 def main() -> int:
+    # Capture logs to a file so we can read them if it fails
+    log_file = open("backend_smoke.log", "w")
     process = subprocess.Popen(
         [
             sys.executable,
@@ -36,8 +38,8 @@ def main() -> int:
             "--port=5000",
         ],
         cwd=BACKEND_DIR,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
+        stdout=log_file,
+        stderr=log_file,
     )
 
     try:
@@ -59,16 +61,25 @@ def main() -> int:
             method="POST",
         )
 
-        with urllib.request.urlopen(request, timeout=5) as response:
-            if response.status != 201:
-                raise SystemExit(f"unexpected status {response.status}")
-            data = json.loads(response.read().decode())
+        try:
+            with urllib.request.urlopen(request, timeout=5) as response:
+                if response.status != 201:
+                    raise SystemExit(f"unexpected status {response.status}")
+                data = json.loads(response.read().decode())
+        except Exception as e:
+            print("\n--- BACKEND LOGS (ERROR DIAGNOSTICS) ---")
+            if Path("backend_smoke.log").exists():
+                with open("backend_smoke.log", "r") as f:
+                    print(f.read())
+            print("--- END LOGS ---\n")
+            raise e
 
         assert data["email"] == unique_email
         assert data["session"]["token"]
         return 0
     finally:
         process.terminate()
+        log_file.close()
         try:
             process.wait(timeout=10)
         except subprocess.TimeoutExpired:

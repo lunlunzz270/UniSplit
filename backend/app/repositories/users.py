@@ -21,17 +21,41 @@ class UserRepository:
 
     def create_user(self, user_in: UserCreate, is_admin: bool = False) -> User:
         """Create and save a new ORM User object from Schema data."""
+        from decimal import Decimal
         # Note: user_in.password should already be hashed by the Service layer before reaching here
         db_user = User(
             full_name=user_in.full_name,
             email=str(user_in.email),
             password=user_in.password,
-            is_admin=is_admin
+            is_admin=is_admin,
+            balance=Decimal("0.00")
         )
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user) # Refresh to get the database-generated auto-increment ID
         return db_user
+
+    def update_balance(self, user_id: int, amount: float) -> User | None:
+        """Add or subtract amount from user balance. Use negative for subtraction."""
+        from decimal import Decimal
+        user = self.get_user_by_id(user_id)
+        if user:
+            if user.balance is None:
+                user.balance = Decimal("0.00")
+            user.balance += Decimal(str(amount))
+            self.db.commit()
+            self.db.refresh(user)
+        return user
+
+    def update_vip_status(self, user_id: int, is_vip: bool, expiry_date: datetime | None = None) -> User | None:
+        """Update VIP status and expiry date."""
+        user = self.get_user_by_id(user_id)
+        if user:
+            user.is_vip = is_vip
+            user.vip_expiry = expiry_date
+            self.db.commit()
+            self.db.refresh(user)
+        return user
 
     def create_session(self, user_id: int, token: str, expires_at: datetime, session_id: str | None = None) -> UserSession:
         db_session = UserSession(

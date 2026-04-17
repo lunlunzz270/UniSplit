@@ -16,9 +16,11 @@ def _settlement_to_dict(settlement):
     return {
         "id": settlement.id,
         "group_id": settlement.group_id,
+        "expense_id": settlement.expense_id,
         "payer_id": settlement.payer_id,
         "payee_id": settlement.payee_id,
         "amount": float(settlement.amount),
+        "status": settlement.status,
         "note": settlement.note,
         "settled_at": settlement.settled_at.isoformat() if settlement.settled_at else None,
     }

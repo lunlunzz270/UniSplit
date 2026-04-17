@@ -30,6 +30,10 @@ class ExpenseParticipant(Base):
     user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     share = Column(Numeric(10, 2), nullable=False)
     is_settled = Column(Boolean, default=False)
+    status = Column(String(20), default="pending") # pending, accepted, rejected, paid
+    appeal_reason = Column(Text, nullable=True)
+    last_reminder_at = Column(DateTime, nullable=True)
+    reminder_count = Column(Integer, default=0)
 
     expense = relationship("Expense", back_populates="participants")
     user = relationship("User")
@@ -40,12 +44,19 @@ class Settlement(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     group_id = Column(Integer, ForeignKey("groups.id", ondelete="CASCADE"), nullable=False)
+    expense_id = Column(Integer, ForeignKey("expenses.id", ondelete="CASCADE"), nullable=False)
     payer_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     payee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
+    status = Column(String(20), default="pending") # pending, accepted, rejected, paid, cancelled
+    rejection_message = Column(Text, nullable=True)
     note = Column(Text, nullable=True)
-    settled_at = Column(DateTime, server_default=func.now())
+    due_date = Column(DateTime, nullable=True)
+    last_reminder_at = Column(DateTime, nullable=True)
+    reminder_count = Column(Integer, default=0)
+    settled_at = Column(DateTime, nullable=True)
 
     group = relationship("Group")
-    payer = relationship("User", foreign_keys=[payer_id])
-    payee = relationship("User", foreign_keys=[payee_id])
+    expense = relationship("Expense")
+    payer = relationship("User", foreign_keys=[payer_id], back_populates="settlements_paid")
+    payee = relationship("User", foreign_keys=[payee_id], back_populates="settlements_received")

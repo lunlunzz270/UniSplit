@@ -103,12 +103,52 @@
         }
 
         function renderHistoryItem(item) {
+            const currentUser = window.UniSplitApp.getCurrentUser();
+            const meAsParticipant = item.participants.find(p => p.user_id === currentUser.id);
+            
+            let actionButtons = '';
+            let statusLabel = '';
+
+            if (meAsParticipant) {
+                if (meAsParticipant.status === 'pending') {
+                    statusLabel = '<span class="status warning">Pending Action</span>';
+                    actionButtons = `
+                        <div class="button-row" style="margin-top: 10px;">
+                            <button class="btn btn-small" onclick="handleResponse(${item.id}, 'accepted')">Accept</button>
+                            <button class="btn-secondary btn-small" onclick="handleAppeal(${item.id})">Appeal</button>
+                        </div>
+                    `;
+                } else if (meAsParticipant.status === 'accepted') {
+                    statusLabel = '<span class="status warning">Awaiting Payment</span>';
+                    actionButtons = `
+                        <div class="button-row" style="margin-top: 10px;">
+                            <button class="btn btn-small" onclick="handlePay(${item.group_id}, ${item.id}, ${item.payer_id || 0}, ${meAsParticipant.share})">Pay Now (${formatAmount(meAsParticipant.share)})</button>
+                        </div>
+                    `;
+                } else if (meAsParticipant.status === 'rejected') {
+                    statusLabel = '<span class="status error">Appealed</span>';
+                    actionButtons = `
+                        <p style="font-size:0.85em; opacity:0.8; margin-bottom:8px;">Reason: ${meAsParticipant.appeal_reason || 'No reason provided'}</p>
+                        <div class="button-row">
+                            <button class="btn btn-small" onclick="handleResponse(${item.id}, 'accepted')">Re-Accept</button>
+                        </div>
+                    `;
+                } else if (meAsParticipant.status === 'paid' || meAsParticipant.is_settled) {
+                    statusLabel = '<span class="status positive">Paid</span>';
+                }
+            } else if (item.payer_id === currentUser.id) {
+                statusLabel = '<span class="status positive">You Paid</span>';
+            }
+
             return `
                 <div class="history-item">
                     <div class="history-main">
                         <div class="history-top-row">
                             <h3>${item.description || 'Untitled Expense'}</h3>
-                            <span class="history-amount">${formatAmount(item.amount)}</span>
+                            <div style="display:flex; align-items:center; gap:10px;">
+                                ${statusLabel}
+                                <span class="history-amount">${formatAmount(item.amount)}</span>
+                            </div>
                         </div>
                         <div class="history-meta">
                             <span>Category: ${formatCategory(item.category)}</span>
@@ -116,10 +156,104 @@
                             <span>Paid by: ${item.payer || 'Unknown'}</span>
                             <span>Date: ${item.date || 'N/A'}</span>
                         </div>
-                        <p class="history-notes">${item.notes || ''}</p>
+                        <div class="participants-list" style="margin-top:12px; padding:10px; background: rgba(255,255,255,0.05); border-radius:8px;">
+                            <strong style="display:block; margin-bottom:6px; font-size:0.95em;">Split Details:</strong>
+                            <div style="display:grid; gap:8px;">
+                                ${item.participants.map(p => {
+                                    let badge = '';
+                                    let reasonText = '';
+                                    let payerAction = '';
+
+                                    if (p.status === 'paid' || p.is_settled) {
+                                        badge = '<span class="status positive" style="font-size:0.8em; padding:2px 6px;">Paid</span>';
+                                    } else if (p.status === 'rejected') {
+                                        badge = '<span class="status error" style="font-size:0.8em; padding:2px 6px;">Appealed</span>';
+                                        reasonText = `<div style="font-size:0.85em; color:#ff9d9d; margin-top:2px;">Reason: ${p.appeal_reason || 'No message'}</div>`;
+                                        
+                                        // If I am the payer, show Acknowledge button
+                                        if (item.payer_id === currentUser.id) {
+                                            payerAction = `<button class="btn btn-tiny" style="margin-top:4px;" onclick="handleResolveAppeal(${item.id}, ${p.user_id}, 'acknowledge')">Acknowledge</button>`;
+                                        }
+                                    } else if (p.status === 'appealed_acknowledged') {
+                                        badge = '<span class="status warning" style="font-size:0.8em; padding:2px 6px;">Acknowledged</span>';
+                                        reasonText = `<div style="font-size:0.85em; opacity:0.9; margin-top:2px; color: #ffcc00;">Appeal Acknowledged by Payer</div>`;
+                                    } else if (p.status === 'accepted') {
+                                        badge = '<span class="status warning" style="font-size:0.8em; padding:2px 6px;">Accepted</span>';
+                                    } else {
+                                        badge = '<span class="status" style="font-size:0.8em; padding:2px 6px; opacity:0.6;">Pending</span>';
+                                    }
+
+                                    return `
+                                        <div style="display:flex; flex-direction:column; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                                            <div style="display:flex; justify-content:space-between; align-items:center;">
+                                                <span style="font-size:0.9em;">${p.name} (${p.email || 'N/A'})</span>
+                                                <div style="display:flex; align-items:center; gap:8px;">
+                                                    <span style="font-weight:bold; font-size:0.9em;">${formatAmount(p.share)}</span>
+                                                    ${badge}
+                                                </div>
+                                            </div>
+                                            ${reasonText}
+                                            ${payerAction}
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                        ${actionButtons}
                     </div>
                 </div>
             `;
+        }
+
+        async function handleResolveAppeal(expenseId, participantUserId, action) {
+            const sessionToken = window.UniSplitApp.getCurrentSessionToken();
+            try {
+                const res = await fetch(window.UniSplitApp.apiUrl(`/api/expenses/${expenseId}/resolve_appeal`), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${sessionToken}`,
+                        'X-Session-Token': sessionToken,
+                    },
+                    body: JSON.stringify({ participant_id: participantUserId, action: action }),
+                });
+                const data = await res.json();
+                if (data.error) alert(data.error);
+                else loadHistory();
+            } catch (e) {
+                alert("Network error");
+            }
+        }
+
+        async function handleResponse(expenseId, status) {
+            const res = await window.UniSplitApp.respondToExpense(expenseId, status);
+            if (res.error) {
+                alert("Error: " + res.error);
+            } else {
+                loadHistory();
+            }
+        }
+
+        async function handleAppeal(expenseId) {
+            const reason = prompt("Enter your reason for appeal:");
+            if (reason === null) return;
+            const res = await window.UniSplitApp.respondToExpense(expenseId, 'rejected', reason);
+            if (res.error) {
+                alert("Error: " + res.error);
+            } else {
+                loadHistory();
+            }
+        }
+
+        async function handlePay(groupId, expenseId, payeeId, amount) {
+            if (!confirm(`Confirm payment of $${amount}?`)) return;
+            const res = await window.UniSplitApp.payExpense(groupId, expenseId, payeeId, amount);
+            if (res.error) {
+                alert("Payment Failed: " + res.error);
+            } else {
+                alert("Payment Successful!");
+                loadHistory();
+            }
         }
 
         async function loadHistory() {

@@ -33,8 +33,8 @@ class ExpenseRepository:
                 raise ValueError("Payer must belong to the group")
 
             total_share = sum(p.share for p in expense_in.participants)
-            if total_share != expense_in.amount:
-                raise ValueError("Participant shares must add up to the expense amount")
+            if total_share > expense_in.amount:
+                raise ValueError("Total participant shares cannot exceed the expense amount")
 
             # 1. Create the main expense record
             db_expense = Expense(
@@ -84,6 +84,42 @@ class ExpenseRepository:
     def get_group_expenses(self, group_id: int):
         """Fetch all expense history for a specific group."""
         return self.db.query(Expense).filter(Expense.group_id == group_id).order_by(Expense.created_at.desc()).all()
+
+    def update_participant_status(self, expense_id: int, user_id: int, status: str, appeal_reason: str | None = None) -> bool:
+        """Update a participant's status (accepted/rejected) for an expense."""
+        participant = (
+            self.db.query(ExpenseParticipant)
+            .filter(ExpenseParticipant.expense_id == expense_id, ExpenseParticipant.user_id == user_id)
+            .first()
+        )
+        if not participant:
+            return False
+
+        participant.status = status
+        if status == "rejected":
+            participant.appeal_reason = appeal_reason
+
+        self.db.commit()
+        self.db.refresh(participant)
+        return True
+
+    def resolve_appeal(self, expense_id: int, user_id: int, action: str) -> bool:
+        """Allow Payer to acknowledge or dismiss an appeal from a participant."""
+        participant = (
+            self.db.query(ExpenseParticipant)
+            .filter(ExpenseParticipant.expense_id == expense_id, ExpenseParticipant.user_id == user_id)
+            .first()
+        )
+        if not participant or participant.status != "rejected":
+            return False
+
+        if action == "dismiss":
+            participant.status = "pending" # Send back to pending for reconsideration
+        elif action == "acknowledge":
+            participant.status = "appealed_acknowledged" # Mark as 'In Negotiation'
+
+        self.db.commit()
+        return True
 
     def list_expenses(self, user_id: int | None = None, is_admin: bool = False, search: str = "", category: str = "", group_name: str = "", start_date: str = "", end_date: str = ""):
         """Fetch expenses with optional filters, including date range."""
@@ -139,6 +175,7 @@ class ExpenseRepository:
                 "category": expense.category,
                 "group_id": expense.group_id,
                 "group_name": expense.group.name if expense.group else None,
+                "payer_id": expense.paid_by,
                 "payer": expense.payer.full_name if expense.payer else None,
                 "date": expense.created_at.isoformat() if expense.created_at else None,
                 "notes": "",
@@ -147,7 +184,10 @@ class ExpenseRepository:
                         "id": participant.id,
                         "user_id": participant.user_id,
                         "name": participant.user.full_name if participant.user else None,
+                        "email": participant.user.email if participant.user else None,
                         "share": float(participant.share),
+                        "status": participant.status,
+                        "appeal_reason": participant.appeal_reason,
                         "is_settled": participant.is_settled,
                     }
                     for participant in expense.participants

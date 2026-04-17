@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, Numeric
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from ..core.database import Base
@@ -11,6 +11,9 @@ class User(Base):
     email = Column(String(255), unique=True, index=True, nullable=False)
     password = Column(String(255), nullable=False)
     is_admin = Column(Boolean, default=False)
+    balance = Column(Numeric(10, 2), nullable=False, default=0.00)
+    is_vip = Column(Boolean, default=False)
+    vip_expiry = Column(DateTime, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
     is_active = Column(Boolean, default=True)
@@ -18,6 +21,10 @@ class User(Base):
     # Relationships
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+    settlements_paid = relationship("Settlement", foreign_keys="Settlement.payer_id", back_populates="payer")
+    settlements_received = relationship("Settlement", foreign_keys="Settlement.payee_id", back_populates="payee")
+    owned_groups = relationship("Group", foreign_keys="Group.created_by", back_populates="owner")
+    activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
 
 
 class Session(Base):
