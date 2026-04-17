@@ -35,12 +35,43 @@
                     <p id="netBalanceCaption" class="neutral-text">Calculating...</p>
                 </div>
                 <div class="mini-stat">
-                    <span class="mini-label">Pending Items</span>
-                    <h3 id="pendingSettlementsValue">0</h3>
-                    <p id="pendingSettlementsCaption">From history</p>
+                    <span class="mini-label">Pending Tasks</span>
+                    <div class="pending-split-box">
+                        <div class="pending-sub">
+                            <span class="p-val" id="toCollectValue" style="color: #8ff0b0;">0</span>
+                            <span class="p-lbl">To Collect</span>
+                        </div>
+                        <div class="pending-divider"></div>
+                        <div class="pending-sub">
+                            <span class="p-val" id="toPayValue" style="color: #ff9d9d;">0</span>
+                            <span class="p-lbl">To Pay</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
+
+        <style>
+            .pending-split-box {
+                display: flex;
+                align-items: center;
+                margin-top: 10px;
+                background: rgba(255, 255, 255, 0.03);
+                padding: 10px 0;
+                border-radius: 10px;
+                border: 1px solid rgba(255, 255, 255, 0.05);
+            }
+            .pending-sub { 
+                flex: 1; 
+                display: flex; 
+                flex-direction: column; 
+                align-items: center;
+                text-align: center;
+            }
+            .p-val { font-size: 1.5em; font-weight: 700; line-height: 1; }
+            .p-lbl { font-size: 0.65em; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6; margin-top: 4px; }
+            .pending-divider { width: 1px; height: 25px; background: rgba(255, 255, 255, 0.1); }
+        </style>
 
         <p id="dashboardMessage" class="status neutral" style="margin-bottom: 20px; padding: 10px; display:none;"></p>
 
@@ -66,7 +97,7 @@
             <div class="stat-card">
                 <p class="stat-label">Total Records</p>
                 <h2 id="openExpensesValue">0</h2>
-                <span id="openExpensesTag" class="tag neutral">Processed</span>
+                <span id="openExpensesTag" class="tag neutral">Historical</span>
             </div>
         </section>
 
@@ -192,10 +223,11 @@
                 const categoryMap = new Map();
                 let totalNetBalance = 0;
                 let monthlyVolume = 0;
-                let pendingCount = 0;
+                let pendingToCollect = 0;
+                let pendingToPay = 0;
                 
                 expenses.forEach(exp => {
-                    // Group tracking
+                    // ... (group and category tracking same as before)
                     const gName = exp.group_name || 'Individual';
                     const stats = groupMap.get(gName) || { total: 0, userBalance: 0, count: 0 };
                     stats.total += Number(exp.amount || 0);
@@ -203,33 +235,26 @@
                     stats.count += 1;
                     groupMap.set(gName, stats);
 
-                    // Category tracking
                     const cat = exp.category || 'other';
                     categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(exp.amount || 0));
 
-                    // Global stats
                     totalNetBalance += calculateUserBalance(exp, userId);
                     if ((exp.date || '').startsWith(currentMonth)) {
                         monthlyVolume += Number(exp.amount || 0);
                     }
 
-                    // PENDING ITEMS LOGIC (Per Expense Task)
-                    let isPendingTask = false;
-
-                    // Case 1: I am the payer, is there ANYONE who hasn't paid me yet?
+                    // REFINED PENDING LOGIC (Align with Net Balance)
                     if (Number(exp.payer_id) === Number(userId)) {
-                        const hasUnpaid = (exp.participants || []).some(p => !p.is_settled && p.status !== 'rejected');
-                        if (hasUnpaid) isPendingTask = true;
-                    } 
-                    // Case 2: I am a participant, have I paid MY share yet?
-                    else {
+                        // I am the payer: count as 1 task if ANYONE still owes and hasn't appealed
+                        const hasActiveDebt = (exp.participants || []).some(p => !p.is_settled && p.status !== 'cancelled' && p.status !== 'rejected');
+                        if (hasActiveDebt) pendingToCollect++;
+                    } else {
+                        // I am a participant: count as 1 task if I still owe and haven't appealed
                         const mySplit = (exp.participants || []).find(p => Number(p.user_id) === Number(userId));
-                        if (mySplit && !mySplit.is_settled && mySplit.status !== 'rejected') {
-                            isPendingTask = true;
+                        if (mySplit && !mySplit.is_settled && mySplit.status !== 'cancelled' && mySplit.status !== 'rejected') {
+                            pendingToPay++;
                         }
                     }
-
-                    if (isPendingTask) pendingCount++;
                 });
 
                 // Update UI Stats
@@ -245,8 +270,9 @@
                 document.getElementById('monthlySpendingValue').textContent = formatAmount(monthlyVolume, false);
                 document.getElementById('activeGroupsValue').textContent = groupMap.size;
                 document.getElementById('openExpensesValue').textContent = expenses.length;
-                document.getElementById('pendingSettlementsValue').textContent = pendingCount;
-                document.getElementById('pendingSettlementsCaption').textContent = pendingCount === 1 ? 'Action Required' : 'Actions Required';
+                
+                document.getElementById('toCollectValue').textContent = pendingToCollect;
+                document.getElementById('toPayValue').textContent = pendingToPay;
 
                 // Render Groups
                 groupList.innerHTML = Array.from(groupMap.entries())
