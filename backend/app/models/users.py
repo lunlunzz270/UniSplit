@@ -23,6 +23,8 @@ class User(Base):
     reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
     settlements_paid = relationship("Settlement", foreign_keys="Settlement.payer_id", back_populates="payer")
     settlements_received = relationship("Settlement", foreign_keys="Settlement.payee_id", back_populates="payee")
+    owned_groups = relationship("Group", foreign_keys="Group.created_by", back_populates="owner")
+    activity_logs = relationship("ActivityLog", back_populates="user", cascade="all, delete-orphan")
 
 
 class Session(Base):

@@ -14,8 +14,10 @@ class Group(Base):
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
     # Relationships
+    owner = relationship("User", foreign_keys=[created_by], back_populates="owned_groups")
     memberships = relationship("GroupMember", back_populates="group", cascade="all, delete-orphan")
     expenses = relationship("Expense", back_populates="group", cascade="all, delete-orphan")
+    activity_logs = relationship("ActivityLog", back_populates="group", cascade="all, delete-orphan")
 
 
 class GroupMember(Base):

@@ -30,3 +30,7 @@
 2026-04-17 01:58:27,140 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-17 02:00:44,316 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-17 02:00:45,552 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-17 02:09:51,545 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-17 02:09:54,053 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 19 | Email: ci-48c24be6713e@example.com
+2026-04-17 02:10:32,287 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-17 02:10:34,897 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 20 | Email: ci-cda38fa7ab5c@example.com

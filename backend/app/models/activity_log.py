@@ -16,5 +16,5 @@ class ActivityLog(Base):
     ref_id = Column(Integer, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
-    group = relationship("Group")
-    user = relationship("User")
+    group = relationship("Group", back_populates="activity_logs")
+    user = relationship("User", back_populates="activity_logs")

@@ -59,10 +59,19 @@ def main() -> int:
             method="POST",
         )
 
-        with urllib.request.urlopen(request, timeout=5) as response:
-            if response.status != 201:
-                raise SystemExit(f"unexpected status {response.status}")
-            data = json.loads(response.read().decode())
+        try:
+            with urllib.request.urlopen(request, timeout=5) as response:
+                if response.status != 201:
+                    print(f"Error: unexpected status {response.status}")
+                    print(response.read().decode())
+                    raise SystemExit(f"unexpected status {response.status}")
+                data = json.loads(response.read().decode())
+        except urllib.error.HTTPError as e:
+            print(f"HTTP Error {e.code}: {e.read().decode()}")
+            raise SystemExit(f"HTTP Error {e.code}")
+        except Exception as e:
+            print(f"Error during request: {str(e)}")
+            raise SystemExit(f"Request failed: {str(e)}")
 
         assert data["email"] == unique_email
         assert data["session"]["token"]
