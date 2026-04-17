@@ -64,13 +64,13 @@ def main() -> int:
         try:
             with urllib.request.urlopen(request, timeout=5) as response:
                 if response.status != 201:
-                    print(f"Error: unexpected status {response.status}")
                     raise SystemExit(f"unexpected status {response.status}")
                 data = json.loads(response.read().decode())
         except Exception as e:
-            print("\n--- BACKEND LOGS ---")
-            with open("backend_smoke.log", "r") as f:
-                print(f.read())
+            print("\n--- BACKEND LOGS (ERROR DIAGNOSTICS) ---")
+            if Path("backend_smoke.log").exists():
+                with open("backend_smoke.log", "r") as f:
+                    print(f.read())
             print("--- END LOGS ---\n")
             raise e
 

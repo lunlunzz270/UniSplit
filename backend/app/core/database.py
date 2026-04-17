@@ -73,6 +73,7 @@ def ensure_sqlite_compatibility():
             add_column_if_missing(conn, "users", user_columns, "created_at DATETIME", "created_at")
             add_column_if_missing(conn, "users", user_columns, "updated_at DATETIME", "updated_at")
             add_column_if_missing(conn, "users", user_columns, "is_active BOOLEAN DEFAULT 1", "is_active")
+            add_column_if_missing(conn, "users", user_columns, "balance NUMERIC(10, 2) DEFAULT 0.00", "balance")
 
         if "groups" in tables:
             group_columns = {col["name"] for col in inspector.get_columns("groups")}
