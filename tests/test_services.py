@@ -118,7 +118,8 @@ def test_record_expense_creates_group_and_splits(monkeypatch):
     assert saved_expense.description == "Taxi"
     assert saved_expense.group.name == "Sprint4 Trip"
     # Logic: 2 emails (payer + participant) -> Only 1 debt record (the participant)
-    assert len(saved_expense.participants) == 1    verify_db.close()
+    assert len(saved_expense.participants) == 1
+    verify_db.close()
 
     db.close()
 
