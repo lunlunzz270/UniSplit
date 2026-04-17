@@ -35,9 +35,10 @@ class UserRepository:
 
     def update_balance(self, user_id: int, amount: float) -> User | None:
         """Add or subtract amount from user balance. Use negative for subtraction."""
+        from decimal import Decimal
         user = self.get_user_by_id(user_id)
         if user:
-            user.balance += amount
+            user.balance += Decimal(str(amount))
             self.db.commit()
             self.db.refresh(user)
         return user

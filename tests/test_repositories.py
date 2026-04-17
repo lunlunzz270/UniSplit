@@ -227,6 +227,9 @@ def test_create_and_get_settlements(db_session):
 
     # Prerequisite: Create the payer, the payee, and the group context
     payer = user_repo.create_user(UserCreate(full_name="Payer", email="payer@test.com", password="123"))
+    # Manual balance top-up for test
+    user_repo.update_balance(payer.id, 100.00)
+    
     payee = user_repo.create_user(UserCreate(full_name="Payee", email="payee@test.com", password="123"))
     group = group_repo.create_group(GroupCreate(name="Roommates"), creator_id=payee.id)
 

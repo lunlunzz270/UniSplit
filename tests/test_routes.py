@@ -86,7 +86,7 @@ def test_group_join_and_leave_routes_repeat_and_delete(api_client):
     assert leave_res.get_json()["user_id"] == member["id"]
 
 
-def test_group_settlement_and_activity_log_routes(api_client):
+def test_group_settlement_and_activity_log_routes(api_client, session_factory):
     creator = api_client.post(
         "/api/register",
         json={"name": "Creator", "email": "creator@example.com", "password": "pwd123"},
@@ -95,6 +95,12 @@ def test_group_settlement_and_activity_log_routes(api_client):
         "/api/register",
         json={"name": "Teammate", "email": "teammate@example.com", "password": "pwd123"},
     ).get_json()
+
+    # Manual balance top-up for teammate to allow settlement
+    from backend.app.repositories.users import UserRepository
+    db = session_factory()
+    UserRepository(db).update_balance(teammate["id"], 50.00)
+    db.close()
 
     group_res = api_client.post(
         "/api/groups",
@@ -115,10 +121,27 @@ def test_group_settlement_and_activity_log_routes(api_client):
     assert group_list.status_code == 200
     assert group_list.get_json()["groups"][0]["name"] == "Route Group"
 
+    # Create an expense for the group so settlement can reference it
+    expense_res = api_client.post(
+        "/api/expenses",
+        headers={"Authorization": f"Bearer {creator['session']['token']}"},
+        json={
+            "group_name": "Route Group",
+            "description": "Lunch",
+            "amount": "25.00",
+            "category": "Food",
+            "payer_email": creator["email"],
+            "participant_emails": [creator["email"], teammate["email"]],
+        },
+    )
+    assert expense_res.status_code == 201
+    expense_id = expense_res.get_json()["id"]
+
     settlement_res = api_client.post(
         f"/api/groups/{group_id}/settlements",
         headers={"Authorization": f"Bearer {teammate['session']['token']}"},
         json={
+            "expense_id": expense_id,
             "payer_id": teammate["id"],
             "payee_id": creator["id"],
             "amount": "12.50",

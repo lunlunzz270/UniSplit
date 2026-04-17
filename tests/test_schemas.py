@@ -262,14 +262,16 @@ def test_settlement_invalid_amount():
 
 
 class MockSettlementORM:
-    def __init__(self, id, group_id, payer_id, payee_id, amount, note):
+    def __init__(self, id, group_id, expense_id, payer_id, payee_id, amount, note, status="paid"):
         self.id = id
         self.group_id = group_id
+        self.expense_id = expense_id
         self.payer_id = payer_id
         self.payee_id = payee_id
         self.amount = amount
         self.note = note
-
+        self.status = status
+        self.settled_at = None
 
 def test_settlement_read_from_orm():
     """Test SettlementRead from_attributes mapping."""

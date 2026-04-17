@@ -37,13 +37,18 @@ def get_user_groups(user_id: int):
         db.close()
 
 
-def get_group_members(group_id: int):
+def get_group_members(group_id: int, user_id: int = None):
     db = SessionLocal()
     try:
         group_repo = GroupRepository(db)
         group = group_repo.get_group_by_id(group_id)
         if not group:
             raise ValueError("Group not found")
+        
+        # Optional: verify that the requesting user is a member of the group
+        if user_id and not group_repo.get_group_member(group_id, user_id):
+            raise ValueError("Access denied: You must be a member of the group to view its members")
+
         return group_repo.get_group_members(group_id)
     finally:
         db.close()

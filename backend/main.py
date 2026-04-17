@@ -65,8 +65,7 @@ def get_currencies():
         print(f"DEBUG: Currency API Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-Base.metadata.create_all(bind=engine)
-ensure_sqlite_compatibility()
-
 if __name__ == '__main__':
+    Base.metadata.create_all(bind=engine)
+    ensure_sqlite_compatibility()
     app.run(debug=True, host="127.0.0.1", port=5000)
