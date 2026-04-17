@@ -65,7 +65,12 @@ def get_currencies():
         print(f"DEBUG: Currency API Error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
-if __name__ == '__main__':
+import os
+
+# Initialize database unless running in a test environment (where tests handle their own setup)
+if "PYTEST_CURRENT_TEST" not in os.environ:
     Base.metadata.create_all(bind=engine)
     ensure_sqlite_compatibility()
+
+if __name__ == '__main__':
     app.run(debug=True, host="127.0.0.1", port=5000)

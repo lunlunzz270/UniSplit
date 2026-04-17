@@ -208,3 +208,65 @@ TypeError: get_group_members() takes 1 positional argument but 2 were given
 2026-04-17 01:35:12,501 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: regular@example.com
 2026-04-17 01:35:12,502 [WARNING] [127.0.0.1] SESSION_AUTH_FAIL | Failure | Invalid token attempt
 2026-04-17 01:35:12,675 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: static@example.com
+2026-04-17 01:39:31,727 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-17 01:39:31,918 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: user@example.com
+2026-04-17 01:39:32,086 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: admin@unisplit.com
+2026-04-17 01:39:32,270 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: a@example.com
+2026-04-17 01:39:32,443 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: b@example.com
+2026-04-17 01:39:32,611 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 3 | Email: admin_c@unisplit.com
+2026-04-17 01:39:32,841 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: route@example.com
+2026-04-17 01:39:33,013 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: route@example.com
+2026-04-17 01:39:33,181 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: team@example.com
+2026-04-17 01:39:33,190 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-17 01:39:33,362 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: join.creator@example.com
+2026-04-17 01:39:33,528 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: join.member@example.com
+2026-04-17 01:39:33,703 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: creator@example.com
+2026-04-17 01:39:33,872 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: teammate@example.com
+2026-04-17 01:39:34,060 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: session@example.com
+2026-04-17 01:39:34,233 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: session@example.com
+2026-04-17 01:39:34,234 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-17 01:39:34,235 [WARNING] [127.0.0.1] SESSION_AUTH_FAIL | Failure | Invalid token attempt
+2026-04-17 01:39:34,407 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: group.creator@example.com
+2026-04-17 01:39:34,574 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: group.member@example.com
+2026-04-17 01:39:34,750 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: sender@example.com
+2026-04-17 01:39:34,916 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: recipient@example.com
+2026-04-17 01:39:35,082 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 3 | Email: outsider@example.com
+2026-04-17 01:39:35,263 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: members.owner@example.com
+2026-04-17 01:39:35,469 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: members.member@example.com
+2026-04-17 01:39:35,650 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 3 | Email: members.outsider@example.com
+2026-04-17 01:39:35,832 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: admin@unisplit.com
+2026-04-17 01:39:36,000 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: regular@example.com
+2026-04-17 01:39:36,003 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: regular@example.com
+2026-04-17 01:39:36,003 [WARNING] [127.0.0.1] SESSION_AUTH_FAIL | Failure | Invalid token attempt
+2026-04-17 01:39:36,178 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: static@example.com
+2026-04-17 01:40:02,768 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-17 01:40:02,951 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: user@example.com
+2026-04-17 01:40:03,116 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: admin@unisplit.com
+2026-04-17 01:40:03,286 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: a@example.com
+2026-04-17 01:40:03,451 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: b@example.com
+2026-04-17 01:40:03,617 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 3 | Email: admin_c@unisplit.com
+2026-04-17 01:40:03,834 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: route@example.com
+2026-04-17 01:40:03,999 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: route@example.com
+2026-04-17 01:40:04,167 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: team@example.com
+2026-04-17 01:40:04,176 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-17 01:40:04,345 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: join.creator@example.com
+2026-04-17 01:40:04,510 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: join.member@example.com
+2026-04-17 01:40:04,682 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: creator@example.com
+2026-04-17 01:40:04,848 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: teammate@example.com
+2026-04-17 01:40:05,028 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: session@example.com
+2026-04-17 01:40:05,193 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: session@example.com
+2026-04-17 01:40:05,194 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-17 01:40:05,195 [WARNING] [127.0.0.1] SESSION_AUTH_FAIL | Failure | Invalid token attempt
+2026-04-17 01:40:05,364 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: group.creator@example.com
+2026-04-17 01:40:05,530 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: group.member@example.com
+2026-04-17 01:40:05,702 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: sender@example.com
+2026-04-17 01:40:05,868 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: recipient@example.com
+2026-04-17 01:40:06,032 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 3 | Email: outsider@example.com
+2026-04-17 01:40:06,211 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: members.owner@example.com
+2026-04-17 01:40:06,377 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: members.member@example.com
+2026-04-17 01:40:06,541 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 3 | Email: members.outsider@example.com
+2026-04-17 01:40:06,718 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: admin@unisplit.com
+2026-04-17 01:40:06,883 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 2 | Email: regular@example.com
+2026-04-17 01:40:06,889 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: regular@example.com
+2026-04-17 01:40:06,890 [WARNING] [127.0.0.1] SESSION_AUTH_FAIL | Failure | Invalid token attempt
+2026-04-17 01:40:07,064 [INFO] [127.0.0.1] AUTH_REGISTER_SUCCESS | Success | User ID: 1 | Email: static@example.com
