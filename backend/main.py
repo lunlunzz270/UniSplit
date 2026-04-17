@@ -12,7 +12,7 @@ if __package__ is None or __package__ == "":
     sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from backend.app.core.database import Base, engine, ensure_sqlite_compatibility
-from backend.app.routers import auth_bp, expenses_bp, groups_bp, settlements_bp, activity_logs_bp
+from backend.app.routers import auth_bp, expenses_bp, groups_bp, settlements_bp, activity_logs_bp, reminders_bp, admin_bp
 from backend.app.core.logging_config import setup_logging
 import backend.app.models  # noqa: F401
 
@@ -32,6 +32,8 @@ app.register_blueprint(expenses_bp)
 app.register_blueprint(groups_bp)
 app.register_blueprint(settlements_bp)
 app.register_blueprint(activity_logs_bp)
+app.register_blueprint(reminders_bp)
+app.register_blueprint(admin_bp)
 
 
 @app.route("/")

@@ -22,8 +22,8 @@ def create_access_token(user_id: int, email: str):
     is_admin = email.lower().endswith(ADMIN_DOMAIN)
 
     payload = {
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=1),
-        "iat": datetime.datetime.utcnow(),
+        "exp": datetime.datetime.now(datetime.UTC) + datetime.timedelta(days=1),
+        "iat": datetime.datetime.now(datetime.UTC),
         "sub": str(user_id),
         "is_admin": is_admin,
         "jti": str(uuid.uuid4())

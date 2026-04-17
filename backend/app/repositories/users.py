@@ -83,3 +83,15 @@ class UserRepository:
         if count:
             self.db.commit()
         return count
+
+    def list_users(self):
+        return self.db.query(User).order_by(User.id.asc()).all()
+
+    def set_user_active(self, user_id: int, is_active: bool) -> User:
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+        user.is_active = is_active
+        self.db.commit()
+        self.db.refresh(user)
+        return user
