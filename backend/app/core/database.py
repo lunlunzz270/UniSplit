@@ -74,6 +74,8 @@ def ensure_sqlite_compatibility():
             add_column_if_missing(conn, "users", user_columns, "updated_at DATETIME", "updated_at")
             add_column_if_missing(conn, "users", user_columns, "is_active BOOLEAN DEFAULT 1", "is_active")
             add_column_if_missing(conn, "users", user_columns, "balance NUMERIC(10, 2) DEFAULT 0.00", "balance")
+            add_column_if_missing(conn, "users", user_columns, "is_vip BOOLEAN DEFAULT 0", "is_vip")
+            add_column_if_missing(conn, "users", user_columns, "vip_expiry DATETIME", "vip_expiry")
 
         if "groups" in tables:
             group_columns = {col["name"] for col in inspector.get_columns("groups")}
@@ -94,8 +96,12 @@ def ensure_sqlite_compatibility():
         if "expense_participants" in tables:
             participant_columns = {col["name"] for col in inspector.get_columns("expense_participants")}
             add_column_if_missing(conn, "expense_participants", participant_columns, "is_settled BOOLEAN DEFAULT 0", "is_settled")
+            add_column_if_missing(conn, "expense_participants", participant_columns, "status VARCHAR(20) DEFAULT 'pending'", "status")
+            add_column_if_missing(conn, "expense_participants", participant_columns, "appeal_reason TEXT", "appeal_reason")
 
         if "settlements" in tables:
             settlement_columns = {col["name"] for col in inspector.get_columns("settlements")}
             add_column_if_missing(conn, "settlements", settlement_columns, "note TEXT", "note")
             add_column_if_missing(conn, "settlements", settlement_columns, "settled_at DATETIME", "settled_at")
+            add_column_if_missing(conn, "settlements", settlement_columns, "status VARCHAR(20) DEFAULT 'paid'", "status")
+            add_column_if_missing(conn, "settlements", settlement_columns, "expense_id INTEGER", "expense_id")
