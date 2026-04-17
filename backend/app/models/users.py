@@ -21,6 +21,8 @@ class User(Base):
     # Relationships
     sessions = relationship("Session", back_populates="user", cascade="all, delete-orphan")
     reset_tokens = relationship("PasswordResetToken", back_populates="user", cascade="all, delete-orphan")
+    settlements_paid = relationship("Settlement", foreign_keys="Settlement.payer_id", back_populates="payer")
+    settlements_received = relationship("Settlement", foreign_keys="Settlement.payee_id", back_populates="payee")
 
 
 class Session(Base):

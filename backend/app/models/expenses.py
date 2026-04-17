@@ -58,5 +58,5 @@ class Settlement(Base):
 
     group = relationship("Group")
     expense = relationship("Expense")
-    payer = relationship("User", foreign_keys=[payer_id])
-    payee = relationship("User", foreign_keys=[payee_id])
+    payer = relationship("User", foreign_keys=[payer_id], back_populates="settlements_paid")
+    payee = relationship("User", foreign_keys=[payee_id], back_populates="settlements_received")
