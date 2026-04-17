@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from ..core.database import SessionLocal
 from ..repositories.redemption import RedemptionRepository
 from ..repositories.users import UserRepository
@@ -25,7 +25,8 @@ def redeem_code(user_id: int, code_str: str):
 
         elif db_code.category == CodeCategory.VIP:
             user = user_repo.get_user_by_id(user_id)
-            current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > datetime.now()) else datetime.now()
+            now = datetime.now(timezone.utc).replace(tzinfo=None)
+            current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > now) else now
             new_expiry = current_expiry + timedelta(days=int(db_code.value))
             user_repo.update_vip_status(user_id, True, new_expiry)
             return {"status": "success", "message": f"Successfully upgraded membership for {int(db_code.value)} days"}
@@ -54,7 +55,8 @@ def buy_membership_with_balance(user_id: int, plan_type: str):
         user_repo.update_balance(user_id, -plan["price"])
         
         # Extend VIP
-        current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > datetime.now()) else datetime.now()
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > now) else now
         new_expiry = current_expiry + timedelta(days=plan["days"])
         user_repo.update_vip_status(user_id, True, new_expiry)
         

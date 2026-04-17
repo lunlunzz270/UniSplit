@@ -1,23 +1,20 @@
+from datetime import datetime, timedelta, timezone
+from sqlalchemy import and_
 from ..core.database import SessionLocal
 from ..repositories.groups import GroupRepository
 from ..repositories.users import UserRepository
 from ..repositories.settlements import SettlementRepository
 from ..repositories.expenses import ExpenseRepository
 from ..schemas.settlements import SettlementCreate
-
-
-from datetime import datetime, timedelta
-from sqlalchemy import and_
 from ..models.expenses import ExpenseParticipant, Expense
 from ..models.users import User
-from ..core.database import SessionLocal
 
 def auto_process_payments(user_id: int):
     """Scan all 'Accepted' bills for this user and auto-pay if they are older than 24h."""
     db = SessionLocal()
     try:
         # 1. Find all accepted but unpaid splits for this user that are > 24h old
-        threshold = datetime.now() - timedelta(hours=24)
+        threshold = datetime.now(timezone.utc).replace(tzinfo=None) - timedelta(hours=24)
         pending_splits = (
             db.query(ExpenseParticipant)
             .join(Expense, ExpenseParticipant.expense_id == Expense.id)

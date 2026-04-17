@@ -58,7 +58,7 @@ def create_session_for_user(user_id: int):
         if not user:
             return None
         token = create_access_token(user.id, user.email)
-        expires_at = datetime.utcnow() + timedelta(days=1)
+        expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(days=1)
         session = repo.create_session(user_id, token, expires_at)
         return session
     finally:
@@ -72,7 +72,7 @@ def get_current_user_from_token(token: str):
         if not session:
             return None
         
-        if session.expires_at < datetime.utcnow():
+        if session.expires_at < datetime.now(timezone.utc).replace(tzinfo=None):
             repo.delete_session_by_token(token)
             return None
             

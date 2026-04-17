@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from ..models.expenses import Settlement, ExpenseParticipant
@@ -47,7 +47,7 @@ class SettlementRepository:
                 payee_id=settlement_in.payee_id,
                 amount=settlement_in.amount,
                 status="paid",
-                settled_at=datetime.now(),
+                settled_at=datetime.now(timezone.utc).replace(tzinfo=None),
                 note=settlement_in.note,
             )
             self.db.add(db_settlement)

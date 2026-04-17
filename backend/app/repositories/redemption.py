@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.orm import Session
 from ..models.redemption_codes import RedemptionCode, CodeCategory
 
@@ -14,7 +14,7 @@ class RedemptionRepository:
         if db_code and not db_code.is_used:
             db_code.is_used = True
             db_code.used_by_id = user_id
-            db_code.used_at = datetime.now()
+            db_code.used_at = datetime.now(timezone.utc).replace(tzinfo=None)
             self.db.commit()
             self.db.refresh(db_code)
         return db_code
