@@ -58,7 +58,7 @@ def get_currencies():
     try:
         url = f"https://api.frankfurter.app/latest?from={base}"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=10) as response:
+        with urllib.request.urlopen(req, timeout=20) as response:
             data = json.loads(response.read().decode())
             return jsonify(data)
     except Exception as e:
