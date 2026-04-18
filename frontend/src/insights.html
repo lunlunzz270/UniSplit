@@ -17,11 +17,12 @@
     <main class="container">
         <section class="page-hero">
             <div>
-                <span class="hero-badge">Analytics & Spending Review</span>
+                <span class="hero-badge" id="insightScopeBadge">User view</span>
                 <h1>Expense Insights</h1>
                 <p id="insightHeroText">
                     Loading your financial analysis...
                 </p>
+                <p id="insightScopeNote" class="inline-status neutral">Waiting for your account context...</p>
             </div>
         </section>
 
@@ -88,7 +89,7 @@
         </section>
     </main>
 
-    <script src="./js/app.js?v=11"></script>
+    <script src="./js/app.js?v=19"></script>
     <script>
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Insights access',
@@ -96,6 +97,8 @@
             loginHref: 'login.html',
             dashboardHref: 'dashboard.html'
         });
+        const insightScopeBadge = document.getElementById('insightScopeBadge');
+        const insightScopeNote = document.getElementById('insightScopeNote');
 
         function formatAmount(amount) {
             return `$${Number(amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
@@ -129,12 +132,16 @@
             
             // Set initial contextual text
             if (currentUser.is_admin) {
-                heroText.textContent = "Global system-wide expense analysis. You are viewing data for all users.";
-                totalTag.textContent = "System Total";
+                insightScopeBadge.textContent = 'Administrator view';
+                heroText.textContent = 'Global system-wide expense analysis. You are viewing data for all accessible users.';
+                insightScopeNote.textContent = 'Admin analysis includes platform-wide spending patterns and shared group activity.';
+                totalTag.textContent = 'System total';
                 document.getElementById('premiumNoteSection').style.display = 'none';
             } else {
-                heroText.textContent = "Review your personal spending patterns and group contributions.";
-                totalTag.textContent = "Your Total";
+                insightScopeBadge.textContent = 'User view';
+                heroText.textContent = 'Review your personal spending patterns and group contributions.';
+                insightScopeNote.textContent = 'This view only includes records you can access as a regular user.';
+                totalTag.textContent = 'Your total';
             }
 
             try {
@@ -150,10 +157,11 @@
                 const categoryData = data.by_category || {};
                 
                 if (count === 0) {
+                    document.getElementById('insightCount').textContent = '0';
                     document.getElementById('categoryBreakdownList').innerHTML = `
                         <div class="empty-state-card">
                             <h3>No transactions yet</h3>
-                            <p>Once you add expenses in groups, your spending breakdown will appear here.</p>
+                            <p>${currentUser.is_admin ? 'No system records are available for this range.' : 'Once you add expenses in groups, your spending breakdown will appear here.'}</p>
                             <a href="add_expense.html" class="btn" style="margin-top:10px; display:inline-block;">Add First Expense</a>
                         </div>`;
                     return;
@@ -203,6 +211,7 @@
                         <p style="color: #ffb3b3;">Error loading data: ${error.message}</p>
                         <button onclick="location.reload()" class="btn-secondary">Retry</button>
                     </div>`;
+                insightScopeNote.textContent = 'The analysis endpoint returned an error. You can retry after the backend recovers.';
             }
         }
 

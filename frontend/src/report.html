@@ -63,9 +63,10 @@
 
     <main class="container">
         <section class="page-header-card">
-            <span class="hero-badge">Advanced Analytics</span>
+            <span class="hero-badge" id="reportScopeBadge">User view</span>
             <h1>Financial Reports</h1>
-            <p>Precise analysis of your shared financial activity within a custom timeframe.</p>
+            <p id="reportHeroText">Precise analysis of your shared financial activity within a custom timeframe.</p>
+            <p id="reportStatus" class="inline-status neutral">Choose a date range to refresh the charts.</p>
         </section>
 
         <!-- Custom Interaction: Detailed Date Range Selector -->
@@ -105,12 +106,15 @@
         </div>
     </main>
 
-    <script src="./js/app.js?v=14"></script>
+    <script src="./js/app.js?v=19"></script>
     <script>
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Report access',
             requireLogin: true
         });
+        const reportScopeBadge = document.getElementById('reportScopeBadge');
+        const reportHeroText = document.getElementById('reportHeroText');
+        const reportStatus = document.getElementById('reportStatus');
 
         let pieChart, lineChart, boxPlot;
 
@@ -135,8 +139,23 @@
             document.getElementById('startDate').value = start.toISOString().split('T')[0];
         }
 
+        function setReportStatus(message, kind = 'neutral') {
+            reportStatus.className = `inline-status ${kind}`;
+            reportStatus.textContent = message;
+        }
+
         async function initCharts() {
             if (!currentUser) return;
+
+            if (currentUser.is_admin) {
+                reportScopeBadge.textContent = 'Administrator view';
+                reportHeroText.textContent = 'Global system-wide analysis across all accessible accounts and groups.';
+                setReportStatus('Admin reports aggregate platform-wide transaction data.', 'neutral');
+            } else {
+                reportScopeBadge.textContent = 'User view';
+                reportHeroText.textContent = 'Precise analysis of your shared financial activity within a custom timeframe.';
+                setReportStatus('Reports only include data you can access as a regular user.', 'neutral');
+            }
 
             const baseOptions = {
                 chart: { foreColor: '#ccc', toolbar: { show: true }, animations: { enabled: true } },
@@ -179,8 +198,12 @@
             const params = new URLSearchParams({ start_date: start, end_date: end });
 
             try {
+                setReportStatus('Refreshing report data...', 'neutral');
                 const res = await window.UniSplitApp.apiFetch(`/api/expenses?${params.toString()}`);
                 const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Failed to load report data');
+                }
                 const filtered = window.UniSplitApp.normalizeExpenseList(data);
 
                 // 1. Pie Data
@@ -223,9 +246,11 @@
                     return { x: name, y: [vals[0], q1, median, q3, vals[vals.length-1]] };
                 }).filter(Boolean);
                 boxPlot.updateSeries([{ data: boxSeries }]);
+                setReportStatus(`Loaded ${filtered.length} records for the selected range.`, 'success');
 
             } catch (err) {
                 console.error("Report Refresh Error:", err);
+                setReportStatus(err.message || 'Unable to load report data.', 'error');
             }
         }
 

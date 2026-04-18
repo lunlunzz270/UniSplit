@@ -6,6 +6,15 @@ from ..schemas.users import UserCreate
 from ..core.auth import create_access_token, ADMIN_DOMAIN
 from ..models.users import Session, User
 
+def normalize_account_role(role: str | None) -> str:
+    normalized = str(role or "user").strip().lower()
+    if normalized in {"admin", "administrator"}:
+        return "admin"
+    if normalized == "user":
+        return normalized
+    raise ValueError("Invalid role selection")
+
+
 def get_user_by_email(email: str):
     db = SessionLocal()
     try:
@@ -13,14 +22,18 @@ def get_user_by_email(email: str):
     finally:
         db.close()
 
-def create_user(name: str, email: str, password: str):
+def create_user(name: str, email: str, password: str, requested_role: str = "user"):
     db = SessionLocal()
     try:
-        is_admin = email.lower().endswith(ADMIN_DOMAIN)
+        normalized_role = normalize_account_role(requested_role)
+        email_is_admin = email.lower().endswith(ADMIN_DOMAIN)
+        if normalized_role == "admin" and not email_is_admin:
+            raise ValueError(f"Administrator accounts require an email ending with {ADMIN_DOMAIN}")
+
         hashed_password = hashpw(password.encode("utf-8"), gensalt()).decode("utf-8")
         user = UserRepository(db).create_user(
             UserCreate(full_name=name, email=email, password=hashed_password),
-            is_admin=is_admin
+            is_admin=email_is_admin or normalized_role == "admin"
         )
         return user
     finally:
@@ -109,6 +122,7 @@ def serialize_user(user: User, session: Session = None):
         "name": user.full_name,
         "email": user.email,
         "is_admin": user.is_admin,
+        "role": "admin" if user.is_admin else "user",
         "is_active": user.is_active,
         "balance": float(user.balance) if user.balance is not None else 0.0,
         "is_vip": user.is_vip,

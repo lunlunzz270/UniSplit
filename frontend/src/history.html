@@ -24,9 +24,9 @@
 
     <main class="container">
         <section class="page-header-card">
-            <span class="hero-badge">Transactions & Records</span>
-            <h1>Expense history</h1>
-            <p>Review past shared expenses, filter records, and track settlement activity.</p>
+            <span class="hero-badge" id="historyScopeBadge">User view</span>
+            <h1 id="historyTitle">Expense history</h1>
+            <p id="historyDescription">Review past shared expenses, filter records, and track settlement activity.</p>
         </section>
 
         <section class="panel">
@@ -37,7 +37,7 @@
             <div class="history-filter-grid">
                 <div class="input-group">
                     <label for="searchInput">Search</label>
-                    <input type="text" id="searchInput" placeholder="Search description, payer, group...">
+                    <input type="text" id="searchInput" placeholder="Search description, payer, email, group...">
                 </div>
 
                 <div class="input-group">
@@ -70,15 +70,19 @@
                 <a href="add_expense.html">+ Add new expense</a>
             </div>
 
-            <p id="historyMessage" class="error-message"></p>
+            <p id="historyMessage" class="inline-status" aria-live="polite"></p>
             <div id="historyList" class="history-list"></div>
         </section>
     </main>
 
-    <script src="./js/app.js?v=10"></script>
+    <script src="./js/app.js?v=19"></script>
     <script>
         const historyList = document.getElementById('historyList');
         const historyMessage = document.getElementById('historyMessage');
+        const historyScopeBadge = document.getElementById('historyScopeBadge');
+        const historyTitle = document.getElementById('historyTitle');
+        const historyDescription = document.getElementById('historyDescription');
+        const searchInput = document.getElementById('searchInput');
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'History access',
             requireLogin: true,
@@ -100,6 +104,28 @@
                 'other': 'Other'
             };
             return map[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1).replace('_', ' ') : 'Other');
+        }
+
+        function setHistoryMessage(message, kind = 'error') {
+            historyMessage.className = `inline-status ${kind}`;
+            historyMessage.textContent = message;
+            if (!message) {
+                historyMessage.className = 'inline-status';
+            }
+        }
+
+        function updateHistoryContext() {
+            if (currentUser?.is_admin) {
+                historyScopeBadge.textContent = 'Administrator view';
+                historyTitle.textContent = 'System expense history';
+                historyDescription.textContent = 'Audit all accessible expenses, sort by group or payer, and act on disputes.';
+                searchInput.placeholder = 'Search expenses across users, groups, and descriptions...';
+            } else {
+                historyScopeBadge.textContent = 'User view';
+                historyTitle.textContent = 'My expense history';
+                historyDescription.textContent = 'Review expenses you created or joined, filter by group, and follow settlement progress.';
+                searchInput.placeholder = 'Search description, payer, email, group...';
+            }
         }
 
         function renderHistoryItem(item) {
@@ -217,20 +243,25 @@
                     },
                     body: JSON.stringify({ participant_id: participantUserId, action: action }),
                 });
-                const data = await res.json();
-                if (data.error) alert(data.error);
-                else loadHistory();
+                const data = await res.json().catch(() => ({}));
+                if (!res.ok || data.error) {
+                    setHistoryMessage(data.error || 'Unable to resolve appeal.');
+                    return;
+                }
+                setHistoryMessage(data.message || 'Appeal updated.', 'success');
+                await loadHistory();
             } catch (e) {
-                alert("Network error");
+                setHistoryMessage('Network error while resolving appeal.');
             }
         }
 
         async function handleResponse(expenseId, status) {
             const res = await window.UniSplitApp.respondToExpense(expenseId, status);
             if (res.error) {
-                alert("Error: " + res.error);
+                setHistoryMessage(res.error);
             } else {
-                loadHistory();
+                setHistoryMessage('Response saved.', 'success');
+                await loadHistory();
             }
         }
 
@@ -239,9 +270,10 @@
             if (reason === null) return;
             const res = await window.UniSplitApp.respondToExpense(expenseId, 'rejected', reason);
             if (res.error) {
-                alert("Error: " + res.error);
+                setHistoryMessage(res.error);
             } else {
-                loadHistory();
+                setHistoryMessage('Appeal submitted.', 'success');
+                await loadHistory();
             }
         }
 
@@ -249,21 +281,21 @@
             if (!confirm(`Confirm payment of $${amount}?`)) return;
             const res = await window.UniSplitApp.payExpense(groupId, expenseId, payeeId, amount);
             if (res.error) {
-                alert("Payment Failed: " + res.error);
+                setHistoryMessage(res.error);
             } else {
-                alert("Payment Successful!");
-                loadHistory();
+                setHistoryMessage('Payment successful.', 'success');
+                await loadHistory();
             }
         }
 
         async function loadHistory() {
             if (!currentUser) {
-                historyMessage.textContent = 'Please log in to view transaction history.';
+                setHistoryMessage('Please log in to view transaction history.');
                 historyList.innerHTML = '<div class="empty-state-card"><h3>Login required</h3><p>Sign in to see your shared expense history.</p></div>';
                 return;
             }
 
-            historyMessage.textContent = '';
+            setHistoryMessage('');
             historyList.innerHTML = '<div class="panel"><p>Loading history...</p></div>';
 
             const search = document.getElementById('searchInput').value.trim();
@@ -281,7 +313,7 @@
 
                 if (!res.ok) {
                     historyList.innerHTML = '';
-                    historyMessage.textContent = data.error || 'Failed to load transaction history.';
+                    setHistoryMessage(data.error || 'Failed to load transaction history.');
                     return;
                 }
 
@@ -300,17 +332,17 @@
                 historyList.innerHTML = records.map(renderHistoryItem).join('');
             } catch (error) {
                 historyList.innerHTML = '';
-                historyMessage.textContent = 'Could not connect to the server.';
+                setHistoryMessage('Could not connect to the server.');
             }
         }
 
         document.getElementById('applyFilterBtn').addEventListener('click', loadHistory);
 
         window.addEventListener('DOMContentLoaded', () => {
+            updateHistoryContext();
             const successMsg = localStorage.getItem('expenseSuccess');
             if (successMsg) {
-                historyMessage.style.color = '#8ff0b0';
-                historyMessage.textContent = successMsg;
+                setHistoryMessage(successMsg, 'success');
                 localStorage.removeItem('expenseSuccess');
             }
             loadHistory();

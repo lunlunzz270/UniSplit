@@ -4,6 +4,20 @@ from ..repositories.redemption import RedemptionRepository
 from ..repositories.users import UserRepository
 from ..models.redemption_codes import CodeCategory
 
+
+def _user_snapshot(user):
+    if not user:
+        return {
+            "balance": 0.0,
+            "is_vip": False,
+            "vip_expiry": None,
+        }
+    return {
+        "balance": float(user.balance) if user.balance is not None else 0.0,
+        "is_vip": user.is_vip,
+        "vip_expiry": user.vip_expiry.isoformat() if user and user.vip_expiry else None,
+    }
+
 def redeem_code(user_id: int, code_str: str):
     db = SessionLocal()
     try:
@@ -21,7 +35,14 @@ def redeem_code(user_id: int, code_str: str):
 
         if db_code.category == CodeCategory.CASH:
             user_repo.update_balance(user_id, float(db_code.value))
-            return {"status": "success", "message": f"Successfully recharged ${db_code.value} to your account"}
+            user = user_repo.get_user_by_id(user_id)
+            return {
+                "status": "success",
+                "message": f"Successfully recharged ${db_code.value} to your account",
+                "category": "CASH",
+                "value": float(db_code.value),
+                **_user_snapshot(user),
+            }
 
         elif db_code.category == CodeCategory.VIP:
             user = user_repo.get_user_by_id(user_id)
@@ -29,7 +50,14 @@ def redeem_code(user_id: int, code_str: str):
             current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > now) else now
             new_expiry = current_expiry + timedelta(days=int(db_code.value))
             user_repo.update_vip_status(user_id, True, new_expiry)
-            return {"status": "success", "message": f"Successfully upgraded membership for {int(db_code.value)} days"}
+            updated_user = user_repo.get_user_by_id(user_id)
+            return {
+                "status": "success",
+                "message": f"Successfully upgraded membership for {int(db_code.value)} days",
+                "category": "VIP",
+                "value": int(db_code.value),
+                **_user_snapshot(updated_user),
+            }
     finally:
         db.close()
 
@@ -47,6 +75,8 @@ def buy_membership_with_balance(user_id: int, plan_type: str):
     try:
         user_repo = UserRepository(db)
         user = user_repo.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
         
         if float(user.balance) < plan["price"]:
             raise ValueError(f"Insufficient balance. Plan costs ${plan['price']}")
@@ -59,7 +89,15 @@ def buy_membership_with_balance(user_id: int, plan_type: str):
         current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > now) else now
         new_expiry = current_expiry + timedelta(days=plan["days"])
         user_repo.update_vip_status(user_id, True, new_expiry)
-        
-        return {"status": "success", "message": f"Plan {plan_type} activated successfully!"}
+        updated_user = user_repo.get_user_by_id(user_id)
+
+        return {
+            "status": "success",
+            "message": f"Plan {plan_type} activated successfully!",
+            "plan": plan_type,
+            "price": plan["price"],
+            "days": plan["days"],
+            **_user_snapshot(updated_user),
+        }
     finally:
         db.close()

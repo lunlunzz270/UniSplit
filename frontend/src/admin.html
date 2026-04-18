@@ -5,42 +5,167 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniSplit - Admin</title>
     <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .admin-toolbar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: flex-end;
+        }
+        .admin-summary {
+            margin-bottom: 22px;
+        }
+        .admin-reset-panel {
+            margin-bottom: 18px;
+        }
+        .admin-reset-panel.hidden {
+            display: none;
+        }
+        .admin-reset-grid {
+            display: grid;
+            grid-template-columns: 1.2fr 1fr auto;
+            gap: 12px;
+            align-items: end;
+        }
+        .admin-muted {
+            color: var(--muted);
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        .admin-inline-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--muted);
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .admin-subtitle {
+            margin-top: 8px;
+        }
+        @media (max-width: 960px) {
+            .admin-reset-grid {
+                grid-template-columns: 1fr;
+            }
+            .admin-toolbar {
+                justify-content: flex-start;
+            }
+        }
+    </style>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="logo">UniSplit</div>
-        <div class="nav-links"></div>
-    </nav>
-
     <main class="container">
         <section class="page-header-card">
-            <span class="hero-badge">Admin Controls</span>
-            <h1>User Management</h1>
-            <p>Review users and disable or restore accounts.</p>
+            <div class="panel-header" style="margin-bottom: 10px;">
+                <div>
+                    <span class="hero-badge">Pure Admin Panel</span>
+                    <h1 style="margin-top: 12px;">Management Console</h1>
+                    <p class="admin-subtitle">User management, system transactions, and audit visibility only.</p>
+                </div>
+                <div class="admin-toolbar">
+                    <button type="button" id="refreshButton" class="btn-secondary">Refresh</button>
+                    <button type="button" id="logoutButton" class="btn-secondary">Logout</button>
+                </div>
+            </div>
+            <p id="adminStatus" class="inline-status" aria-live="polite"></p>
+        </section>
+
+        <section class="stats-grid admin-summary" id="overviewStats">
+            <div class="stat-card">
+                <p class="stat-label">Total users</p>
+                <h2 id="totalUsers">0</h2>
+                <span class="tag neutral">All accounts</span>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Administrator users</p>
+                <h2 id="totalAdmins">0</h2>
+                <span class="tag positive">Elevated access</span>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">System transactions</p>
+                <h2 id="totalTransactions">0</h2>
+                <span class="tag neutral">Settlement records</span>
+            </div>
+            <div class="stat-card">
+                <p class="stat-label">Audit events</p>
+                <h2 id="totalAuditLogs">0</h2>
+                <span class="tag warning">Security trail</span>
+            </div>
         </section>
 
         <section class="panel">
             <div class="panel-header">
-                <h2>Account Status</h2>
-                <span id="adminStatus" class="status neutral">Loading</span>
+                <h2>User management</h2>
+                <span id="userCountBadge" class="status neutral">Loading</span>
             </div>
-            <p id="adminMessage" class="error-message"></p>
+
+            <div id="passwordResetPanel" class="admin-reset-panel empty-state-card hidden">
+                <h3>Reset password</h3>
+                <p id="passwordResetSummary" class="admin-muted">Choose a user to reset their password.</p>
+                <div class="admin-reset-grid">
+                    <div class="input-group">
+                        <label class="admin-inline-label" for="newPasswordInput">New password</label>
+                        <input type="password" id="newPasswordInput" placeholder="Enter a new password">
+                    </div>
+                    <div class="input-group">
+                        <label class="admin-inline-label" for="resetNoteInput">Reason note</label>
+                        <input type="text" id="resetNoteInput" placeholder="Optional note for your own reference">
+                    </div>
+                    <div class="button-row" style="margin-top: 0;">
+                        <button type="button" id="confirmResetButton" class="btn">Reset</button>
+                        <button type="button" id="cancelResetButton" class="btn-secondary">Cancel</button>
+                    </div>
+                </div>
+            </div>
+
+            <p id="userMessage" class="inline-status neutral" aria-live="polite">Manage user accounts below. Audit and transaction summaries appear in the panels underneath.</p>
             <div id="userTable" class="history-list"></div>
+        </section>
+
+        <section class="two-column-layout" style="margin-top: 22px;">
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>System transactions</h2>
+                    <span id="transactionCountBadge" class="status neutral">Loading</span>
+                </div>
+                <div id="transactionList" class="history-list"></div>
+            </section>
+
+            <section class="panel">
+                <div class="panel-header">
+                    <h2>Audit log</h2>
+                    <span id="auditCountBadge" class="status neutral">Loading</span>
+                </div>
+                <div id="auditList" class="history-list"></div>
+            </section>
         </section>
     </main>
 
-    <script src="./js/app.js?v=15"></script>
+    <script src="./js/app.js?v=19"></script>
     <script>
-        const currentUser = window.UniSplitApp.ensureAuthBanner({
-            title: 'Admin access',
-            requireLogin: true,
-            loginHref: 'login.html',
-            dashboardHref: 'dashboard.html'
-        });
-
+        const currentUser = window.UniSplitApp.getCurrentUser();
         const adminStatus = document.getElementById('adminStatus');
-        const adminMessage = document.getElementById('adminMessage');
+        const userMessage = document.getElementById('userMessage');
         const userTable = document.getElementById('userTable');
+        const transactionList = document.getElementById('transactionList');
+        const auditList = document.getElementById('auditList');
+        const userCountBadge = document.getElementById('userCountBadge');
+        const transactionCountBadge = document.getElementById('transactionCountBadge');
+        const auditCountBadge = document.getElementById('auditCountBadge');
+        const passwordResetPanel = document.getElementById('passwordResetPanel');
+        const passwordResetSummary = document.getElementById('passwordResetSummary');
+        const newPasswordInput = document.getElementById('newPasswordInput');
+        const resetNoteInput = document.getElementById('resetNoteInput');
+        const confirmResetButton = document.getElementById('confirmResetButton');
+        const cancelResetButton = document.getElementById('cancelResetButton');
+        const totalUsers = document.getElementById('totalUsers');
+        const totalAdmins = document.getElementById('totalAdmins');
+        const totalTransactions = document.getElementById('totalTransactions');
+        const totalAuditLogs = document.getElementById('totalAuditLogs');
+        const refreshButton = document.getElementById('refreshButton');
+        const logoutButton = document.getElementById('logoutButton');
+
+        let selectedResetUser = null;
 
         function escapeHtml(value) {
             return String(value || '')
@@ -51,7 +176,30 @@
                 .replaceAll("'", '&#39;');
         }
 
+        function formatDateTime(value) {
+            if (!value) {
+                return 'N/A';
+            }
+            const parsed = new Date(value);
+            return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+        }
+
+        function setInlineStatus(message, color = '#ff9d9d') {
+            adminStatus.style.color = color;
+            adminStatus.textContent = message;
+        }
+
+        function readUserPayload(payload) {
+            return payload && payload.user ? payload.user : payload;
+        }
+
+        function renderEmptyState(message) {
+            return `<div class="empty-state-card"><p>${escapeHtml(message)}</p></div>`;
+        }
+
         function renderUser(user) {
+            const actionLabel = user.is_active ? 'Disable' : 'Restore';
+            const actionKey = user.is_active ? 'disable' : 'restore';
             return `
                 <div class="history-item">
                     <div class="history-main">
@@ -61,57 +209,230 @@
                         </div>
                         <div class="history-meta">
                             <span>Email: ${escapeHtml(user.email)}</span>
+                            <span>Role: ${escapeHtml(user.role || (user.is_admin ? 'administrator' : 'user'))}</span>
                             <span>Admin: ${user.is_admin ? 'Yes' : 'No'}</span>
                         </div>
                     </div>
                     <div class="button-row">
-                        <button class="btn-secondary" data-user-action="disable" data-user-id="${user.id}">Disable</button>
-                        <button class="btn" data-user-action="restore" data-user-id="${user.id}">Restore</button>
+                        <button class="btn-secondary" data-user-action="${actionKey}" data-user-id="${user.id}">${actionLabel}</button>
+                        <button class="btn" data-user-action="reset-password" data-user-id="${user.id}">Reset password</button>
                     </div>
                 </div>
             `;
         }
 
-        async function loadUsers() {
-            if (!currentUser || !currentUser.is_admin) {
-                adminMessage.textContent = 'Admin access is required.';
-                userTable.innerHTML = '<div class="empty-state-card"><p>Permission denied.</p></div>';
-                return;
+        function renderTransaction(item) {
+            return `
+                <div class="history-item">
+                    <div class="history-main">
+                        <div class="history-top-row">
+                            <h3>${escapeHtml(item.group_name || 'Unknown group')}</h3>
+                            <span class="history-amount">$${Number(item.amount || 0).toFixed(2)}</span>
+                        </div>
+                        <div class="history-meta">
+                            <span>Payer: ${escapeHtml(item.payer_name || 'Unknown')}</span>
+                            <span>Payee: ${escapeHtml(item.payee_name || 'Unknown')}</span>
+                            <span>Status: ${escapeHtml(item.status || 'unknown')}</span>
+                            <span>Settled: ${escapeHtml(formatDateTime(item.settled_at))}</span>
+                        </div>
+                        <p class="history-notes">${escapeHtml(item.note || item.description || '')}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderAudit(item) {
+            return `
+                <div class="history-item">
+                    <div class="history-main">
+                        <div class="history-top-row">
+                            <h3>${escapeHtml(item.action_type || 'Audit event')}</h3>
+                            <span class="status neutral">${escapeHtml(item.group_name || 'System')}</span>
+                        </div>
+                        <div class="history-meta">
+                            <span>User: ${escapeHtml(item.user_name || 'Unknown')}</span>
+                            <span>Time: ${escapeHtml(formatDateTime(item.created_at))}</span>
+                            <span>Ref: ${escapeHtml(item.ref_id ?? 'N/A')}</span>
+                        </div>
+                        <p class="history-notes">${escapeHtml(item.description || '')}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function showResetPanel(user) {
+            selectedResetUser = user;
+            passwordResetPanel.classList.remove('hidden');
+            passwordResetSummary.textContent = `Reset the password for ${user.full_name} (${user.email}). Sessions will be invalidated.`;
+            newPasswordInput.value = '';
+            resetNoteInput.value = '';
+            newPasswordInput.focus();
+        }
+
+        function hideResetPanel() {
+            selectedResetUser = null;
+            passwordResetPanel.classList.add('hidden');
+            passwordResetSummary.textContent = 'Choose a user to reset their password.';
+            newPasswordInput.value = '';
+            resetNoteInput.value = '';
+        }
+
+        async function loadOverview() {
+            const res = await window.UniSplitApp.apiFetch('/api/admin/overview');
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to load admin overview');
             }
 
+            totalUsers.textContent = data.total_users ?? 0;
+            totalAdmins.textContent = data.total_admins ?? 0;
+            totalTransactions.textContent = data.total_transactions ?? 0;
+            totalAuditLogs.textContent = data.total_audit_logs ?? 0;
+        }
+
+        async function loadUsers() {
             const res = await window.UniSplitApp.apiFetch('/api/admin/users');
             const data = await res.json();
             if (!res.ok) {
-                adminMessage.textContent = data.error || 'Failed to load users.';
-                return;
+                throw new Error(data.error || 'Failed to load users');
             }
 
             const users = data.users || [];
-            adminStatus.textContent = `Loaded ${users.length} users`;
-            userTable.innerHTML = users.map(renderUser).join('');
+            userCountBadge.textContent = `${users.length} users`;
+            userTable.innerHTML = users.length ? users.map(renderUser).join('') : renderEmptyState('No users found.');
 
             userTable.querySelectorAll('[data-user-action]').forEach((button) => {
                 button.addEventListener('click', async () => {
                     const userId = button.dataset.userId;
                     const action = button.dataset.userAction;
+                    const target = users.find((item) => String(item.id) === String(userId));
+                    if (!target) {
+                        return;
+                    }
+
+                    if (action === 'reset-password') {
+                        showResetPanel(target);
+                        return;
+                    }
+
                     const route = `/api/admin/users/${userId}/${action}`;
                     const actionRes = await window.UniSplitApp.apiFetch(route, { method: 'POST' });
                     const actionData = await actionRes.json();
                     if (!actionRes.ok) {
-                        adminMessage.textContent = actionData.error || 'Action failed.';
+                        setInlineStatus(actionData.error || 'Action failed.');
                         return;
                     }
-                    adminMessage.style.color = '#8ff0b0';
-                    adminMessage.textContent = `User ${action}d successfully.`;
-                    await loadUsers();
+
+                    setInlineStatus(actionData.message || `User ${action} completed.`, '#8ff0b0');
+                    await refreshAdminData();
                 });
             });
         }
 
+        async function loadTransactions() {
+            const res = await window.UniSplitApp.apiFetch('/api/admin/system/transactions?limit=8');
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to load transactions');
+            }
+
+            const transactions = data.transactions || [];
+            transactionCountBadge.textContent = `${transactions.length} records`;
+            transactionList.innerHTML = transactions.length ? transactions.map(renderTransaction).join('') : renderEmptyState('No system transactions yet.');
+        }
+
+        async function loadAuditLogs() {
+            const res = await window.UniSplitApp.apiFetch('/api/admin/system/audit-logs?limit=8');
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Failed to load audit logs');
+            }
+
+            const logs = data.audit_logs || [];
+            auditCountBadge.textContent = `${logs.length} events`;
+            auditList.innerHTML = logs.length ? logs.map(renderAudit).join('') : renderEmptyState('No audit events yet.');
+        }
+
+        async function refreshAdminData() {
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!currentUser.is_admin) {
+                setInlineStatus('Admin access is required.', '#ff9d9d');
+                userTable.innerHTML = renderEmptyState('Permission denied.');
+                transactionList.innerHTML = renderEmptyState('Admin access only.');
+                auditList.innerHTML = renderEmptyState('Admin access only.');
+                return;
+            }
+
+            setInlineStatus('Loading admin data...', '#9fe7ff');
+            try {
+                await Promise.all([
+                    loadOverview(),
+                    loadUsers(),
+                    loadTransactions(),
+                    loadAuditLogs(),
+                ]);
+                setInlineStatus('Admin data loaded.', '#8ff0b0');
+            } catch (error) {
+                console.error('Admin load failed:', error);
+                setInlineStatus(error.message || 'Failed to load admin data.');
+            }
+        }
+
+        confirmResetButton.addEventListener('click', async () => {
+            if (!selectedResetUser) {
+                setInlineStatus('Select a user before resetting a password.');
+                return;
+            }
+
+            const newPassword = newPasswordInput.value.trim();
+            const note = resetNoteInput.value.trim();
+            if (newPassword.length < 6) {
+                setInlineStatus('Password must be at least 6 characters long.');
+                return;
+            }
+
+            const res = await window.UniSplitApp.apiFetch(`/api/admin/users/${selectedResetUser.id}/reset-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ new_password: newPassword, note })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                setInlineStatus(data.error || 'Password reset failed.');
+                return;
+            }
+
+            setInlineStatus(data.message || 'Password reset completed.', '#8ff0b0');
+            hideResetPanel();
+            await refreshAdminData();
+        });
+
+        cancelResetButton.addEventListener('click', () => {
+            hideResetPanel();
+        });
+
+        refreshButton.addEventListener('click', refreshAdminData);
+        logoutButton.addEventListener('click', () => window.UniSplitApp.clearAuthAndRedirect('login.html'));
+
         window.addEventListener('DOMContentLoaded', async () => {
-            if (!currentUser) return;
-            adminStatus.textContent = currentUser.is_admin ? 'Admin session active' : 'Not an admin';
-            await loadUsers();
+            if (!currentUser) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (!currentUser.is_admin) {
+                setInlineStatus('Admin access is required.', '#ff9d9d');
+                userTable.innerHTML = renderEmptyState('Permission denied.');
+                transactionList.innerHTML = renderEmptyState('Admin access only.');
+                auditList.innerHTML = renderEmptyState('Admin access only.');
+                return;
+            }
+
+            await refreshAdminData();
         });
     </script>
 </body>

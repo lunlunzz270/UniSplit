@@ -7,20 +7,60 @@ def test_admin_and_user_creation_roles(api_client):
     # 1. Regular user registration
     resp_user = api_client.post(
         "/api/register",
-        json={"name": "Regular User", "email": "user@example.com", "password": "password123"},
+        json={"name": "Regular User", "email": "user@example.com", "password": "password123", "role": "user"},
     )
     assert resp_user.status_code == 201
     data_user = resp_user.get_json()
     assert data_user["is_admin"] is False
+    assert data_user["role"] == "user"
 
     # 2. Admin user registration
     resp_admin = api_client.post(
         "/api/register",
-        json={"name": "Admin User", "email": "admin@unisplit.com", "password": "password123"},
+        json={"name": "Admin User", "email": "admin@unisplit.com", "password": "password123", "role": "admin"},
     )
     assert resp_admin.status_code == 201
     data_admin = resp_admin.get_json()
     assert data_admin["is_admin"] is True
+    assert data_admin["role"] == "admin"
+
+
+def test_explicit_admin_registration_and_login_role_checks(api_client):
+    admin_register = api_client.post(
+        "/api/register",
+        json={"name": "Explicit Admin", "email": "explicit@unisplit.com", "password": "password123", "role": "admin"},
+    )
+    assert admin_register.status_code == 201
+    admin_data = admin_register.get_json()
+    assert admin_data["is_admin"] is True
+
+    invalid_admin_register = api_client.post(
+        "/api/register",
+        json={"name": "Wrong Admin", "email": "wrong@example.com", "password": "password123", "role": "admin"},
+    )
+    assert invalid_admin_register.status_code == 400
+
+    normal_login = api_client.post(
+        "/api/login",
+        json={"email": "explicit@unisplit.com", "password": "password123", "role": "user"},
+    )
+    assert normal_login.status_code == 200
+
+    admin_login = api_client.post(
+        "/api/login",
+        json={"email": "explicit@unisplit.com", "password": "password123", "role": "admin"},
+    )
+    assert admin_login.status_code == 200
+
+    denied_admin_login = api_client.post(
+        "/api/register",
+        json={"name": "Normal User", "email": "normal@example.com", "password": "password123"},
+    ).get_json()
+    denied_login = api_client.post(
+        "/api/login",
+        json={"email": denied_admin_login["email"], "password": "password123", "role": "admin"},
+    )
+    assert denied_login.status_code == 403
 
 
 def test_expense_visibility_isolation(api_client):
@@ -87,3 +127,10 @@ def test_expense_visibility_isolation(api_client):
     assert len(history_c["expenses"]) == 1
     assert history_c["expenses"][0]["description"] == "Coffee"
     assert history_c["expenses"][0]["payer"] == "User A"
+
+    # 6. User A can search by email as well as description.
+    history_email = api_client.get(
+        "/api/expenses?search=a@example.com",
+        headers={"Authorization": f"Bearer {token_a}"},
+    ).get_json()
+    assert len(history_email["expenses"]) == 1

@@ -149,7 +149,9 @@ class ExpenseRepository:
                 or_(
                     Expense.description.ilike(like),
                     User.full_name.ilike(like),
-                    Group.name.ilike(like)
+                    User.email.ilike(like),
+                    Group.name.ilike(like),
+                    Expense.participants.any(ExpenseParticipant.user.has(User.email.ilike(like)))
                 )
             )
 

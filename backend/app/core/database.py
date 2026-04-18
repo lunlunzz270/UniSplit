@@ -98,10 +98,16 @@ def ensure_sqlite_compatibility():
             add_column_if_missing(conn, "expense_participants", participant_columns, "is_settled BOOLEAN DEFAULT 0", "is_settled")
             add_column_if_missing(conn, "expense_participants", participant_columns, "status VARCHAR(20) DEFAULT 'pending'", "status")
             add_column_if_missing(conn, "expense_participants", participant_columns, "appeal_reason TEXT", "appeal_reason")
+            add_column_if_missing(conn, "expense_participants", participant_columns, "last_reminder_at DATETIME", "last_reminder_at")
+            add_column_if_missing(conn, "expense_participants", participant_columns, "reminder_count INTEGER DEFAULT 0", "reminder_count")
 
         if "settlements" in tables:
             settlement_columns = {col["name"] for col in inspector.get_columns("settlements")}
             add_column_if_missing(conn, "settlements", settlement_columns, "note TEXT", "note")
+            add_column_if_missing(conn, "settlements", settlement_columns, "rejection_message TEXT", "rejection_message")
+            add_column_if_missing(conn, "settlements", settlement_columns, "due_date DATETIME", "due_date")
+            add_column_if_missing(conn, "settlements", settlement_columns, "last_reminder_at DATETIME", "last_reminder_at")
+            add_column_if_missing(conn, "settlements", settlement_columns, "reminder_count INTEGER DEFAULT 0", "reminder_count")
             add_column_if_missing(conn, "settlements", settlement_columns, "settled_at DATETIME", "settled_at")
             add_column_if_missing(conn, "settlements", settlement_columns, "status VARCHAR(20) DEFAULT 'paid'", "status")
             add_column_if_missing(conn, "settlements", settlement_columns, "expense_id INTEGER", "expense_id")

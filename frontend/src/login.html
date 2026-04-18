@@ -12,9 +12,9 @@
         <div class="nav-links">
             <a href="index.html">Home</a>
             <a href="register.html">Register</a>
-            <a href="login.html"class="active">Login</a>
+            <a href="login.html" class="active">Login</a>
             <a href="dashboard.html">Dashboard</a>
-            <a href="add_expense.html" >Add Expense</a>
+            <a href="add_expense.html">Add Expense</a>
             <a href="insights.html">Expense Insights</a>
             <a href="membership.html">Membership Purchase</a>
             <a href="history.html">Transaction History</a>
@@ -28,8 +28,8 @@
                 <span class="hero-badge">Secure Account Access</span>
                 <h1>Welcome back to UniSplit</h1>
                 <p>
-                    Log in to manage shared expenses, track balances, and stay updated on
-                    group activity across trips, roommates, and events.
+                    Log in to manage shared expenses, review balances, and access the
+                    administrator console when your account has elevated privileges.
                 </p>
 
                 <div class="auth-feature-list">
@@ -38,12 +38,12 @@
                         <p>Keep your group expenses organized in one place.</p>
                     </div>
                     <div class="auth-feature-card">
-                        <h3>Review recent activity</h3>
-                        <p>See who added expenses and who still needs to settle.</p>
+                        <h3>Switch account mode</h3>
+                        <p>Choose a regular user or administrator session explicitly.</p>
                     </div>
                     <div class="auth-feature-card">
-                        <h3>Access reports quickly</h3>
-                        <p>View expense summaries and payment insights anytime.</p>
+                        <h3>Access system controls</h3>
+                        <p>Admins can review users, audits, and system transactions.</p>
                     </div>
                 </div>
             </div>
@@ -56,6 +56,15 @@
                     </div>
 
                     <div class="input-group">
+                        <label for="role">Account type</label>
+                        <select id="role" required>
+                            <option value="user" selected>Login as user</option>
+                            <option value="admin">Login as administrator</option>
+                        </select>
+                        <p id="roleHint" class="inline-status neutral">Regular accounts use the standard shared expense experience.</p>
+                    </div>
+
+                    <div class="input-group">
                         <label for="email">Email</label>
                         <input type="email" id="email" placeholder="Enter your email">
                     </div>
@@ -65,7 +74,7 @@
                         <input type="password" id="password" placeholder="Enter your password">
                     </div>
 
-                    <p id="errorMsg" class="error-message"></p>
+                    <p id="formStatus" class="inline-status" aria-live="polite"></p>
 
                     <button type="submit" class="btn btn-full">Login</button>
 
@@ -78,35 +87,66 @@
         </section>
     </main>
 
-    <script src="./js/app.js?v=10"></script>
+    <script src="./js/app.js?v=19"></script>
     <script>
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Login status',
             loginHref: 'register.html',
             dashboardHref: 'dashboard.html'
         });
-        if (currentUser) {
-            document.getElementById('errorMsg').textContent = `You are signed in as ${window.UniSplitApp.getUserDisplayName(currentUser)}. Use logout to switch accounts.`;
-            document.getElementById('errorMsg').style.color = '#8ff0b0';
+        const formStatus = document.getElementById('formStatus');
+        const roleHint = document.getElementById('roleHint');
+        const loginForm = document.getElementById('loginForm');
+        const roleSelect = document.getElementById('role');
+
+        function setStatus(message, kind = 'error') {
+            formStatus.className = `inline-status ${kind}`;
+            formStatus.textContent = message;
         }
 
-        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+        function syncRoleHint() {
+            const isAdmin = roleSelect.value === 'admin';
+            roleHint.textContent = isAdmin
+                ? 'Administrator sign-in requires an approved admin account.'
+                : 'Regular accounts use the standard shared expense experience.';
+        }
+
+        roleSelect.addEventListener('change', syncRoleHint);
+        syncRoleHint();
+
+        if (currentUser) {
+            setStatus(`You are signed in as ${window.UniSplitApp.getUserDisplayName(currentUser)} (${window.UniSplitApp.getUserRoleLabel(currentUser)}). Use logout to switch accounts.`, 'success');
+        }
+
+        loginForm.addEventListener('submit', async function (e) {
             e.preventDefault();
-            const email = document.getElementById('email').value;
+
+            setStatus('Signing in...', 'neutral');
+
+            const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
+            const role = document.getElementById('role').value;
 
             const res = await fetch(window.UniSplitApp.apiUrl('/api/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                body: JSON.stringify({ email, password, role })
             });
 
-            const data = await res.json();
+            let data = {};
+            try {
+                data = await res.json();
+            } catch (error) {
+                data = {};
+            }
             if (res.ok) {
                 window.UniSplitApp.setCurrentUser(data);
                 window.location.href = 'dashboard.html';
             } else {
-                document.getElementById('errorMsg').textContent = data.error;
+                const fallback = role === 'admin'
+                    ? 'Administrator login was rejected. Check that the account is approved and the email domain is allowed.'
+                    : 'Login failed';
+                setStatus(data.error || fallback, 'error');
             }
         });
     </script>
