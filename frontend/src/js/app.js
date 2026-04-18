@@ -8,12 +8,16 @@ function normalizeUser(user) {
     }
 
     const session = user.session && typeof user.session === 'object' ? user.session : null;
+    const isAdmin = Boolean(user.is_admin);
+    const roleValue = String(user.role || '').toLowerCase();
+    const role = roleValue.startsWith('admin') || isAdmin ? 'admin' : 'user';
     return {
         id: user.id ?? null,
         name: user.name || user.full_name || '',
         full_name: user.full_name || user.name || '',
         email: user.email || '',
-        is_admin: user.is_admin || false,
+        is_admin: isAdmin,
+        role,
         session_token: user.session_token || user.token || session?.token || '',
         session_expires_at: user.session_expires_at || user.expires_at || session?.expires_at || '',
     };
@@ -57,6 +61,15 @@ function getUserDisplayName(user) {
     }
 
     return normalized.full_name || normalized.name || normalized.email || 'Guest';
+}
+
+function getUserRoleLabel(user) {
+    const normalized = normalizeUser(user);
+    if (!normalized) {
+        return 'Guest';
+    }
+
+    return normalized.role === 'admin' ? 'Administrator' : 'User';
 }
 
 function createAuthActionButton(label, href, className = 'btn-secondary') {
@@ -152,15 +165,18 @@ function syncNavbarAuthState() {
             }));
 
             if (signedIn) {
-                const visibleOrder = [
-                    'dashboard.html',
-                    'add_expense.html',
-                    'history.html',
-                    'insights.html',
-                    'report.html',
-                    'membership.html',
-                    'reminders.html',
-                ];
+                const isAdminPage = currentPage === 'admin.html';
+                const visibleOrder = isAdminPage
+                    ? ['dashboard.html']
+                    : [
+                        'dashboard.html',
+                        'add_expense.html',
+                        'history.html',
+                        'insights.html',
+                        'report.html',
+                        'membership.html',
+                        'reminders.html',
+                    ];
 
                 visibleOrder.forEach((href) => {
                     const labels = {
@@ -180,13 +196,14 @@ function syncNavbarAuthState() {
                     }));
                 });
 
-                // Add Global Currency Action
-                rightGroup.appendChild(createNavbarLink(null, {
-                    href: '#',
-                    label: 'Currency',
-                    active: false,
-                    onClick: (e) => { e.preventDefault(); showCurrencyModal(); }
-                }));
+                if (!isAdminPage) {
+                    rightGroup.appendChild(createNavbarLink(null, {
+                        href: '#',
+                        label: 'Currency',
+                        active: false,
+                        onClick: (e) => { e.preventDefault(); showCurrencyModal(); }
+                    }));
+                }
 
                 if (currentUser?.is_admin) {
                     rightGroup.appendChild(createNavbarLink(null, {
@@ -313,7 +330,7 @@ function ensureAuthBanner(options = {}) {
     const statusClass = signedIn ? 'positive' : 'warning';
     const statusText = signedIn ? 'Signed in' : 'Sign in required';
     const introText = signedIn
-        ? `You are signed in as ${getUserDisplayName(currentUser)}.`
+        ? `You are signed in as ${getUserDisplayName(currentUser)} (${getUserRoleLabel(currentUser)}).`
         : 'You are not signed in yet. Please log in to continue.';
 
     banner.innerHTML = `
@@ -549,6 +566,7 @@ window.UniSplitApp = {
     clearCurrentUser,
     getCurrentSessionToken,
     getUserDisplayName,
+    getUserRoleLabel,
     createAuthActionButton,
     createLogoutButton,
     logoutCurrentUser,

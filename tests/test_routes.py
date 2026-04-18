@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_auth_and_expense_routes(api_client):
     register = api_client.post(
         "/api/register",
@@ -47,6 +50,14 @@ def test_auth_and_expense_routes(api_client):
     records = history.get_json()["expenses"]
     assert len(records) == 1
     assert records[0]["group_name"] == "Sprint 5 Trip"
+
+    email_search = api_client.get(
+        "/api/expenses",
+        headers={"Authorization": f"Bearer {session_token}"},
+        query_string={"search": "team@example.com"},
+    )
+    assert email_search.status_code == 200
+    assert len(email_search.get_json()["expenses"]) == 1
 
     logout = api_client.post(
         "/api/logout",
@@ -333,23 +344,34 @@ def test_group_members_route(api_client):
     assert outsider_res.status_code == 403
 
 
-def test_admin_routes(api_client):
+def test_admin_routes(api_client, session_factory):
     admin_user = api_client.post(
         "/api/register",
-        json={"name": "Admin User", "email": "admin@unisplit.com", "password": "pwd123"},
+        json={"name": "Admin User", "email": "admin@unisplit.com", "password": "pwd123", "role": "admin"},
     ).get_json()
     regular_user = api_client.post(
         "/api/register",
-        json={"name": "Regular User", "email": "regular@example.com", "password": "pwd123"},
+        json={"name": "Regular User", "email": "regular@example.com", "password": "pwd123", "role": "user"},
     ).get_json()
 
     admin_headers = {"Authorization": f"Bearer {admin_user['session']['token']}"}
     user_headers = {"Authorization": f"Bearer {regular_user['session']['token']}"}
 
+    admin_login = api_client.post(
+        "/api/login",
+        json={"email": "admin@unisplit.com", "password": "pwd123", "role": "admin"},
+    )
+    assert admin_login.status_code == 200
+    assert admin_login.get_json()["role"] == "admin"
+
     list_res = api_client.get("/api/admin/users", headers=admin_headers)
     assert list_res.status_code == 200
     users = list_res.get_json()["users"]
     assert any(user["email"] == "regular@example.com" for user in users)
+
+    overview_res = api_client.get("/api/admin/overview", headers=admin_headers)
+    assert overview_res.status_code == 200
+    assert overview_res.get_json()["total_users"] >= 2
 
     deny_res = api_client.get("/api/admin/users", headers=user_headers)
     assert deny_res.status_code == 403
@@ -357,22 +379,145 @@ def test_admin_routes(api_client):
     disable_res = api_client.post(f"/api/admin/users/{regular_user['id']}/disable", headers=admin_headers)
     assert disable_res.status_code == 200
     assert disable_res.get_json()["is_active"] is False
+    assert disable_res.get_json()["role"] == "user"
 
     disabled_login = api_client.post(
         "/api/login",
-        json={"email": "regular@example.com", "password": "pwd123"},
+        json={"email": "regular@example.com", "password": "pwd123", "role": "user"},
     )
     assert disabled_login.status_code == 401
 
-    disabled_me = api_client.get(
-        "/api/me",
-        headers=user_headers,
-    )
+    disabled_me = api_client.get("/api/me", headers=user_headers)
     assert disabled_me.status_code == 401
 
     restore_res = api_client.post(f"/api/admin/users/{regular_user['id']}/restore", headers=admin_headers)
     assert restore_res.status_code == 200
     assert restore_res.get_json()["is_active"] is True
+
+    fresh_login = api_client.post(
+        "/api/login",
+        json={"email": "regular@example.com", "password": "pwd123", "role": "user"},
+    )
+    assert fresh_login.status_code == 200
+    fresh_headers = {"Authorization": f"Bearer {fresh_login.get_json()['session']['token']}"}
+
+    reset_res = api_client.post(
+        f"/api/admin/users/{regular_user['id']}/reset-password",
+        headers=admin_headers,
+        json={"new_password": "newpwd123"},
+    )
+    assert reset_res.status_code == 200
+    assert "Password reset successfully" in reset_res.get_json()["message"]
+
+    old_session = api_client.get("/api/me", headers=fresh_headers)
+    assert old_session.status_code == 401
+
+    new_login = api_client.post(
+        "/api/login",
+        json={"email": "regular@example.com", "password": "newpwd123", "role": "user"},
+    )
+    assert new_login.status_code == 200
+    assert new_login.get_json()["email"] == "regular@example.com"
+
+
+def test_admin_system_audit_views(api_client, session_factory):
+    admin = api_client.post(
+        "/api/register",
+        json={"name": "System Admin", "email": "system.admin@unisplit.com", "password": "pwd123", "role": "admin"},
+    ).get_json()
+    creator = api_client.post(
+        "/api/register",
+        json={"name": "Creator", "email": "audit.creator@example.com", "password": "pwd123", "role": "user"},
+    ).get_json()
+    teammate = api_client.post(
+        "/api/register",
+        json={"name": "Teammate", "email": "audit.member@example.com", "password": "pwd123", "role": "user"},
+    ).get_json()
+
+    from backend.app.repositories.users import UserRepository
+    db = session_factory()
+    UserRepository(db).update_balance(teammate["id"], 50.00)
+    db.close()
+
+    group_res = api_client.post(
+        "/api/groups",
+        json={"name": "Audit Group", "description": "Audit test", "creator_id": creator["id"]},
+    )
+    assert group_res.status_code == 201
+    group_id = group_res.get_json()["id"]
+
+    member_res = api_client.post(
+        f"/api/groups/{group_id}/members",
+        headers={"Authorization": f"Bearer {creator['session']['token']}"},
+        json={"user_id": teammate["id"], "role": "MEMBER"},
+    )
+    assert member_res.status_code == 201
+
+    expense_res = api_client.post(
+        "/api/expenses",
+        headers={"Authorization": f"Bearer {creator['session']['token']}"},
+        json={
+            "group_name": "Audit Group",
+            "description": "Lunch",
+            "amount": "25.00",
+            "category": "Food",
+            "payer_email": creator["email"],
+            "participant_emails": [creator["email"], teammate["email"]],
+        },
+    )
+    assert expense_res.status_code == 201
+    expense_id = expense_res.get_json()["id"]
+
+    settlement_res = api_client.post(
+        f"/api/groups/{group_id}/settlements",
+        headers={"Authorization": f"Bearer {teammate['session']['token']}"},
+        json={
+            "expense_id": expense_id,
+            "payer_id": teammate["id"],
+            "payee_id": creator["id"],
+            "amount": "12.50",
+            "note": "Lunch split",
+        },
+    )
+    assert settlement_res.status_code == 201
+
+    admin_headers = {"Authorization": f"Bearer {admin['session']['token']}"}
+    transactions = api_client.get("/api/admin/system/transactions", headers=admin_headers)
+    assert transactions.status_code == 200
+    assert any(item["group_name"] == "Audit Group" for item in transactions.get_json()["transactions"])
+
+    audit_logs = api_client.get("/api/admin/system/audit-logs", headers=admin_headers)
+    assert audit_logs.status_code == 200
+    assert any(item["action_type"] == "settlement_recorded" for item in audit_logs.get_json()["audit_logs"])
+
+    denied = api_client.get("/api/admin/system/transactions", headers={"Authorization": f"Bearer {creator['session']['token']}"})
+    assert denied.status_code == 403
+
+
+def test_membership_routes_return_details(api_client, session_factory):
+    user = api_client.post(
+        "/api/register",
+        json={"name": "Premium User", "email": "premium@example.com", "password": "pwd123", "role": "user"},
+    ).get_json()
+
+    from backend.app.repositories.users import UserRepository
+    db = session_factory()
+    UserRepository(db).update_balance(user["id"], 20.00)
+    db.close()
+
+    buy_res = api_client.post(
+        "/api/membership/buy",
+        headers={"Authorization": f"Bearer {user['session']['token']}"},
+        json={"plan": "monthly"},
+    )
+    assert buy_res.status_code == 200
+    buy_data = buy_res.get_json()
+    assert buy_data["status"] == "success"
+    assert buy_data["plan"] == "monthly"
+    assert buy_data["is_vip"] is True
+    assert buy_data["vip_expiry"] is not None
+    assert buy_data["balance"] == pytest.approx(10.01, rel=1e-6)
+
 def test_flask_serves_frontend_and_api_on_same_port(app_client):
     index = app_client.get("/")
     assert index.status_code == 200

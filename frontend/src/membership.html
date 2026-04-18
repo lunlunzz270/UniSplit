@@ -22,6 +22,10 @@
         .wallet-stats p { margin: 5px 0 0 0; font-size: 1.8em; font-weight: bold; color: #8ff0b0; }
         .redeem-form { display: flex; gap: 10px; flex: 1; max-width: 400px; }
         .redeem-form input { flex: 1; }
+        .membership-summary {
+            flex: 1;
+            min-width: 250px;
+        }
     </style>
 </head>
 <body>
@@ -46,11 +50,16 @@
                 <p id="displayBalance">$0.00</p>
                 <small id="displayVip" style="opacity: 0.6;">Free Member</small>
             </div>
+            <div class="membership-summary">
+                <span id="membershipRoleBadge" class="status neutral">User view</span>
+                <p id="membershipSummaryText">Review your current plan, redeem a code, or upgrade when you're ready.</p>
+            </div>
             <div class="redeem-form">
                 <input type="text" id="redeemCode" placeholder="Enter Redemption Code">
                 <button class="btn" onclick="handleRedeem()">Redeem</button>
             </div>
         </section>
+        <p id="membershipStatus" class="inline-status" aria-live="polite"></p>
 
         <section class="membership-comparison">
             <div class="panel">
@@ -90,48 +99,119 @@
         </section>
     </main>
 
-    <script src="./js/app.js?v=16"></script>
+    <script src="./js/app.js?v=19"></script>
     <script>
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Membership access',
             requireLogin: true
         });
 
+        const membershipStatus = document.getElementById('membershipStatus');
+        const membershipSummaryText = document.getElementById('membershipSummaryText');
+        const membershipRoleBadge = document.getElementById('membershipRoleBadge');
+        const redeemInput = document.getElementById('redeemCode');
+        const redeemButton = document.querySelector('.redeem-form .btn');
+        const monthlyButton = document.querySelector('.featured-plan .btn');
+        const yearlyButton = document.querySelectorAll('.membership-grid .btn')[2];
+
+        function setStatus(message, kind = 'error') {
+            membershipStatus.className = `inline-status ${kind}`;
+            membershipStatus.textContent = message;
+            if (!message) {
+                membershipStatus.className = 'inline-status';
+            }
+        }
+
         async function updateWalletUI() {
             try {
                 const res = await window.UniSplitApp.apiFetch('/api/me');
-                const user = await res.json();
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Failed to load membership status');
+                }
+                const user = data;
                 document.getElementById('displayBalance').textContent = `$${Number(user.balance || 0).toFixed(2)}`;
                 const vipDiv = document.getElementById('displayVip');
+                if (user.is_admin) {
+                    membershipRoleBadge.textContent = 'Administrator view';
+                    membershipRoleBadge.className = 'status warning';
+                    membershipSummaryText.textContent = 'Administrator accounts focus on user management and audit visibility. Membership actions are hidden here.';
+                    setStatus('Administrator accounts cannot purchase memberships or redeem codes.', 'warning');
+                    redeemInput.disabled = true;
+                    redeemButton.disabled = true;
+                    monthlyButton.disabled = true;
+                    monthlyButton.textContent = 'Admin Only';
+                    yearlyButton.disabled = true;
+                    yearlyButton.textContent = 'Admin Only';
+                    return;
+                }
+
+                membershipRoleBadge.textContent = user.is_vip ? 'Premium member' : 'Free member';
+                membershipRoleBadge.className = user.is_vip ? 'status positive' : 'status neutral';
+
                 if (user.is_vip) {
                     const expiry = user.vip_expiry ? new Date(user.vip_expiry).toLocaleDateString() : 'N/A';
                     vipDiv.textContent = `Premium Member (Expires: ${expiry})`;
                     vipDiv.style.color = '#ffd700';
+                    membershipSummaryText.textContent = 'Your Premium plan is active. You can still redeem another code or keep the plan active.';
+                    monthlyButton.disabled = true;
+                    monthlyButton.textContent = 'Current Premium';
+                    yearlyButton.disabled = false;
+                    yearlyButton.textContent = 'Get Yearly';
+                    setStatus('');
+                } else {
+                    vipDiv.textContent = 'Free Member';
+                    vipDiv.style.color = '#ffffff';
+                    membershipSummaryText.textContent = 'You are on the free plan. Redeem a code or upgrade below to unlock premium access.';
+                    monthlyButton.disabled = false;
+                    monthlyButton.textContent = 'Upgrade Now';
+                    yearlyButton.disabled = false;
+                    yearlyButton.textContent = 'Get Yearly';
+                    setStatus('');
                 }
-            } catch (e) { console.error(e); }
+                redeemInput.disabled = false;
+                redeemButton.disabled = false;
+            } catch (e) {
+                console.error(e);
+                setStatus(e.message || 'Unable to load membership details.', 'error');
+            }
         }
 
         async function handleRedeem() {
             const code = document.getElementById('redeemCode').value.trim();
-            if (!code) return alert("Please enter a code");
+            if (!code) {
+                setStatus('Please enter a redemption code.', 'warning');
+                return;
+            }
             const res = await window.UniSplitApp.apiFetch('/api/redeem', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ code })
             });
-            const data = await res.json();
-            if (data.error) alert(data.error);
-            else { alert(data.message); location.reload(); }
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.error) {
+                setStatus(data.error || 'Redemption failed.', 'error');
+            } else {
+                setStatus(data.message || 'Redemption succeeded.', 'success');
+                redeemInput.value = '';
+                await updateWalletUI();
+            }
         }
 
         async function handleBuy(plan) {
             if (!confirm(`Confirm purchase of ${plan} plan?`)) return;
             const res = await window.UniSplitApp.apiFetch('/api/membership/buy', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ plan })
             });
-            const data = await res.json();
-            if (data.error) alert(data.error);
-            else { alert(data.message); location.reload(); }
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.error) {
+                setStatus(data.error || 'Purchase failed.', 'error');
+            } else {
+                setStatus(data.message || 'Purchase succeeded.', 'success');
+                await updateWalletUI();
+            }
         }
 
         window.addEventListener('DOMContentLoaded', updateWalletUI);

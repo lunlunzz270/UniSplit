@@ -57,6 +57,15 @@ class UserRepository:
             self.db.refresh(user)
         return user
 
+    def update_password(self, user_id: int, hashed_password: str) -> User | None:
+        """Replace the stored password hash for a user."""
+        user = self.get_user_by_id(user_id)
+        if user:
+            user.password = hashed_password
+            self.db.commit()
+            self.db.refresh(user)
+        return user
+
     def create_session(self, user_id: int, token: str, expires_at: datetime, session_id: str | None = None) -> UserSession:
         db_session = UserSession(
             id=session_id or uuid4().hex,
@@ -97,6 +106,15 @@ class UserRepository:
         if not user:
             raise ValueError("User not found")
         user.is_active = is_active
+        self.db.commit()
+        self.db.refresh(user)
+        return user
+
+    def set_user_password(self, user_id: int, password_hash: str) -> User:
+        user = self.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+        user.password = password_hash
         self.db.commit()
         self.db.refresh(user)
         return user

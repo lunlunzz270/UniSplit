@@ -1,6 +1,13 @@
 from flask import Blueprint, jsonify, request
 
-from ..services.admin import list_users, set_user_active
+from ..services.admin import (
+    get_system_overview,
+    list_system_audit_logs,
+    list_system_transactions,
+    list_users,
+    reset_user_password,
+    set_user_active,
+)
 from ..services.auth import get_current_user_from_token
 
 admin_bp = Blueprint("admin", __name__)
@@ -36,6 +43,10 @@ def _user_to_dict(user):
         "email": user.email,
         "is_active": user.is_active,
         "is_admin": user.is_admin,
+        "role": "admin" if user.is_admin else "user",
+        "balance": float(user.balance) if user.balance is not None else 0.0,
+        "is_vip": user.is_vip,
+        "vip_expiry": user.vip_expiry.isoformat() if user.vip_expiry else None,
     }
 
 
@@ -48,25 +59,103 @@ def list_users_route():
     return jsonify({"users": [_user_to_dict(user) for user in users]}), 200
 
 
-@admin_bp.route("/api/admin/users/<int:user_id>/disable", methods=["POST"])
-def disable_user_route(user_id: int):
+@admin_bp.route("/api/admin/overview", methods=["GET"])
+def overview_route():
     _, error = _require_admin()
     if error:
         return error
+    return jsonify(get_system_overview()), 200
+
+
+@admin_bp.route("/api/admin/summary", methods=["GET"])
+def summary_route():
+    return overview_route()
+
+
+@admin_bp.route("/api/admin/system/transactions", methods=["GET"])
+def system_transactions_route():
+    _, error = _require_admin()
+    if error:
+        return error
+    limit = request.args.get("limit", 20)
+    search = request.args.get("search", "").strip()
+    return jsonify({"transactions": list_system_transactions(limit=limit, search=search)}), 200
+
+
+@admin_bp.route("/api/admin/system-transactions", methods=["GET"])
+def system_transactions_alias_route():
+    return system_transactions_route()
+
+
+@admin_bp.route("/api/admin/system/audit-logs", methods=["GET"])
+def system_audit_logs_route():
+    _, error = _require_admin()
+    if error:
+        return error
+    limit = request.args.get("limit", 20)
+    search = request.args.get("search", "").strip()
+    return jsonify({"audit_logs": list_system_audit_logs(limit=limit, search=search)}), 200
+
+
+@admin_bp.route("/api/admin/system-activity", methods=["GET"])
+def system_activity_alias_route():
+    _, error = _require_admin()
+    if error:
+        return error
+    limit = request.args.get("limit", 20)
+    search = request.args.get("search", "").strip()
+    return jsonify({"activity_logs": list_system_audit_logs(limit=limit, search=search)}), 200
+
+
+@admin_bp.route("/api/admin/users/<int:user_id>/disable", methods=["POST"])
+def disable_user_route(user_id: int):
+    current_user, error = _require_admin()
+    if error:
+        return error
     try:
-        user = set_user_active(user_id, False)
+        user = set_user_active(user_id, False, performed_by_user_id=current_user.id)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify(_user_to_dict(user)), 200
+    payload = _user_to_dict(user)
+    payload["message"] = "User disabled successfully"
+    return jsonify(payload), 200
 
 
 @admin_bp.route("/api/admin/users/<int:user_id>/restore", methods=["POST"])
 def restore_user_route(user_id: int):
-    _, error = _require_admin()
+    current_user, error = _require_admin()
     if error:
         return error
     try:
-        user = set_user_active(user_id, True)
+        user = set_user_active(user_id, True, performed_by_user_id=current_user.id)
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
-    return jsonify(_user_to_dict(user)), 200
+    payload = _user_to_dict(user)
+    payload["message"] = "User restored successfully"
+    return jsonify(payload), 200
+
+
+@admin_bp.route("/api/admin/users/<int:user_id>/reset-password", methods=["POST"])
+def reset_password_route(user_id: int):
+    current_user, error = _require_admin()
+    if error:
+        return error
+
+    data = request.get_json(silent=True) or {}
+    new_password = (data.get("new_password") or "").strip()
+    if len(new_password) < 6:
+        return jsonify({"error": "Password must be at least 6 characters long"}), 400
+
+    try:
+        result = reset_user_password(
+            user_id,
+            new_password,
+            performed_by_user_id=current_user.id,
+        )
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify({
+        "message": "Password reset successfully",
+        **result,
+    }), 200
