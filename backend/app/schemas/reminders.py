@@ -3,6 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ReminderCreate(BaseModel):
     recipient_id: int
+    expense_id: int | None = None
     message: str = Field(min_length=1, max_length=500)
 
 
@@ -11,6 +12,7 @@ class ReminderRead(BaseModel):
     group_id: int
     sender_id: int
     recipient_id: int
+    expense_id: int | None = None
     message: str
     is_read: bool
 

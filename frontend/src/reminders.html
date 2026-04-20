@@ -34,6 +34,12 @@
                     <label for="recipientSelect">Recipient</label>
                     <select id="recipientSelect"></select>
                 </div>
+                <div class="input-group" id="expenseSelectGroup" style="display: none;">
+                    <label for="expenseSelect">Link to Bill (Optional)</label>
+                    <select id="expenseSelect">
+                        <option value="">Select an unsettled bill</option>
+                    </select>
+                </div>
                 <div class="input-group">
                     <label for="reminderMessage">Message</label>
                     <textarea id="reminderMessage" placeholder="Please settle your balance."></textarea>
@@ -46,7 +52,14 @@
         <section class="panel" style="margin-top: 20px;">
             <div class="panel-header">
                 <h2>Reminder History</h2>
-                <button id="refreshReminders" class="btn-secondary" type="button">Refresh</button>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="page-ctrl-mini" style="display:flex; align-items:center; gap:10px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px;">
+                        <button id="prevRemBtn" class="btn-secondary" style="background:none; border:none; color:var(--primary-2); cursor:pointer; font-weight:bold;">&lt;</button>
+                        <span id="remPageDisplay" style="font-size:12px; color:var(--muted);">Page 1</span>
+                        <button id="nextRemBtn" class="btn-secondary" style="background:none; border:none; color:var(--primary-2); cursor:pointer; font-weight:bold;">&gt;</button>
+                    </div>
+                    <button id="refreshReminders" class="btn-secondary" type="button">Refresh</button>
+                </div>
             </div>
             <div id="reminderList" class="history-list"></div>
         </section>
@@ -66,6 +79,14 @@
         const reminderMessageBox = document.getElementById('reminderMessageBox');
         const groupSelect = document.getElementById('groupSelect');
         const recipientSelect = document.getElementById('recipientSelect');
+        const expenseSelect = document.getElementById('expenseSelect');
+        const expenseSelectGroup = document.getElementById('expenseSelectGroup');
+        const prevRemBtn = document.getElementById('prevRemBtn');
+        const nextRemBtn = document.getElementById('nextRemBtn');
+        const remPageDisplay = document.getElementById('remPageDisplay');
+
+        let remOffset = 0;
+        const PAGE_LIMIT = 10;
 
         function escapeHtml(value) {
             return String(value || '')
@@ -87,6 +108,7 @@
                             <span>Group: ${item.group_id}</span>
                             <span>Sender: ${item.sender_id}</span>
                             <span>Recipient: ${item.recipient_id}</span>
+                            ${item.expense_id ? `<span>Bill: #${item.expense_id}</span>` : ''}
                             <span>Date: ${item.created_at || 'N/A'}</span>
                         </div>
                         <p class="history-notes">${escapeHtml(item.message)}</p>
@@ -151,6 +173,34 @@
                     return `<option value="${member.user_id}">${labelParts.join(' ')}</option>`;
                 }),
             ].join('');
+            
+            // Clear expenses when recipient list changes
+            expenseSelectGroup.style.display = 'none';
+            expenseSelect.innerHTML = '<option value="">Select an unsettled bill</option>';
+        }
+
+        async function loadUnsettledExpenses() {
+            const groupId = groupSelect.value;
+            const recipientId = recipientSelect.value;
+            if (!groupId || !recipientId) {
+                expenseSelectGroup.style.display = 'none';
+                return;
+            }
+
+            const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders/unsettled-expenses?recipient_id=${recipientId}`);
+            const data = await res.json();
+            const expenses = data.expenses || [];
+
+            if (expenses.length > 0) {
+                expenseSelectGroup.style.display = 'block';
+                expenseSelect.innerHTML = [
+                    '<option value="">Select an unsettled bill</option>',
+                    ...expenses.map(e => `<option value="${e.id}">${escapeHtml(e.description)} (#${e.id}) - $${e.amount}</option>`)
+                ].join('');
+            } else {
+                expenseSelectGroup.style.display = 'none';
+                expenseSelect.innerHTML = '<option value="">No unsettled bills found</option>';
+            }
         }
 
         async function loadReminders() {
@@ -159,14 +209,24 @@
                 reminderList.innerHTML = '<div class="empty-state-card"><p>Select a group to view reminders.</p></div>';
                 return;
             }
-            const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders`);
+            const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders?limit=${PAGE_LIMIT}&offset=${remOffset}`);
             const data = await res.json();
             const reminders = data.reminders || [];
             if (!reminders.length) {
-                reminderList.innerHTML = '<div class="empty-state-card"><p>No reminders yet.</p></div>';
+                if (remOffset === 0) {
+                    reminderList.innerHTML = '<div class="empty-state-card"><p>No reminders yet.</p></div>';
+                } else {
+                    reminderList.innerHTML = '<div class="empty-state-card"><p>No more reminders.</p></div>';
+                }
+                nextRemBtn.disabled = true;
                 return;
             }
             reminderList.innerHTML = reminders.map(renderReminder).join('');
+
+            // Update Pagination UI
+            remPageDisplay.textContent = `Page ${Math.floor(remOffset / PAGE_LIMIT) + 1}`;
+            prevRemBtn.disabled = remOffset <= 0;
+            nextRemBtn.disabled = reminders.length < PAGE_LIMIT;
         }
 
         document.getElementById('reminderForm').addEventListener('submit', async (event) => {
@@ -174,6 +234,7 @@
             reminderMessageBox.textContent = '';
             const groupId = groupSelect.value;
             const recipientId = Number(recipientSelect.value);
+            const expenseId = expenseSelect.value ? Number(expenseSelect.value) : null;
             const message = document.getElementById('reminderMessage').value.trim();
 
             if (!groupId || !recipientId || !message) {
@@ -184,7 +245,7 @@
             const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recipient_id: recipientId, message }),
+                body: JSON.stringify({ recipient_id: recipientId, message, expense_id: expenseId }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -198,9 +259,27 @@
         });
 
         document.getElementById('refreshReminders').addEventListener('click', loadReminders);
+
+        prevRemBtn.addEventListener('click', () => {
+            if (remOffset > 0) {
+                remOffset -= PAGE_LIMIT;
+                loadReminders();
+            }
+        });
+
+        nextRemBtn.addEventListener('click', () => {
+            remOffset += PAGE_LIMIT;
+            loadReminders();
+        });
+
         groupSelect.addEventListener('change', async () => {
+            remOffset = 0; // Reset pagination
             await loadRecipients();
             await loadReminders();
+        });
+
+        recipientSelect.addEventListener('change', async () => {
+            await loadUnsettledExpenses();
         });
 
         window.addEventListener('DOMContentLoaded', async () => {
