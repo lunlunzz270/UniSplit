@@ -43,6 +43,56 @@
         .admin-subtitle {
             margin-top: 8px;
         }
+        /* Enhanced Pagination Bar */
+        .page-ctrl-mini {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.05);
+            padding: 4px 10px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .page-ctrl-mini button {
+            background: none;
+            border: none;
+            color: var(--primary-2);
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 16px;
+            padding: 0 5px;
+            transition: opacity 0.2s;
+        }
+        .page-ctrl-mini button:disabled {
+            color: var(--muted);
+            cursor: not-allowed;
+            opacity: 0.3;
+        }
+        .page-num {
+            font-size: 12px;
+            color: var(--muted);
+            min-width: 50px;
+            text-align: center;
+        }
+        
+        /* Compact List Items for Admin */
+        .admin-list-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .admin-list-item:last-child { border-bottom: none; }
+        .admin-list-item h4 { font-size: 14px; margin-bottom: 4px; color: var(--text); }
+        .admin-list-item .meta-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--subtle); }
+        .admin-list-item .desc { font-size: 13px; margin-top: 6px; color: var(--muted); }
+        
+        .stat-card.clickable {
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+        }
+        .stat-card.clickable:hover {
+            transform: translateY(-4px);
+            background: var(--card-strong);
+        }
         @media (max-width: 960px) {
             .admin-reset-grid {
                 grid-template-columns: 1fr;
@@ -63,6 +113,7 @@
                     <p class="admin-subtitle">User management, system transactions, and audit visibility only.</p>
                 </div>
                 <div class="admin-toolbar">
+                    <a href="dashboard.html" class="btn">Back to Dashboard</a>
                     <button type="button" id="refreshButton" class="btn-secondary">Refresh</button>
                     <button type="button" id="logoutButton" class="btn-secondary">Logout</button>
                 </div>
@@ -71,29 +122,29 @@
         </section>
 
         <section class="stats-grid admin-summary" id="overviewStats">
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="document.getElementById('user-section').scrollIntoView({behavior: 'smooth'})">
                 <p class="stat-label">Total users</p>
                 <h2 id="totalUsers">0</h2>
                 <span class="tag neutral">All accounts</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="document.getElementById('user-section').scrollIntoView({behavior: 'smooth'})">
                 <p class="stat-label">Administrator users</p>
                 <h2 id="totalAdmins">0</h2>
                 <span class="tag positive">Elevated access</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="document.getElementById('transaction-section').scrollIntoView({behavior: 'smooth'})">
                 <p class="stat-label">System transactions</p>
                 <h2 id="totalTransactions">0</h2>
                 <span class="tag neutral">Settlement records</span>
             </div>
-            <div class="stat-card">
+            <div class="stat-card clickable" onclick="document.getElementById('audit-section').scrollIntoView({behavior: 'smooth'})">
                 <p class="stat-label">Audit events</p>
                 <h2 id="totalAuditLogs">0</h2>
                 <span class="tag warning">Security trail</span>
             </div>
         </section>
 
-        <section class="panel">
+        <section class="panel" id="user-section">
             <div class="panel-header">
                 <h2>User management</h2>
                 <span id="userCountBadge" class="status neutral">Loading</span>
@@ -122,19 +173,27 @@
             <div id="userTable" class="history-list"></div>
         </section>
 
-        <section class="two-column-layout" style="margin-top: 22px;">
-            <section class="panel">
                 <div class="panel-header">
                     <h2>System transactions</h2>
-                    <span id="transactionCountBadge" class="status neutral">Loading</span>
+                    <div class="admin-toolbar" style="gap: 8px;">
+                        <button id="prevTransactions" class="btn-secondary" style="padding: 4px 10px;">&lt;</button>
+                        <span id="transactionPageDisplay" class="admin-muted">Page 1</span>
+                        <button id="nextTransactions" class="btn-secondary" style="padding: 4px 10px;">&gt;</button>
+                        <span id="transactionCountBadge" class="status neutral">Loading</span>
+                    </div>
                 </div>
                 <div id="transactionList" class="history-list"></div>
             </section>
 
-            <section class="panel">
+            <section class="panel" id="audit-section">
                 <div class="panel-header">
                     <h2>Audit log</h2>
-                    <span id="auditCountBadge" class="status neutral">Loading</span>
+                    <div class="admin-toolbar" style="gap: 8px;">
+                        <button id="prevAudit" class="btn-secondary" style="padding: 4px 10px;">&lt;</button>
+                        <span id="auditPageDisplay" class="admin-muted">Page 1</span>
+                        <button id="nextAudit" class="btn-secondary" style="padding: 4px 10px;">&gt;</button>
+                        <span id="auditCountBadge" class="status neutral">Loading</span>
+                    </div>
                 </div>
                 <div id="auditList" class="history-list"></div>
             </section>
@@ -166,6 +225,16 @@
         const logoutButton = document.getElementById('logoutButton');
 
         let selectedResetUser = null;
+        let transactionOffset = 0;
+        let auditOffset = 0;
+        const PAGE_LIMIT = 10;
+
+        const transactionPageDisplay = document.getElementById('transactionPageDisplay');
+        const auditPageDisplay = document.getElementById('auditPageDisplay');
+        const prevTransactions = document.getElementById('prevTransactions');
+        const nextTransactions = document.getElementById('nextTransactions');
+        const prevAudit = document.getElementById('prevAudit');
+        const nextAudit = document.getElementById('nextAudit');
 
         function escapeHtml(value) {
             return String(value || '')
@@ -177,11 +246,25 @@
         }
 
         function formatDateTime(value) {
-            if (!value) {
+            if (!value || value === 'N/A' || value === 'None') {
                 return 'N/A';
             }
-            const parsed = new Date(value);
-            return Number.isNaN(parsed.getTime()) ? value : parsed.toLocaleString();
+            try {
+                // Remove millisecond or space if any to satisfy most browsers
+                const cleanValue = String(value).split('.')[0].replace(' ', 'T');
+                const d = new Date(cleanValue);
+                if (isNaN(d.getTime())) return value;
+                
+                // Manual format to avoid any toLocaleString locale issues
+                const y = d.getFullYear();
+                const mo = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                const h = String(d.getHours()).padStart(2, '0');
+                const mi = String(d.getMinutes()).padStart(2, '0');
+                return `${y}-${mo}-${day} ${h}:${mi}`;
+            } catch (e) {
+                return value;
+            }
         }
 
         function setInlineStatus(message, color = '#ff9d9d') {
@@ -284,9 +367,9 @@
                 throw new Error(data.error || 'Failed to load admin overview');
             }
 
-            totalUsers.textContent = data.total_users ?? 0;
+            totalUsers.textContent = data.total_users ?? data.user_count ?? 0;
             totalAdmins.textContent = data.total_admins ?? 0;
-            totalTransactions.textContent = data.total_transactions ?? 0;
+            totalTransactions.textContent = data.total_transactions ?? data.total_settlements ?? 0;
             totalAuditLogs.textContent = data.total_audit_logs ?? 0;
         }
 
@@ -330,7 +413,7 @@
         }
 
         async function loadTransactions() {
-            const res = await window.UniSplitApp.apiFetch('/api/admin/system/transactions?limit=8');
+            const res = await window.UniSplitApp.apiFetch(`/api/admin/system/transactions?limit=${PAGE_LIMIT}&offset=${transactionOffset}`);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || 'Failed to load transactions');
@@ -338,11 +421,15 @@
 
             const transactions = data.transactions || [];
             transactionCountBadge.textContent = `${transactions.length} records`;
-            transactionList.innerHTML = transactions.length ? transactions.map(renderTransaction).join('') : renderEmptyState('No system transactions yet.');
+            transactionList.innerHTML = transactions.length ? transactions.map(renderTransaction).join('') : renderEmptyState('No more transactions.');
+            
+            transactionPageDisplay.textContent = `Page ${Math.floor(transactionOffset / PAGE_LIMIT) + 1}`;
+            prevTransactions.disabled = transactionOffset <= 0;
+            nextTransactions.disabled = transactions.length < PAGE_LIMIT;
         }
 
         async function loadAuditLogs() {
-            const res = await window.UniSplitApp.apiFetch('/api/admin/system/audit-logs?limit=8');
+            const res = await window.UniSplitApp.apiFetch(`/api/admin/system/audit-logs?limit=${PAGE_LIMIT}&offset=${auditOffset}`);
             const data = await res.json();
             if (!res.ok) {
                 throw new Error(data.error || 'Failed to load audit logs');
@@ -350,7 +437,11 @@
 
             const logs = data.audit_logs || [];
             auditCountBadge.textContent = `${logs.length} events`;
-            auditList.innerHTML = logs.length ? logs.map(renderAudit).join('') : renderEmptyState('No audit events yet.');
+            auditList.innerHTML = logs.length ? logs.map(renderAudit).join('') : renderEmptyState('No more audit events.');
+            
+            auditPageDisplay.textContent = `Page ${Math.floor(auditOffset / PAGE_LIMIT) + 1}`;
+            prevAudit.disabled = auditOffset <= 0;
+            nextAudit.disabled = logs.length < PAGE_LIMIT;
         }
 
         async function refreshAdminData() {
@@ -417,6 +508,28 @@
 
         refreshButton.addEventListener('click', refreshAdminData);
         logoutButton.addEventListener('click', () => window.UniSplitApp.clearAuthAndRedirect('login.html'));
+
+        prevTransactions.addEventListener('click', async () => {
+            if (transactionOffset > 0) {
+                transactionOffset -= PAGE_LIMIT;
+                await loadTransactions();
+            }
+        });
+        nextTransactions.addEventListener('click', async () => {
+            transactionOffset += PAGE_LIMIT;
+            await loadTransactions();
+        });
+
+        prevAudit.addEventListener('click', async () => {
+            if (auditOffset > 0) {
+                auditOffset -= PAGE_LIMIT;
+                await loadAuditLogs();
+            }
+        });
+        nextAudit.addEventListener('click', async () => {
+            auditOffset += PAGE_LIMIT;
+            await loadAuditLogs();
+        });
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!currentUser) {

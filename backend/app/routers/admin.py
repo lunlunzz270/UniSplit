@@ -77,9 +77,10 @@ def system_transactions_route():
     _, error = _require_admin()
     if error:
         return error
-    limit = request.args.get("limit", 20)
+    limit = request.args.get("limit", 20, type=int)
+    offset = request.args.get("offset", 0, type=int)
     search = request.args.get("search", "").strip()
-    return jsonify({"transactions": list_system_transactions(limit=limit, search=search)}), 200
+    return jsonify({"transactions": list_system_transactions(limit=limit, offset=offset, search=search)}), 200
 
 
 @admin_bp.route("/api/admin/system-transactions", methods=["GET"])
@@ -92,9 +93,10 @@ def system_audit_logs_route():
     _, error = _require_admin()
     if error:
         return error
-    limit = request.args.get("limit", 20)
+    limit = request.args.get("limit", 20, type=int)
+    offset = request.args.get("offset", 0, type=int)
     search = request.args.get("search", "").strip()
-    return jsonify({"audit_logs": list_system_audit_logs(limit=limit, search=search)}), 200
+    return jsonify({"audit_logs": list_system_audit_logs(limit=limit, offset=offset, search=search)}), 200
 
 
 @admin_bp.route("/api/admin/system-activity", methods=["GET"])

@@ -105,8 +105,8 @@ def get_system_overview():
         total_admins = db.query(func.count(User.id)).filter(User.is_admin.is_(True)).scalar() or 0
         total_transactions = db.query(func.count(Settlement.id)).scalar() or 0
         total_audit_logs = db.query(func.count(ActivityLog.id)).scalar() or 0
-        latest_transaction = db.query(Settlement).order_by(Settlement.settled_at.desc().nullslast()).first()
-        latest_audit = db.query(ActivityLog).order_by(ActivityLog.created_at.desc().nullslast()).first()
+        latest_transaction = db.query(Settlement).order_by(Settlement.settled_at.desc()).first()
+        latest_audit = db.query(ActivityLog).order_by(ActivityLog.created_at.desc()).first()
         return {
             "user_count": total_users,
             "active_user_count": db.query(func.count(User.id)).filter(User.is_active.is_(True)).scalar() or 0,
@@ -124,7 +124,7 @@ def get_system_overview():
         db.close()
 
 
-def list_system_transactions(limit: int | None = 20, search: str = ""):
+def list_system_transactions(limit: int | None = 20, offset: int = 0, search: str = ""):
     db = SessionLocal()
     try:
         query = (
@@ -135,7 +135,7 @@ def list_system_transactions(limit: int | None = 20, search: str = ""):
                 joinedload(Settlement.payer),
                 joinedload(Settlement.payee),
             )
-            .order_by(Settlement.settled_at.desc().nullslast(), Settlement.id.desc())
+            .order_by(Settlement.settled_at.desc(), Settlement.id.desc())
         )
 
         if search:
@@ -152,7 +152,7 @@ def list_system_transactions(limit: int | None = 20, search: str = ""):
                 )
             )
 
-        rows = query.limit(_clamp_limit(limit)).all()
+        rows = query.offset(offset).limit(_clamp_limit(limit)).all()
         return [
             {
                 "id": row.id,
@@ -177,13 +177,13 @@ def list_system_transactions(limit: int | None = 20, search: str = ""):
         db.close()
 
 
-def list_system_audit_logs(limit: int | None = 20, search: str = ""):
+def list_system_audit_logs(limit: int | None = 20, offset: int = 0, search: str = ""):
     db = SessionLocal()
     try:
         query = (
             db.query(ActivityLog)
             .options(joinedload(ActivityLog.group), joinedload(ActivityLog.user))
-            .order_by(ActivityLog.created_at.desc().nullslast(), ActivityLog.id.desc())
+            .order_by(ActivityLog.created_at.desc(), ActivityLog.id.desc())
         )
 
         if search:
@@ -202,7 +202,7 @@ def list_system_audit_logs(limit: int | None = 20, search: str = ""):
                 )
             )
 
-        rows = query.limit(_clamp_limit(limit)).all()
+        rows = query.offset(offset).limit(_clamp_limit(limit)).all()
         return [
             {
                 "id": row.id,

@@ -67,7 +67,14 @@
         <section class="panel">
             <div class="panel-header">
                 <h2>Transaction List</h2>
-                <a href="add_expense.html">+ Add new expense</a>
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="page-ctrl-mini" style="display:flex; align-items:center; gap:10px; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 20px;">
+                        <button id="prevBtn" class="btn-secondary" style="background:none; border:none; color:var(--primary-2); cursor:pointer; font-weight:bold;">&lt;</button>
+                        <span id="pageDisplay" style="font-size:12px; color:var(--muted);">Page 1</span>
+                        <button id="nextBtn" class="btn-secondary" style="background:none; border:none; color:var(--primary-2); cursor:pointer; font-weight:bold;">&gt;</button>
+                    </div>
+                    <a href="add_expense.html">+ Add new expense</a>
+                </div>
             </div>
 
             <p id="historyMessage" class="inline-status" aria-live="polite"></p>
@@ -83,6 +90,13 @@
         const historyTitle = document.getElementById('historyTitle');
         const historyDescription = document.getElementById('historyDescription');
         const searchInput = document.getElementById('searchInput');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const pageDisplay = document.getElementById('pageDisplay');
+
+        let currentOffset = 0;
+        const PAGE_LIMIT = 10;
+
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'History access',
             requireLogin: true,
@@ -306,6 +320,8 @@
             if (search) params.append('search', search);
             if (category) params.append('category', category);
             if (group) params.append('group_name', group);
+            params.append('limit', PAGE_LIMIT);
+            params.append('offset', currentOffset);
 
             try {
                 const res = await window.UniSplitApp.apiFetch(`/api/expenses?${params.toString()}`);
@@ -326,17 +342,39 @@
                             <p>Try changing your filters or add a new expense.</p>
                         </div>
                     `;
+                    nextBtn.disabled = true;
                     return;
                 }
 
                 historyList.innerHTML = records.map(renderHistoryItem).join('');
+                
+                // Update Pagination UI
+                pageDisplay.textContent = `Page ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`;
+                prevBtn.disabled = currentOffset <= 0;
+                nextBtn.disabled = records.length < PAGE_LIMIT;
+
             } catch (error) {
                 historyList.innerHTML = '';
                 setHistoryMessage('Could not connect to the server.');
             }
         }
 
-        document.getElementById('applyFilterBtn').addEventListener('click', loadHistory);
+        document.getElementById('applyFilterBtn').addEventListener('click', () => {
+            currentOffset = 0;
+            loadHistory();
+        });
+
+        prevBtn.addEventListener('click', () => {
+            if (currentOffset > 0) {
+                currentOffset -= PAGE_LIMIT;
+                loadHistory();
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            currentOffset += PAGE_LIMIT;
+            loadHistory();
+        });
 
         window.addEventListener('DOMContentLoaded', () => {
             updateHistoryContext();

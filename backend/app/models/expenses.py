@@ -49,7 +49,7 @@ class Settlement(Base):
     payee_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     amount = Column(Numeric(10, 2), nullable=False)
     status = Column(String(20), default="pending") # pending, accepted, rejected, paid, cancelled
-    rejection_message = Column(Text, nullable=True)
+    rejection_reason = Column(Text, nullable=True)
     note = Column(Text, nullable=True)
     due_date = Column(DateTime, nullable=True)
     last_reminder_at = Column(DateTime, nullable=True)
