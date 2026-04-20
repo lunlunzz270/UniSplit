@@ -8,8 +8,9 @@ CREATE TABLE IF NOT EXISTS settlements (
     payee_id          INT UNSIGNED    NOT NULL,
     amount            DECIMAL(10, 2)  NOT NULL,
     status            ENUM('pending', 'accepted', 'rejected', 'paid', 'cancelled') NOT NULL DEFAULT 'pending',
-    rejection_message TEXT            DEFAULT NULL,
+    rejection_reason  TEXT            DEFAULT NULL,
     note              VARCHAR(255)    DEFAULT NULL,
+
     due_date          DATETIME        DEFAULT NULL,
     last_reminder_at  DATETIME        DEFAULT NULL,
     reminder_count    INT             NOT NULL DEFAULT 0,

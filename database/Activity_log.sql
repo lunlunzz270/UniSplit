@@ -14,7 +14,8 @@ CREATE TABLE IF NOT EXISTS activity_log (
                     'expense_accepted',
                     'expense_appealed',
                     'group_joined',
-                    'group_left'
+                    'group_left',
+                    'reminder_created'
                 ) NOT NULL,
     description VARCHAR(255)    NOT NULL,
     ref_id      INT UNSIGNED    DEFAULT NULL,
