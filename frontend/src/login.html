@@ -115,7 +115,10 @@
         syncRoleHint();
 
         if (currentUser) {
-            setStatus(`You are signed in as ${window.UniSplitApp.getUserDisplayName(currentUser)} (${window.UniSplitApp.getUserRoleLabel(currentUser)}). Use logout to switch accounts.`, 'success');
+            const roleLabel = window.UniSplitApp.getUserRoleLabel(currentUser);
+            const roleClass = currentUser.is_admin ? 'role-admin' : 'role-user';
+            const displayName = window.UniSplitApp.getUserDisplayName(currentUser);
+            setStatus(`You are signed in as ${displayName} <span class="role-badge ${roleClass}">${roleLabel}</span>. Use logout to switch accounts.`, 'success');
         }
 
         loginForm.addEventListener('submit', async function (e) {

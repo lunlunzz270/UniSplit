@@ -158,25 +158,24 @@ function syncNavbarAuthState() {
             const rightGroup = document.createElement('div');
             rightGroup.className = 'nav-group nav-right';
 
-            leftGroup.appendChild(createNavbarLink(null, {
-                href: 'index.html',
-                label: 'Home',
-                active: isActiveHref('index.html', currentPage),
-            }));
-
             if (signedIn) {
                 const isAdminPage = currentPage === 'admin.html';
-                const visibleOrder = isAdminPage
-                    ? ['dashboard.html']
-                    : [
-                        'dashboard.html',
-                        'add_expense.html',
-                        'history.html',
-                        'insights.html',
-                        'report.html',
-                        'membership.html',
-                        'reminders.html',
-                    ];
+                let visibleOrder = [
+                    'dashboard.html',
+                    'add_expense.html',
+                    'history.html',
+                    'insights.html',
+                    'report.html',
+                    'membership.html',
+                    'reminders.html',
+                ];
+
+                if (isAdminPage) {
+                    visibleOrder = ['dashboard.html'];
+                } else if (currentUser?.is_admin) {
+                    // Hide Add Expense for admins in normal view as they can't be in bills
+                    visibleOrder = visibleOrder.filter(item => item !== 'add_expense.html');
+                }
 
                 visibleOrder.forEach((href) => {
                     const labels = {
@@ -223,6 +222,12 @@ function syncNavbarAuthState() {
                     },
                 }));
             } else {
+                leftGroup.appendChild(createNavbarLink(null, {
+                    href: 'index.html',
+                    label: 'Home',
+                    active: isActiveHref('index.html', currentPage),
+                }));
+
                 rightGroup.appendChild(createNavbarLink(null, {
                     href: 'register.html',
                     label: 'Register',
@@ -329,9 +334,15 @@ function ensureAuthBanner(options = {}) {
     const signedIn = Boolean(currentUser);
     const statusClass = signedIn ? 'positive' : 'warning';
     const statusText = signedIn ? 'Signed in' : 'Sign in required';
-    const introText = signedIn
-        ? `You are signed in as ${getUserDisplayName(currentUser)} (${getUserRoleLabel(currentUser)}).`
-        : 'You are not signed in yet. Please log in to continue.';
+    
+    let introText = '';
+    if (signedIn) {
+        const roleLabel = getUserRoleLabel(currentUser);
+        const roleClass = currentUser.is_admin ? 'role-admin' : 'role-user';
+        introText = `You are signed in as ${getUserDisplayName(currentUser)} <span class="role-badge ${roleClass}">${roleLabel}</span>.`;
+    } else {
+        introText = 'You are not signed in yet. If you don\'t have an account, please <a href="register.html" style="color: var(--primary-2); font-weight: bold;">register here</a> to continue.';
+    }
 
     banner.innerHTML = `
         <div class="panel-header">
