@@ -101,3 +101,35 @@
 2026-04-19 20:10:32,762 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-19 20:13:52,562 [WARNING] [127.0.0.1] ADMIN_PASSWORD_RESET | Actor: 10 | Target: 3 | Email: manager@unisplit.com | Sessions cleared: 0
 2026-04-19 20:15:44,093 [WARNING] [127.0.0.1] ADMIN_USER_DISABLED | Actor: 10 | Target: 2 | Email: alice@gmail.com
+2026-04-19 20:34:18,424 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-19 20:34:47,680 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
+2026-04-19 20:35:00,145 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-19 20:35:19,203 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Admin attempted to login as user: lance@unisplit.com
+2026-04-19 20:35:23,852 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com
+2026-04-19 20:36:24,630 [WARNING] [127.0.0.1] ADMIN_PASSWORD_RESET | Actor: 10 | Target: 1 | Email: zc270@duke.edu | Sessions cleared: 0
+2026-04-19 20:36:28,672 [WARNING] [127.0.0.1] ADMIN_USER_ACTIVATED | Actor: 10 | Target: 2 | Email: alice@gmail.com
+2026-04-19 20:36:31,262 [WARNING] [127.0.0.1] ADMIN_USER_DISABLED | Actor: 10 | Target: 2 | Email: alice@gmail.com
+2026-04-19 20:36:43,884 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-19 20:36:51,827 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: zc270@duke.edu
+2026-04-19 20:37:07,228 [WARNING] [127.0.0.1] ADMIN_PASSWORD_RESET | Actor: 10 | Target: 1 | Email: zc270@duke.edu | Sessions cleared: 1
+2026-04-19 20:37:19,283 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: zc270@duke.edu
+2026-04-19 20:44:14,783 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-19 20:44:28,520 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
+2026-04-19 21:00:31,099 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-19 21:00:46,510 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: lance@unispllit.com
+2026-04-19 21:00:53,102 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com
+2026-04-20 12:15:46,858 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 12:15:49,496 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 12:16:15,973 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-20 12:16:31,511 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com
+2026-04-20 12:24:26,139 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 12:41:07,489 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 12:41:07,736 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 12:42:04,693 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 12:42:05,234 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 12:42:33,507 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-20 12:43:13,884 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com
+2026-04-20 12:50:01,308 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-20 12:52:10,294 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
+2026-04-20 13:28:16,847 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 13:28:17,280 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up

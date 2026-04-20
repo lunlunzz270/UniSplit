@@ -170,24 +170,30 @@ function syncNavbarAuthState() {
                     'reminders.html',
                 ];
 
-                if (isAdminPage) {
+                const labels = {
+                    'admin.html': 'Admin Console', // New professional name
+                    'dashboard.html': 'Dashboard',
+                    'add_expense.html': 'Add Expense',
+                    'history.html': 'Transaction History',
+                    'insights.html': 'Expense Insights',
+                    'report.html': 'Reports',
+                    'membership.html': 'Membership',
+                    'reminders.html': 'Reminders',
+                };
+
+                if (currentUser?.is_admin) {
+                    // Admins see the Console as their home
+                    visibleOrder = [
+                        'admin.html',
+                        'history.html',
+                        'report.html',
+                        'membership.html',
+                    ];
+                } else if (isAdminPage) {
                     visibleOrder = ['dashboard.html'];
-                } else if (currentUser?.is_admin) {
-                    // Hide Add Expense for admins in normal view as they can't be in bills
-                    visibleOrder = visibleOrder.filter(item => item !== 'add_expense.html');
                 }
 
                 visibleOrder.forEach((href) => {
-                    const labels = {
-                        'dashboard.html': 'Dashboard',
-                        'add_expense.html': 'Add Expense',
-                        'history.html': 'Transaction History',
-                        'insights.html': 'Expense Insights',
-                        'report.html': 'Reports',
-                        'membership.html': 'Membership',
-                        'reminders.html': 'Reminders',
-                    };
-
                     leftGroup.appendChild(createNavbarLink(null, {
                         href,
                         label: labels[href],
@@ -195,22 +201,13 @@ function syncNavbarAuthState() {
                     }));
                 });
 
-                if (!isAdminPage) {
-                    rightGroup.appendChild(createNavbarLink(null, {
-                        href: '#',
-                        label: 'Currency',
-                        active: false,
-                        onClick: (e) => { e.preventDefault(); showCurrencyModal(); }
-                    }));
-                }
-
-                if (currentUser?.is_admin) {
-                    rightGroup.appendChild(createNavbarLink(null, {
-                        href: 'admin.html',
-                        label: 'Admin',
-                        active: isActiveHref('admin.html', currentPage),
-                    }));
-                }
+                // Restore Currency for everyone including admins
+                rightGroup.appendChild(createNavbarLink(null, {
+                    href: '#',
+                    label: 'Currency',
+                    active: false,
+                    onClick: (e) => { e.preventDefault(); showCurrencyModal(); }
+                }));
 
                 rightGroup.appendChild(createNavbarLink(null, {
                     href: '#',
@@ -344,6 +341,9 @@ function ensureAuthBanner(options = {}) {
         introText = 'You are not signed in yet. If you don\'t have an account, please <a href="register.html" style="color: var(--primary-2); font-weight: bold;">register here</a> to continue.';
     }
 
+    const dashboardUrl = currentUser?.is_admin ? 'admin.html' : dashboardHref;
+    const dashboardLabel = currentUser?.is_admin ? 'Go to admin panel' : 'Go to dashboard';
+
     banner.innerHTML = `
         <div class="panel-header">
             <h2>${title}</h2>
@@ -353,7 +353,7 @@ function ensureAuthBanner(options = {}) {
         <div class="button-row" style="margin-top: 14px; flex-wrap: wrap;">
             ${signedIn
                 ? `
-                    <a href="${dashboardHref}" class="btn">Go to dashboard</a>
+                    <a href="${dashboardUrl}" class="btn">${dashboardLabel}</a>
                     <button type="button" class="btn-secondary" data-logout-action onclick="window.UniSplitApp.clearAuthAndRedirect(); return false;">Logout</button>
                 `
                 : `

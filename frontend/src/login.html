@@ -56,15 +56,6 @@
                     </div>
 
                     <div class="input-group">
-                        <label for="role">Account type</label>
-                        <select id="role" required>
-                            <option value="user" selected>Login as user</option>
-                            <option value="admin">Login as administrator</option>
-                        </select>
-                        <p id="roleHint" class="inline-status neutral">Regular accounts use the standard shared expense experience.</p>
-                    </div>
-
-                    <div class="input-group">
                         <label for="email">Email</label>
                         <input type="email" id="email" placeholder="Enter your email">
                     </div>
@@ -95,24 +86,12 @@
             dashboardHref: 'dashboard.html'
         });
         const formStatus = document.getElementById('formStatus');
-        const roleHint = document.getElementById('roleHint');
         const loginForm = document.getElementById('loginForm');
-        const roleSelect = document.getElementById('role');
 
         function setStatus(message, kind = 'error') {
             formStatus.className = `inline-status ${kind}`;
             formStatus.textContent = message;
         }
-
-        function syncRoleHint() {
-            const isAdmin = roleSelect.value === 'admin';
-            roleHint.textContent = isAdmin
-                ? 'Administrator sign-in requires an approved admin account.'
-                : 'Regular accounts use the standard shared expense experience.';
-        }
-
-        roleSelect.addEventListener('change', syncRoleHint);
-        syncRoleHint();
 
         if (currentUser) {
             const roleLabel = window.UniSplitApp.getUserRoleLabel(currentUser);
@@ -128,12 +107,11 @@
 
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
 
             const res = await fetch(window.UniSplitApp.apiUrl('/api/login'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, role })
+                body: JSON.stringify({ email, password })
             });
 
             let data = {};
@@ -144,12 +122,14 @@
             }
             if (res.ok) {
                 window.UniSplitApp.setCurrentUser(data);
-                window.location.href = 'dashboard.html';
+                // Auto redirect based on role
+                if (data.is_admin) {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'dashboard.html';
+                }
             } else {
-                const fallback = role === 'admin'
-                    ? 'Administrator login was rejected. Check that the account is approved and the email domain is allowed.'
-                    : 'Login failed';
-                setStatus(data.error || fallback, 'error');
+                setStatus(data.error || 'Login failed', 'error');
             }
         });
     </script>
