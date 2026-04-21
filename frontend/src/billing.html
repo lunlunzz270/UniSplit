@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniSplit - Billing</title>
+    <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .wallet-banner {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .wallet-stats h3 { margin: 0; font-size: 0.9em; opacity: 0.7; text-transform: uppercase; }
+        .wallet-stats p { margin: 5px 0 0 0; font-size: 1.8em; font-weight: bold; color: #8ff0b0; }
+        .redeem-form { display: flex; gap: 10px; flex: 1; max-width: 400px; }
+        .redeem-form input { flex: 1; }
+        .membership-summary {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .admin-section {
+            display: none;
+            margin-top: 40px;
+        }
+        .search-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .search-row input {
+            flex: 1;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: white;
+        }
+        .log-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 5px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .log-table th, .log-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .log-table th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.8em;
+            letter-spacing: 0.05em;
+        }
+        .pagination-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            padding: 10px;
+        }
+        .page-input {
+            width: 50px;
+            text-align: center;
+            padding: 5px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="logo">UniSplit</div>
+        <div class="nav-links"></div>
+    </nav>
+
+    <main class="container">
+        <section class="page-hero">
+            <div>
+                <span class="hero-badge">Premium Access & Payments</span>
+                <h1>Billing & Membership</h1>
+                <p id="pageDescription">Unlock advanced analytics, priority reminders, and unlimited history.</p>
+            </div>
+        </section>
+
+        <!-- User Wallet & Redeem Section -->
+        <section id="userWalletSection" class="wallet-banner">
+            <div class="wallet-stats">
+                <h3>My Balance</h3>
+                <p id="displayBalance">$0.00</p>
+                <small id="displayVip" style="opacity: 0.6;">Free Member</small>
+            </div>
+            <div class="membership-summary">
+                <span id="membershipRoleBadge" class="status neutral">User view</span>
+                <p id="membershipSummaryText">Review your current plan, redeem a code, or upgrade when you're ready.</p>
+            </div>
+            <div class="redeem-form">
+                <input type="text" id="redeemCode" placeholder="Enter Redemption Code">
+                <button class="btn" onclick="handleRedeem()">Redeem</button>
+            </div>
+        </section>
+        <p id="membershipStatus" class="inline-status" aria-live="polite"></p>
+
+        <!-- User Membership Options -->
+        <div id="userMembershipSection">
+            <section class="membership-comparison">
+                <div class="panel">
+                    <div class="panel-header"><h2>Free vs Premium</h2></div>
+                    <div class="compare-table">
+                        <div class="compare-head">Feature</div><div class="compare-head">Free</div><div class="compare-head">Premium</div>
+                        <div class="compare-cell">Expense tracking</div><div class="compare-cell">Yes</div><div class="compare-cell">Yes</div>
+                        <div class="compare-cell">Full history</div><div class="compare-cell">No</div><div class="compare-cell">Yes</div>
+                        <div class="compare-cell">Advanced insights</div><div class="compare-cell">No</div><div class="compare-cell">Yes</div>
+                        <div class="compare-cell">Auto-Pay tools</div><div class="compare-cell">No</div><div class="compare-cell">Yes</div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="membership-grid">
+                <div class="membership-card">
+                    <h3>Free</h3>
+                    <p class="price">$0 <span>/ month</span></p>
+                    <ul><li>Track shared expenses</li><li>Basic dashboard</li></ul>
+                    <button class="btn btn-secondary" disabled>Current Plan</button>
+                </div>
+
+                <div class="membership-card featured-plan">
+                    <div class="plan-badge">Recommended</div>
+                    <h3>Premium Monthly</h3>
+                    <p class="price">$9.99 <span>/ month</span></p>
+                    <ul><li>Full history access</li><li>Priority reminders</li><li>Advanced analytics</li></ul>
+                    <button class="btn" onclick="handleBuy('monthly')">Upgrade Now</button>
+                </div>
+
+                <div class="membership-card">
+                    <h3>Premium Yearly</h3>
+                    <p class="price">$89.99 <span>/ year</span></p>
+                    <ul><li>Everything in Monthly</li><li>Best value for teams</li><li>Long-term VIP status</li></ul>
+                    <button class="btn" onclick="handleBuy('yearly')">Get Yearly</button>
+                </div>
+            </section>
+        </div>
+
+        <!-- Admin History Sections -->
+        <section id="adminRechargeSection" class="admin-section panel">
+            <div class="panel-header">
+                <h2>User Recharge History</h2>
+                <span class="status info">Audit Log</span>
+            </div>
+            
+            <div class="search-row">
+                <input type="text" id="rechargeSearch" placeholder="Search by name or email..." onkeyup="if(event.key==='Enter') loadAdminLogs('recharge', 1)">
+                <button class="btn btn-sm" onclick="loadAdminLogs('recharge', 1)">Search</button>
+            </div>
+
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User & Email</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="rechargeLogBody">
+                    <tr><td colspan="4" style="text-align:center; opacity:0.5;">Loading recharge records...</td></tr>
+                </tbody>
+            </table>
+            <div class="pagination-controls" id="rechargePagination">
+                <button class="btn-secondary btn-sm" onclick="changePage('recharge', -1)">Prev</button>
+                <span>Page <input type="number" class="page-input" id="rechargePageInput" value="1" min="1" onchange="goToPage('recharge')"> of <span id="rechargeTotalPages">1</span></span>
+                <button class="btn-secondary btn-sm" onclick="changePage('recharge', 1)">Next</button>
+            </div>
+        </section>
+
+        <section id="adminMembershipSection" class="admin-section panel">
+            <div class="panel-header">
+                <h2>User Membership Purchases</h2>
+                <span class="status positive">Sales Log</span>
+            </div>
+
+            <div class="search-row">
+                <input type="text" id="membershipSearch" placeholder="Search by name or email..." onkeyup="if(event.key==='Enter') loadAdminLogs('membership', 1)">
+                <button class="btn btn-sm" onclick="loadAdminLogs('membership', 1)">Search</button>
+            </div>
+
+            <table class="log-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>User & Email</th>
+                        <th>Amount</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody id="membershipLogBody">
+                    <tr><td colspan="4" style="text-align:center; opacity:0.5;">Loading membership records...</td></tr>
+                </tbody>
+            </table>
+            <div class="pagination-controls" id="membershipPagination">
+                <button class="btn-secondary btn-sm" onclick="changePage('membership', -1)">Prev</button>
+                <span>Page <input type="number" class="page-input" id="membershipPageInput" value="1" min="1" onchange="goToPage('membership')"> of <span id="membershipTotalPages">1</span></span>
+                <button class="btn-secondary btn-sm" onclick="changePage('membership', 1)">Next</button>
+            </div>
+        </section>
+    </main>
+
+    <script src="./js/app.js?v=20"></script>
+    <script>
+        const currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Billing & Membership',
+            requireLogin: true
+        });
+
+        const membershipStatus = document.getElementById('membershipStatus');
+        const membershipSummaryText = document.getElementById('membershipSummaryText');
+        const membershipRoleBadge = document.getElementById('membershipRoleBadge');
+        const redeemInput = document.getElementById('redeemCode');
+        const redeemButton = document.querySelector('.redeem-form .btn');
+        
+        const userWalletSection = document.getElementById('userWalletSection');
+        const userMembershipSection = document.getElementById('userMembershipSection');
+        const adminRechargeSection = document.getElementById('adminRechargeSection');
+        const adminMembershipSection = document.getElementById('adminMembershipSection');
+        const pageDescription = document.getElementById('pageDescription');
+
+        let paginationState = {
+            recharge: { current: 1, total: 1 },
+            membership: { current: 1, total: 1 }
+        };
+
+        function setStatus(message, kind = 'error') {
+            membershipStatus.className = `inline-status ${kind}`;
+            membershipStatus.textContent = message;
+            if (!message) {
+                membershipStatus.className = 'inline-status';
+            }
+        }
+
+        async function loadAdminLogs(type, page = 1) {
+            try {
+                const search = document.getElementById(`${type}Search`).value.trim();
+                const res = await window.UniSplitApp.apiFetch(`/api/admin/billing-transactions?type=${type}&page=${page}&limit=10&search=${encodeURIComponent(search)}`);
+                
+                const contentType = res.headers.get("content-type");
+                if (!contentType || !contentType.includes("application/json")) {
+                    const text = await res.text();
+                    console.error("Non-JSON response received:", text.substring(0, 500));
+                    throw new Error(`Server returned non-JSON response (${res.status}). Check backend logs.`);
+                }
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Failed to load logs');
+
+                const body = document.getElementById(`${type}LogBody`);
+                const totalPagesSpan = document.getElementById(`${type}TotalPages`);
+                const pageInput = document.getElementById(`${type}PageInput`);
+
+                paginationState[type].current = data.current_page;
+                paginationState[type].total = data.total_pages;
+                
+                totalPagesSpan.textContent = data.total_pages;
+                pageInput.value = data.current_page;
+
+                if (data.transactions.length === 0) {
+                    body.innerHTML = `<tr><td colspan="4" style="text-align:center; opacity:0.5;">No ${type} records found.</td></tr>`;
+                    return;
+                }
+
+                body.innerHTML = data.transactions.map(t => `
+                    <tr>
+                        <td>${new Date(t.created_at).toLocaleString()}</td>
+                        <td>
+                            <strong>${t.full_name}</strong><br>
+                            <small style="opacity:0.7;">${t.email}</small>
+                        </td>
+                        <td style="color: ${t.type === 'recharge' ? '#8ff0b0' : '#ffd700'}">$${Number(t.amount).toFixed(2)}</td>
+                        <td>${t.description || 'N/A'}</td>
+                    </tr>
+                `).join('');
+
+            } catch (e) {
+                console.error(e);
+                document.getElementById(`${type}LogBody`).innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ffb3b3;">${e.message}</td></tr>`;
+            }
+        }
+
+        function changePage(type, delta) {
+            const next = paginationState[type].current + delta;
+            if (next >= 1 && next <= paginationState[type].total) {
+                loadAdminLogs(type, next);
+            }
+        }
+
+        function goToPage(type) {
+            const input = document.getElementById(`${type}PageInput`);
+            let val = parseInt(input.value);
+            if (isNaN(val)) val = 1;
+            if (val < 1) val = 1;
+            if (val > paginationState[type].total) val = paginationState[type].total;
+            loadAdminLogs(type, val);
+        }
+
+        async function updateWalletUI() {
+            try {
+                const res = await window.UniSplitApp.apiFetch('/api/me');
+                const data = await res.json();
+                if (!res.ok) {
+                    throw new Error(data.error || 'Failed to load billing status');
+                }
+                const user = data;
+                
+                if (user.is_admin) {
+                    // Admin View Logic
+                    userWalletSection.style.display = 'none';
+                    userMembershipSection.style.display = 'none';
+                    adminRechargeSection.style.display = 'block';
+                    adminMembershipSection.style.display = 'block';
+                    pageDescription.textContent = 'Admin Console: Monitor all user recharge and membership activities.';
+                    
+                    loadAdminLogs('recharge', 1);
+                    loadAdminLogs('membership', 1);
+                    return;
+                }
+
+                // Regular User View Logic
+                userWalletSection.style.display = 'flex';
+                userMembershipSection.style.display = 'block';
+                adminRechargeSection.style.display = 'none';
+                adminMembershipSection.style.display = 'none';
+
+                document.getElementById('displayBalance').textContent = `$${Number(user.balance || 0).toFixed(2)}`;
+                const vipDiv = document.getElementById('displayVip');
+                membershipRoleBadge.textContent = user.is_vip ? 'Premium member' : 'Free member';
+                membershipRoleBadge.className = user.is_vip ? 'status positive' : 'status neutral';
+
+                if (user.is_vip) {
+                    const expiry = user.vip_expiry ? new Date(user.vip_expiry).toLocaleDateString() : 'N/A';
+                    vipDiv.textContent = `Premium Member (Expires: ${expiry})`;
+                    vipDiv.style.color = '#ffd700';
+                    membershipSummaryText.textContent = 'Your Premium plan is active. You can still redeem another code or keep the plan active.';
+                } else {
+                    vipDiv.textContent = 'Free Member';
+                    vipDiv.style.color = '#ffffff';
+                    membershipSummaryText.textContent = 'You are on the free plan. Redeem a code or upgrade below to unlock premium access.';
+                }
+            } catch (e) {
+                console.error(e);
+                setStatus(e.message || 'Unable to load billing details.', 'error');
+            }
+        }
+
+        async function handleRedeem() {
+            const code = document.getElementById('redeemCode').value.trim();
+            if (!code) {
+                setStatus('Please enter a redemption code.', 'warning');
+                return;
+            }
+            const res = await window.UniSplitApp.apiFetch('/api/redeem', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.error) {
+                setStatus(data.error || 'Redemption failed.', 'error');
+            } else {
+                setStatus(data.message || 'Redemption succeeded.', 'success');
+                document.getElementById('redeemCode').value = '';
+                await updateWalletUI();
+            }
+        }
+
+        async function handleBuy(plan) {
+            if (!confirm(`Confirm purchase of ${plan} plan?`)) return;
+            const res = await window.UniSplitApp.apiFetch('/api/membership/buy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ plan })
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || data.error) {
+                setStatus(data.error || 'Purchase failed.', 'error');
+            } else {
+                setStatus(data.message || 'Purchase succeeded.', 'success');
+                await updateWalletUI();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', updateWalletUI);
+    </script>
+</body>
+</html>

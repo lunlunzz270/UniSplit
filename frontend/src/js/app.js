@@ -166,7 +166,7 @@ function syncNavbarAuthState() {
                     'history.html',
                     'insights.html',
                     'report.html',
-                    'membership.html',
+                    'billing.html',
                     'reminders.html',
                 ];
 
@@ -177,7 +177,7 @@ function syncNavbarAuthState() {
                     'history.html': 'Transaction History',
                     'insights.html': 'Expense Insights',
                     'report.html': 'Reports',
-                    'membership.html': 'Membership',
+                    'billing.html': 'Billing',
                     'reminders.html': 'Reminders',
                 };
 
@@ -187,7 +187,7 @@ function syncNavbarAuthState() {
                         'admin.html',
                         'history.html',
                         'report.html',
-                        'membership.html',
+                        'billing.html',
                     ];
                 } else if (isAdminPage) {
                     visibleOrder = ['dashboard.html'];

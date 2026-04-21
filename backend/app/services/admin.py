@@ -9,6 +9,7 @@ from ..models.expenses import Expense, Settlement
 from ..models.groups import Group
 from ..models.users import User
 from ..repositories.users import UserRepository
+from ..repositories.transactions import TransactionRepository
 
 security_logger = logging.getLogger("security")
 
@@ -173,6 +174,15 @@ def list_system_transactions(limit: int | None = 20, offset: int = 0, search: st
             }
             for row in rows
         ]
+    finally:
+        db.close()
+
+
+def list_billing_transactions(type: str = None, page: int = 1, limit: int = 10, search: str = None):
+    db = SessionLocal()
+    try:
+        repo = TransactionRepository(db)
+        return repo.get_paged_transactions(type=type, page=page, limit=limit, search=search)
     finally:
         db.close()
 

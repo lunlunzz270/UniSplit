@@ -133,3 +133,24 @@
 2026-04-20 12:52:10,294 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
 2026-04-20 13:28:16,847 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-20 13:28:17,280 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 18:17:20,849 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 18:17:22,111 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 18:17:54,142 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 18:17:55,452 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 18:34:42,901 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 20:28:06,272 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 20:28:07,587 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 20:28:20,015 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 20:28:21,251 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 20:33:46,335 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 20:33:53,871 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 21:11:22,967 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 21:11:24,212 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 22:52:21,018 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 13 | Email: frank2@qq.com
+2026-04-20 23:25:23,827 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 23:25:28,254 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-20 23:25:31,717 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-21 14:02:53,999 [WARNING] [127.0.0.1] SESSION_AUTH_FAIL | Failure | Invalid token attempt
+2026-04-21 14:52:13,687 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-21 14:52:14,973 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-21 14:53:00,644 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com

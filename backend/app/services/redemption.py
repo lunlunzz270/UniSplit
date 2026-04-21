@@ -2,6 +2,7 @@ from datetime import datetime, timedelta, timezone
 from ..core.database import SessionLocal
 from ..repositories.redemption import RedemptionRepository
 from ..repositories.users import UserRepository
+from ..repositories.transactions import TransactionRepository
 from ..models.redemption_codes import CodeCategory
 
 
@@ -32,9 +33,16 @@ def redeem_code(user_id: int, code_str: str):
 
         # Atomic redemption process
         redemption_repo.redeem_code(db_code.id, user_id)
+        trans_repo = TransactionRepository(db)
 
         if db_code.category == CodeCategory.CASH:
             user_repo.update_balance(user_id, float(db_code.value))
+            trans_repo.create_transaction(
+                user_id=user_id,
+                type='recharge',
+                amount=float(db_code.value),
+                description=f"Redeemed code: {code_str}"
+            )
             user = user_repo.get_user_by_id(user_id)
             return {
                 "status": "success",
@@ -50,6 +58,14 @@ def redeem_code(user_id: int, code_str: str):
             current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > now) else now
             new_expiry = current_expiry + timedelta(days=int(db_code.value))
             user_repo.update_vip_status(user_id, True, new_expiry)
+            
+            trans_repo.create_transaction(
+                user_id=user_id,
+                type='membership',
+                amount=0.00,
+                description=f"Redeemed VIP code for {int(db_code.value)} days: {code_str}"
+            )
+            
             updated_user = user_repo.get_user_by_id(user_id)
             return {
                 "status": "success",
@@ -89,6 +105,16 @@ def buy_membership_with_balance(user_id: int, plan_type: str):
         current_expiry = user.vip_expiry if (user.vip_expiry and user.vip_expiry > now) else now
         new_expiry = current_expiry + timedelta(days=plan["days"])
         user_repo.update_vip_status(user_id, True, new_expiry)
+        
+        # Record transaction
+        trans_repo = TransactionRepository(db)
+        trans_repo.create_transaction(
+            user_id=user_id,
+            type='membership',
+            amount=plan["price"],
+            description=f"Purchased {plan_type} membership plan"
+        )
+        
         updated_user = user_repo.get_user_by_id(user_id)
 
         return {

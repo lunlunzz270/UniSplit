@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 
 from ..services.admin import (
     get_system_overview,
+    list_billing_transactions,
     list_system_audit_logs,
     list_system_transactions,
     list_users,
@@ -86,6 +87,25 @@ def system_transactions_route():
 @admin_bp.route("/api/admin/system-transactions", methods=["GET"])
 def system_transactions_alias_route():
     return system_transactions_route()
+
+
+@admin_bp.route("/api/admin/billing-transactions", methods=["GET"])
+def list_billing_transactions_route():
+    try:
+        _, error = _require_admin()
+        if error:
+            return error
+        
+        trans_type = request.args.get("type") # recharge or membership
+        page = request.args.get("page", 1, type=int)
+        limit = request.args.get("limit", 10, type=int)
+        search = request.args.get("search", "").strip()
+        
+        return jsonify(list_billing_transactions(type=trans_type, page=page, limit=limit, search=search)), 200
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
 
 
 @admin_bp.route("/api/admin/system/audit-logs", methods=["GET"])

@@ -3,3 +3,4 @@ from .groups import Group, GroupMember
 from .expenses import Expense, ExpenseParticipant, Settlement
 from .activity_log import ActivityLog
 from .reminders import Reminder
+from .transactions import Transaction
