@@ -1,4 +1,6 @@
 from decimal import Decimal, ROUND_DOWN
+import csv
+import io
 
 from ..core.database import SessionLocal
 from ..repositories.groups import GroupRepository
@@ -92,6 +94,55 @@ def list_expenses(user_id: int | None = None, is_admin: bool = False, search: st
         )
     finally:
         db.close()
+
+
+def export_expenses_csv(user_id: int | None = None, is_admin: bool = False, search: str = "", category: str = "", group_name: str = "", start_date: str = "", end_date: str = ""):
+    expenses = list_expenses(
+        user_id=user_id,
+        is_admin=is_admin,
+        search=search,
+        category=category,
+        group_name=group_name,
+        start_date=start_date,
+        end_date=end_date,
+        limit=None,
+        offset=0,
+    )
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow([
+        "id",
+        "description",
+        "amount",
+        "category",
+        "group_name",
+        "payer",
+        "date",
+        "participant_summary",
+    ])
+
+    for expense in expenses:
+        participants = []
+        for participant in expense.get("participants", []):
+            status_bits = [participant.get("status") or "unknown"]
+            if participant.get("is_settled"):
+                status_bits.append("settled")
+            participant_label = f"{participant.get('name') or 'Unknown'}<{participant.get('email') or ''}>:{participant.get('share', 0):.2f}"
+            participants.append(f"{participant_label} ({', '.join(status_bits)})")
+
+        writer.writerow([
+            expense.get("id"),
+            expense.get("description"),
+            f"{float(expense.get('amount', 0)):.2f}",
+            expense.get("category"),
+            expense.get("group_name"),
+            expense.get("payer"),
+            expense.get("date"),
+            " | ".join(participants),
+        ])
+
+    return output.getvalue()
 
 
 def record_expense(

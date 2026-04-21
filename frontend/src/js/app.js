@@ -430,6 +430,23 @@ function apiUrl(path) {
     return `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
 }
 
+async function downloadResponseAsFile(response, filename) {
+    if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || `Request failed with status ${response.status}`);
+    }
+
+    const blob = await response.blob();
+    const objectUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(objectUrl);
+}
+
 function normalizeExpenseList(payload) {
     if (Array.isArray(payload)) {
         return payload;
@@ -586,6 +603,7 @@ window.UniSplitApp = {
     clearAuthAndRedirect,
     apiUrl,
     apiFetch,
+    downloadResponseAsFile,
     normalizeExpenseList,
     syncNavbarAuthState,
     showCurrencyModal,

@@ -8,7 +8,7 @@ from .auth import (
     serialize_user,
     verify_password,
 )
-from .expenses import create_expense_with_splits, list_expenses, record_expense, respond_to_expense, resolve_expense_appeal
+from .expenses import create_expense_with_splits, export_expenses_csv, list_expenses, record_expense, respond_to_expense, resolve_expense_appeal
 from .groups import (
     add_user_to_group,
     can_manage_group,
