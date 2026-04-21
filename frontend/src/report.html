@@ -53,6 +53,12 @@
             font-weight: 600;
         }
         .btn-filter:hover { background: #4f46e5; }
+        .report-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
     </style>
 </head>
 <body>
@@ -72,7 +78,8 @@
         <!-- Custom Interaction: Detailed Date Range Selector -->
         <div class="filter-bar">
             <h2 style="margin:0;">Filter by Date Range</h2>
-            <div class="date-inputs">
+            <div class="report-actions">
+                <div class="date-inputs">
                 <div>
                     <label>From:</label>
                     <input type="date" id="startDate" class="date-field">
@@ -82,6 +89,8 @@
                     <input type="date" id="endDate" class="date-field">
                 </div>
                 <button id="applyRangeBtn" class="btn-filter">Apply Filter</button>
+                </div>
+                <button id="exportCsvBtn" class="btn-filter" type="button" style="background:#10b981;">Export CSV</button>
             </div>
         </div>
 
@@ -115,6 +124,7 @@
         const reportScopeBadge = document.getElementById('reportScopeBadge');
         const reportHeroText = document.getElementById('reportHeroText');
         const reportStatus = document.getElementById('reportStatus');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
 
         let pieChart, lineChart, boxPlot;
 
@@ -254,7 +264,27 @@
             }
         }
 
+        async function exportCsv() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const params = new URLSearchParams({ start_date: start, end_date: end });
+
+            try {
+                exportCsvBtn.disabled = true;
+                exportCsvBtn.textContent = 'Exporting...';
+                const response = await window.UniSplitApp.apiFetch(`/api/expenses/export?${params.toString()}`);
+                await window.UniSplitApp.downloadResponseAsFile(response, `unisplit-report-${start || 'start'}-to-${end || 'end'}.csv`);
+                setReportStatus('CSV export downloaded.', 'success');
+            } catch (err) {
+                setReportStatus(err.message || 'Unable to export CSV.', 'error');
+            } finally {
+                exportCsvBtn.disabled = false;
+                exportCsvBtn.textContent = 'Export CSV';
+            }
+        }
+
         document.getElementById('applyRangeBtn').addEventListener('click', fetchAndRender);
+        exportCsvBtn.addEventListener('click', exportCsv);
 
         window.addEventListener('DOMContentLoaded', () => {
             setDefaultDates();

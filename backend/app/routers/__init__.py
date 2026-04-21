@@ -81,6 +81,10 @@ def login():
         security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Attempted email: {email}")
         return jsonify({'error': 'Invalid email or password'}), 401
 
+    if normalized_role == "admin" and not user.is_admin:
+        security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Non-admin attempted admin login: {email}")
+        return jsonify({'error': 'Admin access required'}), 403
+
     session = create_session_for_user(user.id)
     security_logger.info(f"AUTH_LOGIN_SUCCESS | Success | User ID: {user.id} | Email: {email}")
     return jsonify(serialize_user(user, session)), 200

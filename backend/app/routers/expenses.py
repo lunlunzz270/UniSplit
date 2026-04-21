@@ -1,8 +1,8 @@
 from decimal import Decimal, InvalidOperation
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, make_response
 
-from ..services import list_expenses as list_expenses_service, record_expense, respond_to_expense, resolve_expense_appeal
+from ..services import export_expenses_csv, list_expenses as list_expenses_service, record_expense, respond_to_expense, resolve_expense_appeal
 from ..services.auth import get_current_user_from_token
 
 expenses_bp = Blueprint("expenses", __name__)
@@ -13,6 +13,18 @@ def _extract_session_token():
     if auth_header.startswith("Bearer "):
         return auth_header.removeprefix("Bearer ").strip()
     return request.headers.get("X-Session-Token") or request.headers.get("Authorization")
+
+
+def _get_current_user():
+    session_token = _extract_session_token()
+    if not session_token:
+        return None, (jsonify({"error": "Session token is required"}), 401)
+
+    current = get_current_user_from_token(session_token)
+    if not current:
+        return None, (jsonify({"error": "Session expired or invalid"}), 401)
+
+    return current, None
 
 
 @expenses_bp.route("/api/expenses/<int:expense_id>/respond", methods=["POST"])
@@ -70,14 +82,9 @@ def resolve_appeal_route(expense_id: int):
 
 @expenses_bp.route("/api/expenses", methods=["GET"])
 def get_expense_history():
-    session_token = _extract_session_token()
-    if not session_token:
-        return jsonify({"error": "Session token is required"}), 401
-
-    current = get_current_user_from_token(session_token)
-    if not current:
-        return jsonify({"error": "Session expired or invalid"}), 401
-    
+    current, error = _get_current_user()
+    if error:
+        return error
     current_user, _ = current
     
     search = request.args.get("search", "").strip()
@@ -100,6 +107,35 @@ def get_expense_history():
         offset=offset
     )
     return jsonify({"expenses": expenses}), 200
+
+
+@expenses_bp.route("/api/expenses/export", methods=["GET"])
+def export_expense_history():
+    current, error = _get_current_user()
+    if error:
+        return error
+
+    current_user, _ = current
+    search = request.args.get("search", "").strip()
+    category = request.args.get("category", "").strip()
+    group_name = request.args.get("group_name", "").strip()
+    start_date = request.args.get("start_date", "").strip()
+    end_date = request.args.get("end_date", "").strip()
+
+    csv_content = export_expenses_csv(
+        user_id=current_user.id,
+        is_admin=current_user.is_admin,
+        search=search,
+        category=category,
+        group_name=group_name,
+        start_date=start_date,
+        end_date=end_date,
+    )
+
+    response = make_response(csv_content)
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    response.headers["Content-Disposition"] = 'attachment; filename="expense_report.csv"'
+    return response
 
 
 @expenses_bp.route("/api/expenses", methods=["POST"])

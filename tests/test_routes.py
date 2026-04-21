@@ -1,3 +1,6 @@
+import csv
+import io
+
 import pytest
 
 
@@ -64,6 +67,90 @@ def test_auth_and_expense_routes(api_client):
         json={"session_token": session_token},
     )
     assert logout.status_code == 200
+
+
+def test_expense_export_route_requires_authentication(api_client):
+    res = api_client.get("/api/expenses/export")
+    assert res.status_code == 401
+    assert res.get_json()["error"]
+
+
+def test_expense_export_route_returns_csv_and_applies_filters(api_client):
+    user = api_client.post(
+        "/api/register",
+        json={"name": "Exporter", "email": "exporter@example.com", "password": "pwd123"},
+    ).get_json()
+    teammate = api_client.post(
+        "/api/register",
+        json={"name": "Teammate", "email": "export.team@example.com", "password": "pwd123"},
+    ).get_json()
+    other = api_client.post(
+        "/api/register",
+        json={"name": "Other", "email": "export.other@example.com", "password": "pwd123"},
+    ).get_json()
+
+    first_expense = api_client.post(
+        "/api/expenses",
+        headers={"Authorization": f"Bearer {user['session']['token']}"},
+        json={
+            "group_name": "Export Group",
+            "description": "Airport taxi",
+            "amount": "24.00",
+            "category": "Travel",
+            "payer_email": user["email"],
+            "participant_emails": [user["email"], teammate["email"]],
+        },
+    )
+    assert first_expense.status_code == 201
+
+    second_expense = api_client.post(
+        "/api/expenses",
+        headers={"Authorization": f"Bearer {user['session']['token']}"},
+        json={
+            "group_name": "Another Group",
+            "description": "Lunch",
+            "amount": "12.50",
+            "category": "Food",
+            "payer_email": user["email"],
+            "participant_emails": [user["email"], other["email"]],
+        },
+    )
+    assert second_expense.status_code == 201
+
+    export_res = api_client.get(
+        "/api/expenses/export",
+        headers={"Authorization": f"Bearer {user['session']['token']}"},
+        query_string={
+            "search": "taxi",
+            "category": "Travel",
+            "group_name": "Export Group",
+        },
+    )
+    assert export_res.status_code == 200
+    assert export_res.mimetype == "text/csv"
+    assert "attachment" in export_res.headers["Content-Disposition"]
+    assert "expense_report" in export_res.headers["Content-Disposition"]
+
+    csv_rows = list(csv.DictReader(io.StringIO(export_res.get_data(as_text=True))))
+    assert len(csv_rows) == 1
+    row = csv_rows[0]
+    assert row["description"] == "Airport taxi"
+    assert row["category"] == "Travel"
+    assert row["group_name"] == "Export Group"
+    assert row["payer"] == "Exporter"
+    assert row["id"]
+    assert row["date"]
+    assert row["participant_summary"]
+
+    future_res = api_client.get(
+        "/api/expenses/export",
+        headers={"Authorization": f"Bearer {user['session']['token']}"},
+        query_string={"start_date": "2999-01-01"},
+    )
+    assert future_res.status_code == 200
+    future_rows = list(csv.DictReader(io.StringIO(future_res.get_data(as_text=True))))
+    assert len(future_rows) == 0
+
 
 def test_group_join_and_leave_routes_repeat_and_delete(api_client):
     creator = api_client.post(

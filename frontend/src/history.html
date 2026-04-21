@@ -59,7 +59,10 @@
 
                 <div class="input-group">
                     <label>&nbsp;</label>
-                    <button class="btn btn-full" id="applyFilterBtn">Apply Filters</button>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-full" id="applyFilterBtn" type="button">Apply Filters</button>
+                        <button class="btn btn-full" id="exportCsvBtn" type="button" style="background:#10b981;">Export CSV</button>
+                    </div>
                 </div>
             </div>
         </section>
@@ -93,6 +96,7 @@
         const prevBtn = document.getElementById('prevBtn');
         const nextBtn = document.getElementById('nextBtn');
         const pageDisplay = document.getElementById('pageDisplay');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
 
         let currentOffset = 0;
         const PAGE_LIMIT = 10;
@@ -302,6 +306,40 @@
             }
         }
 
+        async function exportHistoryCsv() {
+            if (!currentUser) {
+                setHistoryMessage('Please log in to export transaction history.');
+                return;
+            }
+
+            const search = document.getElementById('searchInput').value.trim();
+            const category = document.getElementById('categoryFilter').value;
+            const group = document.getElementById('groupFilter').value.trim();
+
+            const params = new URLSearchParams();
+            if (search) params.append('search', search);
+            if (category) params.append('category', category);
+            if (group) params.append('group_name', group);
+
+            try {
+                exportCsvBtn.disabled = true;
+                exportCsvBtn.textContent = 'Exporting...';
+
+                const response = await window.UniSplitApp.apiFetch(`/api/expenses/export?${params.toString()}`);
+                const start = search || category || group ? 'filtered' : 'all';
+                await window.UniSplitApp.downloadResponseAsFile(
+                    response,
+                    `unisplit-history-${start}.csv`
+                );
+                setHistoryMessage('CSV export downloaded.', 'success');
+            } catch (error) {
+                setHistoryMessage(error.message || 'Unable to export transaction history.');
+            } finally {
+                exportCsvBtn.disabled = false;
+                exportCsvBtn.textContent = 'Export CSV';
+            }
+        }
+
         async function loadHistory() {
             if (!currentUser) {
                 setHistoryMessage('Please log in to view transaction history.');
@@ -363,6 +401,8 @@
             currentOffset = 0;
             loadHistory();
         });
+
+        exportCsvBtn.addEventListener('click', exportHistoryCsv);
 
         prevBtn.addEventListener('click', () => {
             if (currentOffset > 0) {

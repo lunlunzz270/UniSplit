@@ -1,6 +1,7 @@
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, aliased
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import or_
+from datetime import datetime, time
 
 from ..models.expenses import Expense, ExpenseParticipant
 from ..models.groups import Group, GroupMember
@@ -13,11 +14,43 @@ class ExpenseRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def _apply_date_filters(self, query, start_date: str = "", end_date: str = ""):
+        if start_date:
+            try:
+                start_dt = datetime.combine(datetime.fromisoformat(start_date).date(), time.min)
+                query = query.filter(Expense.created_at >= start_dt)
+            except ValueError:
+                pass
+
+        if end_date:
+            try:
+                end_dt = datetime.combine(datetime.fromisoformat(end_date).date(), time.max)
+                query = query.filter(Expense.created_at <= end_dt)
+            except ValueError:
+                pass
+
+        return query
+
     def create_expense_with_splits(self, group_id: int, expense_in: ExpenseCreate) -> Expense:
         try:
+            group = self.db.query(Group).filter(Group.id == group_id).first()
+            if not group:
+                raise ValueError("Group not found")
+
+            member_ids = {
+                member.user_id
+                for member in self.db.query(GroupMember).filter(GroupMember.group_id == group_id).all()
+            }
+
             participant_ids = [p.user_id for p in expense_in.participants]
             if len(participant_ids) != len(set(participant_ids)):
                 raise ValueError("Duplicate participants are not allowed")
+
+            missing_participants = [user_id for user_id in participant_ids if user_id not in member_ids]
+            if expense_in.paid_by not in member_ids:
+                missing_participants.append(expense_in.paid_by)
+            if missing_participants:
+                raise ValueError("All participants must belong to the group")
 
             # 1. Create main expense
             db_expense = Expense(
@@ -55,26 +88,54 @@ class ExpenseRepository:
             raise e
 
     def list_expenses(self, user_id=None, is_admin=False, search="", category="", group_name="", start_date="", end_date="", limit=10, offset=0):
-        query = self.db.query(Expense).options(
-            joinedload(Expense.group),
-            joinedload(Expense.payer),
-            joinedload(Expense.participants).joinedload(ExpenseParticipant.user)
-        ).join(Group, Expense.group_id == Group.id)
+        participant_user = aliased(User)
+        joined_participants = False
+        query = (
+            self.db.query(Expense)
+            .options(
+                joinedload(Expense.group),
+                joinedload(Expense.payer),
+                joinedload(Expense.participants).joinedload(ExpenseParticipant.user),
+            )
+            .join(Group, Expense.group_id == Group.id)
+            .join(User, Expense.paid_by == User.id)
+        )
 
         if not is_admin and user_id:
             query = query.outerjoin(ExpenseParticipant, Expense.id == ExpenseParticipant.expense_id).filter(
                 or_(Expense.paid_by == user_id, ExpenseParticipant.user_id == user_id)
             ).distinct()
+            joined_participants = True
 
         if search:
-            query = query.filter(Expense.description.ilike(f"%{search}%"))
+            if not joined_participants:
+                query = query.outerjoin(ExpenseParticipant, Expense.id == ExpenseParticipant.expense_id)
+                joined_participants = True
+            query = query.outerjoin(participant_user, ExpenseParticipant.user_id == participant_user.id)
+            like = f"%{search}%"
+            query = query.filter(
+                or_(
+                    Expense.description.ilike(like),
+                    Expense.category.ilike(like),
+                    Group.name.ilike(like),
+                    User.full_name.ilike(like),
+                    User.email.ilike(like),
+                    participant_user.full_name.ilike(like),
+                    participant_user.email.ilike(like),
+                )
+            )
         if category:
             query = query.filter(Expense.category == category)
         if group_name:
             query = query.filter(Group.name.ilike(f"%{group_name}%"))
+        query = self._apply_date_filters(query, start_date=start_date, end_date=end_date)
         
         # Order and paginate
-        query = query.order_by(Expense.created_at.desc()).offset(offset).limit(limit)
+        query = query.order_by(Expense.created_at.desc())
+        if offset:
+            query = query.offset(offset)
+        if limit is not None:
+            query = query.limit(limit)
         
         rows = query.all()
         return [
@@ -102,6 +163,19 @@ class ExpenseRepository:
                 ]
             } for e in rows
         ]
+
+    def get_group_expenses(self, group_id: int):
+        return (
+            self.db.query(Expense)
+            .options(
+                joinedload(Expense.group),
+                joinedload(Expense.payer),
+                joinedload(Expense.participants).joinedload(ExpenseParticipant.user),
+            )
+            .filter(Expense.group_id == group_id)
+            .order_by(Expense.created_at.desc())
+            .all()
+        )
 
     def get_unsettled_expenses_for_recipient(self, group_id: int, payer_id: int, recipient_id: int):
         return (
