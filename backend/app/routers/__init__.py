@@ -41,23 +41,18 @@ def register():
     name = data.get('name')
     email = data.get('email', '').lower()
     password = data.get('password')
-    role = data.get('role', 'user')
 
     if not name or not email or not password:
         security_logger.warning(f"AUTH_REGISTER_FAIL | Failure | Missing fields for email: {email}")
         return jsonify({'error': 'All fields are required'}), 400
-
-    try:
-        normalized_role = normalize_account_role(role)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
 
     if get_user_by_email(email):
         security_logger.warning(f"AUTH_REGISTER_FAIL | Failure | Email already exists: {email}")
         return jsonify({'error': 'Email already registered'}), 400
 
     try:
-        user = create_user(name, email, password, requested_role=normalized_role)
+        # Default all registrations to 'user' role
+        user = create_user(name, email, password, requested_role='user')
     except ValueError as exc:
         return jsonify({'error': str(exc)}), 400
     session = create_session_for_user(user.id)
@@ -69,21 +64,19 @@ def login():
     data = request.get_json(silent=True) or {}
     email = data.get('email', '').lower()
     password = data.get('password')
-    role = data.get('role', 'user')
-
-    try:
-        normalized_role = normalize_account_role(role)
-    except ValueError as exc:
-        return jsonify({"error": str(exc)}), 400
 
     user = get_user_by_email(email)
-    if not user or not user.is_active or not verify_password(password, user.password):
-        security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Attempted email: {email}")
+    if not user:
+        security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | User not found: {email}")
         return jsonify({'error': 'Invalid email or password'}), 401
 
-    if normalized_role == "admin" and not user.is_admin:
-        security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Non-admin attempted admin login: {email}")
-        return jsonify({'error': 'Admin access required'}), 403
+    if not user.is_active:
+        security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Account disabled: {email}")
+        return jsonify({'error': 'Your account has been disabled. Please contact the administrator.'}), 403
+
+    if not verify_password(password, user.password):
+        security_logger.warning(f"AUTH_LOGIN_FAIL | Failure | Wrong password: {email}")
+        return jsonify({'error': 'Invalid email or password'}), 401
 
     session = create_session_for_user(user.id)
     security_logger.info(f"AUTH_LOGIN_SUCCESS | Success | User ID: {user.id} | Email: {email}")

@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniSplit - Register</title>
     <link rel="stylesheet" href="./css/style.css">
+    <style>
+        #formStatus {
+            color: #ffb3b3 !important; /* Force red for visibility */
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -26,24 +32,23 @@
         <section class="auth-page">
             <div class="auth-left">
                 <span class="hero-badge">Create Your Account</span>
-                <h1>Start with the right role</h1>
+                <h1>Join UniSplit Today</h1>
                 <p>
-                    Create a regular account for expense sharing or explicitly register as
-                    an administrator when your email is eligible for elevated access.
+                    Create an account to start tracking shared expenses, managing group balances, and simplifying your group finances.
                 </p>
 
                 <div class="auth-feature-list">
                     <div class="auth-feature-card">
-                        <h3>Regular users</h3>
-                        <p>Share expenses, settle balances, and track history.</p>
+                        <h3>Effortless Splitting</h3>
+                        <p>Share expenses with friends and settle balances with a click.</p>
                     </div>
                     <div class="auth-feature-card">
-                        <h3>Administrator accounts</h3>
-                        <p>Manage users and inspect system-level audit records.</p>
+                        <h3>Real-time Updates</h3>
+                        <p>Get notified immediately when new expenses are added or settled.</p>
                     </div>
                     <div class="auth-feature-card">
-                        <h3>Clear validation</h3>
-                        <p>Inline status text keeps registration feedback visible.</p>
+                        <h3>Cross-platform Access</h3>
+                        <p>Access your dashboard and reports from any device, anywhere.</p>
                     </div>
                 </div>
             </div>
@@ -52,31 +57,22 @@
                 <form class="form-card login-card" id="registerForm">
                     <div class="form-header">
                         <h2>Create account</h2>
-                        <p>Choose the account type before registering.</p>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="role">Account type</label>
-                        <select id="role" required>
-                            <option value="user" selected>Register as user</option>
-                            <option value="admin">Register as administrator</option>
-                        </select>
-                        <p id="roleHint" class="inline-status neutral">Administrator registration requires an approved admin email domain.</p>
+                        <p>Fill in your details to get started.</p>
                     </div>
 
                     <div class="input-group">
                         <label for="name">Full Name</label>
-                        <input type="text" id="name" placeholder="Enter your name">
+                        <input type="text" id="name" placeholder="Enter your name" required>
                     </div>
 
                     <div class="input-group">
                         <label for="email">Email</label>
-                        <input type="email" id="email" placeholder="Enter your email">
+                        <input type="email" id="email" placeholder="Enter your email" required>
                     </div>
 
                     <div class="input-group">
                         <label for="password">Password</label>
-                        <input type="password" id="password" placeholder="Create a password">
+                        <input type="password" id="password" placeholder="Create a password" required>
                     </div>
 
                     <p id="formStatus" class="inline-status" aria-live="polite"></p>
@@ -89,7 +85,7 @@
         </section>
     </main>
 
-    <script src="./js/app.js?v=19"></script>
+    <script src="./js/app.js?v=20"></script>
     <script>
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Registration status',
@@ -97,24 +93,12 @@
             dashboardHref: 'dashboard.html'
         });
         const formStatus = document.getElementById('formStatus');
-        const roleHint = document.getElementById('roleHint');
         const registerForm = document.getElementById('registerForm');
-        const roleSelect = document.getElementById('role');
 
         function setStatus(message, kind = 'error') {
             formStatus.className = `inline-status ${kind}`;
             formStatus.textContent = message;
         }
-
-        function syncRoleHint() {
-            const isAdmin = roleSelect.value === 'admin';
-            roleHint.textContent = isAdmin
-                ? 'Administrator registration requires an approved admin email domain.'
-                : 'Regular accounts use the standard shared expense experience.';
-        }
-
-        roleSelect.addEventListener('change', syncRoleHint);
-        syncRoleHint();
 
         if (currentUser) {
             setStatus(`You are already signed in as ${window.UniSplitApp.getUserDisplayName(currentUser)} (${window.UniSplitApp.getUserRoleLabel(currentUser)}).`, 'success');
@@ -128,12 +112,11 @@
             const name = document.getElementById('name').value.trim();
             const email = document.getElementById('email').value.trim();
             const password = document.getElementById('password').value;
-            const role = document.getElementById('role').value;
 
             const res = await fetch(window.UniSplitApp.apiUrl('/api/register'), {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password, role })
+                body: JSON.stringify({ name, email, password })
             });
 
             let data = {};
@@ -146,10 +129,7 @@
                 window.UniSplitApp.setCurrentUser(data);
                 window.location.href = 'dashboard.html';
             } else {
-                const fallback = role === 'admin'
-                    ? 'Administrator registration was rejected. Check that the email domain is allowed.'
-                    : 'Registration failed';
-                setStatus(data.error || fallback, 'error');
+                setStatus(data.error || 'Registration failed', 'error');
             }
         });
     </script>

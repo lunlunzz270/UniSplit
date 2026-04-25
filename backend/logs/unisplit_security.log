@@ -155,3 +155,31 @@
 2026-04-21 14:52:14,973 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-21 14:53:00,644 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com
 2026-04-21 15:10:09,572 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:28:09,674 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:28:09,964 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:28:44,298 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:28:45,513 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:30:35,963 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:34:19,869 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:34:21,221 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:36:51,297 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:37:20,989 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: zc270@duke.edu
+2026-04-24 21:39:52,917 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: zc270@duke.edu
+2026-04-24 21:40:01,179 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: zc270@duke.edu
+2026-04-24 21:40:11,151 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com
+2026-04-24 21:40:48,885 [WARNING] [127.0.0.1] ADMIN_PASSWORD_RESET | Actor: 10 | Target: 1 | Email: zc270@duke.edu | Sessions cleared: 0
+2026-04-24 21:41:15,368 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: zc270@duke.edu
+2026-04-24 21:41:32,471 [WARNING] [127.0.0.1] ADMIN_PASSWORD_RESET | Actor: 10 | Target: 2 | Email: alice@gmail.com | Sessions cleared: 0
+2026-04-24 21:41:41,713 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-24 21:41:46,395 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: alice@gmail.com
+2026-04-24 21:41:48,670 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: alice@gmail.com
+2026-04-24 21:41:52,204 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Attempted email: alice@gmail.com
+2026-04-24 21:42:58,711 [WARNING] [127.0.0.1] AUTH_REGISTER_FAIL | Failure | Email already exists: alice@gmail.com
+2026-04-24 21:44:34,124 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 21:50:05,361 [WARNING] [127.0.0.1] AUTH_REGISTER_FAIL | Failure | Email already exists: alice@gmail.com
+2026-04-24 21:50:06,781 [WARNING] [127.0.0.1] AUTH_REGISTER_FAIL | Failure | Email already exists: alice@gmail.com
+2026-04-24 21:50:17,816 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Account disabled: alice@gmail.com
+2026-04-24 21:50:33,184 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Wrong password: zc270@duke.edu
+2026-04-24 21:50:38,719 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | User not found: zc270@duke.ed
+2026-04-24 21:50:48,652 [WARNING] [127.0.0.1] AUTH_REGISTER_FAIL | Failure | Email already exists: alice@gmail.com
+2026-04-24 21:58:11,372 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
