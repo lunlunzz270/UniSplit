@@ -51,12 +51,25 @@ def create_reminder(group_id: int, sender_id: int, reminder_in: ReminderCreate):
             if not unsettled:
                 raise ValueError("This member has no unsettled debt to you in this group. Reminder cannot be sent.")
 
+        # Build detailed log description
+        recipient = user_repo.get_user_by_id(reminder_in.recipient_id)
+        recipient_info = f"{recipient.full_name} ({recipient.email})"
+        log_desc = f"Reminder sent to {recipient_info}"
+        
+        if reminder_in.expense_id:
+            # We already fetched 'expense' above if reminder_in.expense_id exists
+            # but let's make sure it's accessible or re-fetch
+            expense = db.query(Expense).filter(Expense.id == reminder_in.expense_id).first()
+            if expense:
+                log_desc += f" for bill '{expense.description}'"
+
         reminder = reminder_repo.create_reminder(
             group_id=group_id,
             sender_id=sender_id,
             recipient_id=reminder_in.recipient_id,
             message=reminder_in.message,
             expense_id=reminder_in.expense_id,
+            log_description=log_desc
         )
 
         # Re-fetch with joinedload to ensure all relationships are available after session close
@@ -89,9 +102,22 @@ def get_group_reminders(group_id: int, user_id: int, limit: int = 10, offset: in
     db = SessionLocal()
     try:
         group_repo = GroupRepository(db)
+        user_repo = UserRepository(db)
+        
+        user = user_repo.get_user_by_id(user_id)
+        if not user:
+            raise ValueError("User not found")
+
         if not group_repo.get_group_member(group_id, user_id):
             raise ValueError("User must belong to the group")
-        return ReminderRepository(db).get_group_reminders(group_id, limit=limit, offset=offset)
+        
+        return ReminderRepository(db).get_group_reminders(
+            group_id=group_id, 
+            user_id=user_id, 
+            is_admin=user.is_admin, 
+            limit=limit, 
+            offset=offset
+        )
     finally:
         db.close()
 

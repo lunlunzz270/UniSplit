@@ -245,13 +245,14 @@
                                     desc: `Confirm your ${formatCurrency(meAsParticipant.share)} share in "${item.description}"`,
                                     href: 'history.html'
                                 });
-                            } else if (meAsParticipant.status === 'accepted' || meAsParticipant.status === 'appealed_acknowledged') {
+                            } else if (meAsParticipant.status === 'accepted') {
                                 tasks.push({
                                     title: 'Pay Outstanding',
-                                    desc: `You owe ${formatCurrency(meAsParticipant.share)} for "${item.description}"`,
+                                    desc: `You owe $${meAsParticipant.share} for "${item.description}"`,
                                     href: 'history.html'
                                 });
                             }
+
                         }
                     }
                 });
