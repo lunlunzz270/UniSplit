@@ -186,7 +186,8 @@ class ExpenseRepository:
                 Expense.group_id == group_id,
                 Expense.paid_by == payer_id,
                 ExpenseParticipant.user_id == recipient_id,
-                ExpenseParticipant.is_settled == False
+                ExpenseParticipant.is_settled == False,
+                ExpenseParticipant.status.notin_(['paid', 'appealed_acknowledged'])
             ).all()
         )
 

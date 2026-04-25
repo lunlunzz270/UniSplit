@@ -2,6 +2,8 @@ from ..core.database import SessionLocal
 from ..repositories.groups import GroupRepository
 from ..repositories.reminders import ReminderRepository
 from ..repositories.users import UserRepository
+from ..models.reminders import Reminder
+from ..models.expenses import Expense, ExpenseParticipant
 from ..schemas.reminders import ReminderCreate
 
 
@@ -24,12 +26,51 @@ def create_reminder(group_id: int, sender_id: int, reminder_in: ReminderCreate):
         if not group_repo.get_group_member(group_id, reminder_in.recipient_id):
             raise ValueError("Recipient must belong to the group")
 
-        return reminder_repo.create_reminder(
+        # Logic Check: Only allow reminders if there is actual unsettled debt
+        from ..repositories.expenses import ExpenseRepository
+        expense_repo = ExpenseRepository(db)
+        
+        if reminder_in.expense_id:
+            # Check specific bill
+            expense = db.query(Expense).filter(Expense.id == reminder_in.expense_id).first()
+            if not expense or expense.group_id != group_id:
+                raise ValueError("Linked bill not found in this group")
+            
+            # Check if this recipient actually owes for this bill
+            p = db.query(ExpenseParticipant).filter_by(
+                expense_id=reminder_in.expense_id, 
+                user_id=reminder_in.recipient_id
+            ).first()
+            if not p or p.is_settled or p.status == 'paid':
+                raise ValueError("This bill is already settled for this recipient")
+        else:
+            # Check if there is ANY unsettled debt from recipient to sender in this group
+            unsettled = expense_repo.get_unsettled_expenses_for_recipient(
+                group_id, sender_id, reminder_in.recipient_id
+            )
+            if not unsettled:
+                raise ValueError("This member has no unsettled debt to you in this group. Reminder cannot be sent.")
+
+        reminder = reminder_repo.create_reminder(
             group_id=group_id,
             sender_id=sender_id,
             recipient_id=reminder_in.recipient_id,
             message=reminder_in.message,
             expense_id=reminder_in.expense_id,
+        )
+
+        # Re-fetch with joinedload to ensure all relationships are available after session close
+        from sqlalchemy.orm import joinedload
+        return (
+            db.query(Reminder)
+            .options(
+                joinedload(Reminder.group),
+                joinedload(Reminder.sender),
+                joinedload(Reminder.recipient),
+                joinedload(Reminder.expense),
+            )
+            .filter(Reminder.id == reminder.id)
+            .first()
         )
     finally:
         db.close()

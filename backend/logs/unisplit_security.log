@@ -221,3 +221,14 @@
 2026-04-25 12:43:07,262 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 13 | Email: frank2@qq.com
 2026-04-25 12:43:14,000 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
 2026-04-25 12:43:20,911 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 14 | Email: frank3@qq.com
+2026-04-25 15:56:37,082 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-25 15:56:47,774 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
+2026-04-25 16:09:58,721 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 16:11:39,471 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 16:14:06,507 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 16:16:47,164 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
+2026-04-25 16:20:39,245 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 16:20:40,355 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 16:21:00,979 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
+2026-04-25 16:22:18,303 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 16:26:00,780 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up

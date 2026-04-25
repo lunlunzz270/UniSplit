@@ -65,7 +65,7 @@
         </section>
     </main>
 
-    <script src="./js/app.js?v=21"></script>
+    <script src="./js/app.js?v=22"></script>
     <script>
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Reminder access',
@@ -186,24 +186,38 @@
         async function loadUnsettledExpenses() {
             const groupId = groupSelect.value;
             const recipientId = recipientSelect.value;
+            const sendBtn = document.querySelector('#reminderForm button[type="submit"]');
+            
+            // Reset to default state
+            expenseSelectGroup.style.display = 'none';
+            expenseSelect.innerHTML = '<option value="">Select an unsettled bill</option>';
+            sendBtn.disabled = false;
+            reminderMessageBox.textContent = '';
+
             if (!groupId || !recipientId) {
-                expenseSelectGroup.style.display = 'none';
                 return;
             }
 
-            const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders/unsettled-expenses?recipient_id=${recipientId}`);
-            const data = await res.json();
-            const expenses = data.expenses || [];
+            try {
+                const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders/unsettled-expenses?recipient_id=${recipientId}`);
+                const data = await res.json();
+                const expenses = data.expenses || [];
 
-            if (expenses.length > 0) {
-                expenseSelectGroup.style.display = 'block';
-                expenseSelect.innerHTML = [
-                    '<option value="">Select an unsettled bill</option>',
-                    ...expenses.map(e => `<option value="${e.id}">${escapeHtml(e.description)} (#${e.id}) - $${e.amount}</option>`)
-                ].join('');
-            } else {
-                expenseSelectGroup.style.display = 'none';
-                expenseSelect.innerHTML = '<option value="">No unsettled bills found</option>';
+                if (expenses.length > 0) {
+                    expenseSelectGroup.style.display = 'block';
+                    expenseSelect.innerHTML = [
+                        '<option value="">Apply to ALL unsettled bills</option>',
+                        ...expenses.map(e => `<option value="${e.id}">${escapeHtml(e.description)} ($${Number(e.amount).toFixed(2)})</option>`)
+                    ].join('');
+                } else {
+                    // NO debt found: Block the action
+                    expenseSelectGroup.style.display = 'none';
+                    reminderMessageBox.style.color = '#ffb3b3';
+                    reminderMessageBox.textContent = 'This member has no unsettled debt to you. Reminder disabled.';
+                    sendBtn.disabled = true;
+                }
+            } catch (e) {
+                console.error("Failed to load unsettled expenses", e);
             }
         }
 
@@ -235,30 +249,59 @@
 
         document.getElementById('reminderForm').addEventListener('submit', async (event) => {
             event.preventDefault();
+            reminderMessageBox.style.color = '#ffb3b3';
             reminderMessageBox.textContent = '';
+            
             const groupId = groupSelect.value;
-            const recipientId = Number(recipientSelect.value);
-            const expenseId = expenseSelect.value ? Number(expenseSelect.value) : null;
+            const recipientIdVal = recipientSelect.value;
             const message = document.getElementById('reminderMessage').value.trim();
 
-            if (!groupId || !recipientId || !message) {
-                reminderMessageBox.textContent = 'Group, recipient, and message are required.';
+            if (!groupId) {
+                reminderMessageBox.textContent = 'Please select a group first.';
                 return;
             }
+            if (!recipientIdVal) {
+                reminderMessageBox.textContent = 'Please select a recipient.';
+                return;
+            }
+            if (!message) {
+                reminderMessageBox.textContent = 'Please enter a message.';
+                return;
+            }
+
+            const recipientId = Number(recipientIdVal);
+            const expenseId = expenseSelect.value ? Number(expenseSelect.value) : null;
 
             const res = await window.UniSplitApp.apiFetch(`/api/groups/${groupId}/reminders`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ recipient_id: recipientId, message, expense_id: expenseId }),
+                body: JSON.stringify({ 
+                    recipient_id: recipientId, 
+                    message: message, 
+                    expense_id: expenseId 
+                }),
             });
-            const data = await res.json();
+            
+            const data = await res.json().catch(() => ({}));
             if (!res.ok) {
+                reminderMessageBox.style.color = '#ffb3b3';
                 reminderMessageBox.textContent = data.error || 'Failed to send reminder.';
                 return;
             }
 
+            // SUCCESS
+            document.getElementById('reminderMessage').value = '';
             reminderMessageBox.style.color = '#8ff0b0';
-            reminderMessageBox.textContent = 'Reminder sent successfully.';
+            reminderMessageBox.style.padding = '10px';
+            reminderMessageBox.style.background = 'rgba(143, 240, 176, 0.1)';
+            reminderMessageBox.style.borderRadius = '8px';
+            reminderMessageBox.textContent = '✓ Reminder successfully sent to the member.';
+            
+            // Fallback for visual confirmation
+            setTimeout(() => {
+                alert('Success: Reminder sent!');
+            }, 100);
+
             await loadReminders();
         });
 
