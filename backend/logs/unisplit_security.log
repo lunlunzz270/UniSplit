@@ -190,3 +190,7 @@
 2026-04-24 22:29:09,437 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-24 22:29:10,576 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-24 22:51:07,672 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 23:12:54,663 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-24 23:13:02,527 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 10 | Email: lance@unisplit.com
+2026-04-24 23:17:38,354 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-24 23:18:00,859 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up

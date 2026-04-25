@@ -98,20 +98,24 @@
         }
 
         function renderReminder(item) {
+            const dateStr = item.created_at ? new Date(item.created_at).toLocaleString() : 'N/A';
             return `
                 <div class="history-item">
                     <div class="history-main">
                         <div class="history-top-row">
-                            <h3>Reminder #${item.id}</h3>
+                            <h3>Settlement Reminder</h3>
+                            <span style="font-size: 0.8em; opacity: 0.5;">ID: #${item.id}</span>
                         </div>
                         <div class="history-meta">
-                            <span>Group: ${item.group_id}</span>
-                            <span>Sender: ${item.sender_id}</span>
-                            <span>Recipient: ${item.recipient_id}</span>
-                            ${item.expense_id ? `<span>Bill: #${item.expense_id}</span>` : ''}
-                            <span>Date: ${item.created_at || 'N/A'}</span>
+                            <span><strong>Group:</strong> ${escapeHtml(item.group_name)}</span>
+                            <span><strong>Sender:</strong> ${escapeHtml(item.sender_name)} <small>(${escapeHtml(item.sender_email)})</small></span>
+                            <span><strong>Recipient:</strong> ${escapeHtml(item.recipient_name)} <small>(${escapeHtml(item.recipient_email)})</small></span>
+                            ${item.expense_id ? `<span><strong>Bill:</strong> ${escapeHtml(item.expense_title)}</span>` : ''}
+                            <span><strong>Date:</strong> ${dateStr}</span>
                         </div>
-                        <p class="history-notes">${escapeHtml(item.message)}</p>
+                        <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid var(--primary-2);">
+                            <p class="history-notes" style="margin: 0; font-style: italic;">"${escapeHtml(item.message)}"</p>
+                        </div>
                     </div>
                 </div>
             `;

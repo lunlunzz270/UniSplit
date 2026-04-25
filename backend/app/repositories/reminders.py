@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from ..models.reminders import Reminder
 from .activity_logs import ActivityLogRepository
@@ -38,6 +38,12 @@ class ReminderRepository:
     def get_group_reminders(self, group_id: int, limit: int = 10, offset: int = 0):
         return (
             self.db.query(Reminder)
+            .options(
+                joinedload(Reminder.group),
+                joinedload(Reminder.sender),
+                joinedload(Reminder.recipient),
+                joinedload(Reminder.expense),
+            )
             .filter(Reminder.group_id == group_id)
             .order_by(Reminder.created_at.desc())
             .offset(offset)
