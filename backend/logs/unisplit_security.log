@@ -197,3 +197,27 @@
 2026-04-24 23:31:25,646 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-24 23:31:39,837 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
 2026-04-24 23:35:45,760 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:02:23,940 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:02:25,190 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:15:33,005 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:15:34,218 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:15:43,632 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-25 12:15:55,884 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 12 | Email: frank1@qq.com
+2026-04-25 12:20:18,408 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:20:19,653 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:21:40,421 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:21:49,913 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:21:59,834 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:22:10,516 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:26:09,042 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:26:10,260 [INFO] [N/A] SYSTEM_STARTUP | Success | UniSplit Backend is starting up
+2026-04-25 12:26:24,613 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-25 12:26:30,433 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: zc270@duke.edu
+2026-04-25 12:42:21,185 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-25 12:42:27,013 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 1 | Email: zc270@duke.edu
+2026-04-25 12:42:47,812 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-25 12:42:53,067 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | User not found: 963665866@qq.com
+2026-04-25 12:43:01,378 [WARNING] [127.0.0.1] AUTH_LOGIN_FAIL | Failure | Account disabled: alice@gmail.com
+2026-04-25 12:43:07,262 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 13 | Email: frank2@qq.com
+2026-04-25 12:43:14,000 [INFO] [127.0.0.1] AUTH_LOGOUT_SUCCESS | Success | Session invalidated
+2026-04-25 12:43:20,911 [INFO] [127.0.0.1] AUTH_LOGIN_SUCCESS | Success | User ID: 14 | Email: frank3@qq.com

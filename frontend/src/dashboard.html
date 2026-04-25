@@ -5,342 +5,319 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniSplit - Dashboard</title>
     <link rel="stylesheet" href="./css/style.css">
+    <style>
+        .action-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .action-card {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.2s;
+        }
+        .action-card:hover { transform: translateY(-3px); }
+        .action-card h3 { margin: 0; font-size: 0.85em; text-transform: uppercase; opacity: 0.6; letter-spacing: 0.05em; }
+        .action-card .amount { margin: 12px 0; font-size: 2.2em; font-weight: 800; }
+        .action-card .status-text { font-size: 0.9em; display: flex; align-items: center; gap: 6px; }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 25px;
+        }
+        .task-list { list-style: none; padding: 0; margin: 0; }
+        .task-item {
+            background: rgba(255, 255, 255, 0.03);
+            margin-bottom: 12px;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #6366f1;
+        }
+        .task-info h4 { margin: 0; font-size: 1em; }
+        .task-info p { margin: 4px 0 0 0; font-size: 0.85em; opacity: 0.7; }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        .btn-quick {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            text-decoration: none;
+            color: white;
+            transition: background 0.2s;
+            text-align: center;
+        }
+        .btn-quick:hover { background: rgba(255, 255, 255, 0.1); }
+        .btn-quick span { margin-top: 8px; font-size: 0.9em; font-weight: 500; }
+    </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="logo">UniSplit</div>
-        <div class="nav-links">
-            <!-- Populated by app.js -->
-        </div>
+        <div class="nav-links"></div>
     </nav>
 
     <main class="container">
-        <section class="hero-section">
-            <div class="hero-text">
-                <span class="hero-badge">Smart Shared Expense Tracking</span>
-                <h1>Manage group spending with clarity.</h1>
-                <p>
-                    Track balances and monitor recent activity across all your shared groups.
-                </p>
-                <div class="hero-actions">
-                    <a href="add_expense.html" class="btn-primary">Add New Expense</a>
-                    <a href="insights.html" class="btn-secondary">View Analysis</a>
-                </div>
-            </div>
-
-            <div class="hero-panel">
-                <div class="mini-stat">
-                    <span class="mini-label">Net Balance</span>
-                    <h3 id="netBalanceValue">$0.00</h3>
-                    <p id="netBalanceCaption" class="neutral-text">Calculating...</p>
-                </div>
-                <div class="mini-stat">
-                    <span class="mini-label">Pending Tasks</span>
-                    <div class="pending-split-box">
-                        <div class="pending-sub">
-                            <span class="p-val" id="toCollectValue" style="color: #8ff0b0;">0</span>
-                            <span class="p-lbl">To Collect</span>
-                        </div>
-                        <div class="pending-divider"></div>
-                        <div class="pending-sub">
-                            <span class="p-val" id="toPayValue" style="color: #ff9d9d;">0</span>
-                            <span class="p-lbl">To Pay</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <section class="page-header-card">
+            <span class="hero-badge">Daily Operations</span>
+            <h1>Welcome back, <span id="userName">User</span></h1>
+            <p>Your action center for shared expenses and balances.</p>
         </section>
 
-        <style>
-            .pending-split-box {
-                display: flex;
-                align-items: center;
-                margin-top: 10px;
-                background: rgba(255, 255, 255, 0.03);
-                padding: 10px 0;
-                border-radius: 10px;
-                border: 1px solid rgba(255, 255, 255, 0.05);
-            }
-            .pending-sub { 
-                flex: 1; 
-                display: flex; 
-                flex-direction: column; 
-                align-items: center;
-                text-align: center;
-            }
-            .p-val { font-size: 1.5em; font-weight: 700; line-height: 1; }
-            .p-lbl { font-size: 0.65em; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.6; margin-top: 4px; }
-            .pending-divider { width: 1px; height: 25px; background: rgba(255, 255, 255, 0.1); }
-        </style>
-
-        <p id="dashboardMessage" class="status neutral" style="margin-bottom: 20px; padding: 10px; display:none;"></p>
-
-        <section class="stats-grid">
-            <div class="stat-card">
-                <p class="stat-label">Total Balance</p>
-                <h2 id="totalBalanceValue">$0.00</h2>
-                <span id="totalBalanceTag" class="tag neutral">Calculating</span>
+        <div class="action-cards">
+            <!-- Wallet Balance (REAL CASH) -->
+            <div class="action-card" style="border-bottom: 4px solid #8ff0b0;">
+                <h3>Account Balance</h3>
+                <div class="amount" id="walletBalance">$0.00</div>
+                <div class="status-text"><a href="billing.html" style="color: #8ff0b0;">Top up wallet &rarr;</a></div>
             </div>
 
-            <div class="stat-card">
-                <p class="stat-label">Monthly Volume</p>
-                <h2 id="monthlySpendingValue">$0.00</h2>
-                <span class="tag neutral">This month</span>
+            <!-- Net Settlement (DEBT/CREDIT) -->
+            <div class="action-card" style="border-bottom: 4px solid #6366f1;">
+                <h3>Net Settlement Position</h3>
+                <div class="amount" id="netBalance">$0.00</div>
+                <div class="status-text" id="netStatus">You are all settled up</div>
             </div>
 
-            <div class="stat-card">
-                <p class="stat-label">Active Groups</p>
-                <h2 id="activeGroupsValue">0</h2>
-                <span id="activeGroupsTag" class="tag neutral">Involved</span>
+            <!-- Pending Actions -->
+            <div class="action-card" style="border-bottom: 4px solid #ffd700;">
+                <h3>Action Required</h3>
+                <div class="amount" id="actionCount">0</div>
+                <div class="status-text">Tasks need your attention</div>
             </div>
+        </div>
 
-            <div class="stat-card">
-                <p class="stat-label">Total Records</p>
-                <h2 id="openExpensesValue">0</h2>
-                <span id="openExpensesTag" class="tag neutral">Historical</span>
-            </div>
-        </section>
-
-        <section class="dashboard-layout">
-            <div class="main-column">
-                <div class="panel">
+        <div class="dashboard-grid">
+            <div class="left-col">
+                <section class="panel">
                     <div class="panel-header">
-                        <h2>Group Overview</h2>
-                        <a href="history.html">See history</a>
+                        <h2>Priority Tasks</h2>
                     </div>
-                    <div class="group-list" id="groupList">
-                        <div class="empty-state-card"><p>Loading groups...</p></div>
+                    <div id="taskList" class="task-list">
+                        <p style="opacity:0.5; padding:20px;">Fetching your pending tasks...</p>
                     </div>
-                </div>
+                </section>
 
-                <div class="panel">
+                <section class="panel" style="margin-top: 25px;">
                     <div class="panel-header">
-                        <h2>Recent Activity</h2>
-                        <a href="history.html">View all</a>
+                        <h2>Active Groups</h2>
                     </div>
-                    <div class="activity-list" id="activityList">
-                        <div class="empty-state-card"><p>Loading activity...</p></div>
-                    </div>
-                </div>
+                    <div id="groupList" class="history-list"></div>
+                </section>
             </div>
 
-            <div class="side-column">
-                <div class="panel">
-                    <div class="panel-header">
-                        <h2>Quick Actions</h2>
-                    </div>
+            <div class="right-col">
+                <section class="panel">
+                    <div class="panel-header"><h2>Quick Actions</h2></div>
                     <div class="quick-actions">
-                        <a href="add_expense.html" class="quick-btn">+ Add Expense</a>
-                        <a href="insights.html" class="quick-btn">Open Insights</a>
-                        <a href="history.html" class="quick-btn">Transaction History</a>
-                        <a href="reminders.html" class="quick-btn">Reminders</a>
-                        <a href="report.html" class="quick-btn">Summary Report</a>
+                        <a href="add_expense.html" class="btn-quick">
+                            <strong>+</strong>
+                            <span>Add Expense</span>
+                        </a>
+                        <a href="history.html" class="btn-quick">
+                            <strong>&equiv;</strong>
+                            <span>History</span>
+                        </a>
+                        <a href="insights.html" class="btn-quick">
+                            <strong>&para;</strong>
+                            <span>Insights</span>
+                        </a>
+                        <a href="reminders.html" class="btn-quick">
+                            <strong>!</strong>
+                            <span>Reminders</span>
+                        </a>
                     </div>
-                </div>
+                </section>
 
-                <div class="panel highlight-panel">
-                    <h2>Spending Insight</h2>
-                    <p id="expenseInsightText">Add some shared expenses to generate personalized spending patterns.</p>
-                    <a href="insights.html" class="btn-primary full-width">Check Analytics</a>
-                </div>
+                <section class="panel" style="margin-top: 25px;">
+                    <div class="panel-header"><h2>Recent Activity</h2></div>
+                    <div id="activityLog" style="font-size: 0.9em; opacity: 0.8;"></div>
+                </section>
             </div>
-        </section>
+        </div>
     </main>
 
-    <script src="./js/app.js?v=12"></script>
+    <script src="./js/app.js?v=21"></script>
     <script>
-        const dashboardMessage = document.getElementById('dashboardMessage');
-        const groupList = document.getElementById('groupList');
-        const activityList = document.getElementById('activityList');
-        
-        const currentUser = window.UniSplitApp.ensureAuthBanner({
+        let currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Dashboard access',
-            requireLogin: true,
-            loginHref: 'login.html',
-            dashboardHref: 'dashboard.html'
+            requireLogin: true
         });
 
-        function formatAmount(amount, showSign = true) {
+        function formatCurrency(amount, showSign = false) {
             const value = Number(amount || 0);
-            const sign = (showSign && value > 0) ? '+' : '';
-            return `${sign}$${Math.abs(value).toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+            const sign = showSign && value > 0 ? '+' : '';
+            return `${sign}$${Math.abs(value).toFixed(2)}`;
         }
 
-        function escapeHtml(value) {
-            return String(value || '')
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#39;');
-        }
-
-        function calculateUserBalance(expense, userId) {
+        function calculateSettlementPosition(expense, userId) {
             if (!userId) return 0;
             let balance = 0;
-            
-            // For participants
-            (expense.participants || []).forEach((p) => {
-                if (Number(p.user_id) === Number(userId)) {
-                    // Only count as debt if NOT paid and NOT rejected/appealed
-                    if (!p.is_settled && p.status !== 'paid' && p.status !== 'rejected') {
-                        balance -= Number(p.share || 0);
-                    }
+
+            const participants = expense.participants || [];
+            const isPayer = Number(expense.payer_id || expense.paid_by) === Number(userId);
+
+            participants.forEach((participant) => {
+                const isCurrentUser = Number(participant.user_id) === Number(userId);
+                const isOutstanding = !participant.is_settled && participant.status !== 'paid' && participant.status !== 'rejected';
+
+                if (isCurrentUser && isOutstanding) {
+                    balance -= Number(participant.share || 0);
+                }
+
+                if (isPayer && !isCurrentUser && isOutstanding) {
+                    balance += Number(participant.share || 0);
                 }
             });
 
-            // For the payer (the person who paid up front)
-            if (Number(expense.paid_by) === Number(userId)) {
-                // The payer is owed money by others who haven't paid yet
-                (expense.participants || []).forEach((p) => {
-                    if (Number(p.user_id) !== Number(userId)) {
-                        // Only count as credit if NOT paid and NOT rejected/appealed
-                        if (!p.is_settled && p.status !== 'paid' && p.status !== 'rejected') {
-                            balance += Number(p.share || 0);
-                        }
-                    }
-                });
-            }
             return balance;
         }
 
-        async function loadDashboard() {
-            if (!currentUser) return;
-
+        async function loadDashboardData() {
             try {
-                const res = await window.UniSplitApp.apiFetch('/api/expenses');
-                const data = await res.json();
-                const expenses = window.UniSplitApp.normalizeExpenseList(data);
-                const userId = currentUser.id;
-                const currentMonth = new Date().toISOString().slice(0, 7);
+                currentUser = await window.UniSplitApp.refreshCurrentUser() || currentUser;
+                const [userRes, expenseRes, activityRes] = await Promise.all([
+                    window.UniSplitApp.apiFetch('/api/me'),
+                    window.UniSplitApp.apiFetch('/api/expenses?limit=100'),
+                    window.UniSplitApp.apiFetch('/api/activity_logs?limit=5')
+                ]);
 
-                if (!expenses.length) {
-                    groupList.innerHTML = '<div class="empty-state-card"><h3>No groups active</h3><p>Create an expense to see group summaries.</p></div>';
-                    activityList.innerHTML = '<div class="empty-state-card"><h3>No activity</h3><p>Your history is empty.</p></div>';
-                    return;
-                }
+                const userData = await userRes.json();
+                const expenseData = await expenseRes.json();
+                const activities = await activityRes.json();
 
-                const groupMap = new Map();
-                const categoryMap = new Map();
-                let totalNetBalance = 0;
-                let monthlyVolume = 0;
-                let pendingToCollect = 0;
-                let pendingToPay = 0;
-                
-                expenses.forEach(exp => {
-                    // ... (group and category tracking same as before)
-                    const gName = exp.group_name || 'Individual';
-                    const stats = groupMap.get(gName) || { total: 0, userBalance: 0, count: 0 };
-                    stats.total += Number(exp.amount || 0);
-                    stats.userBalance += calculateUserBalance(exp, userId);
-                    stats.count += 1;
-                    groupMap.set(gName, stats);
+                // 1. Update Identity & Wallet
+                document.getElementById('userName').textContent = userData.full_name || userData.name || currentUser?.full_name || 'User';
+                document.getElementById('walletBalance').textContent = formatCurrency(userData.balance || 0);
 
-                    const cat = exp.category || 'other';
-                    categoryMap.set(cat, (categoryMap.get(cat) || 0) + Number(exp.amount || 0));
+                // 2. Calculate Settlement & Tasks
+                const expenses = window.UniSplitApp.normalizeExpenseList(expenseData);
+                const logs = Array.isArray(activities) ? activities : (activities.logs || activities.activity_logs || []);
+                let netBalance = 0;
+                let tasks = [];
+                const groupMap = {};
 
-                    totalNetBalance += calculateUserBalance(exp, userId);
-                    if ((exp.date || '').startsWith(currentMonth)) {
-                        monthlyVolume += Number(exp.amount || 0);
+                expenses.forEach(item => {
+                    const meAsPayer = Number(item.payer_id || item.paid_by) === Number(userData.id);
+                    const meAsParticipant = (item.participants || []).find(p => Number(p.user_id) === Number(userData.id));
+                    const settlementPosition = calculateSettlementPosition(item, userData.id);
+                    const groupName = item.group_name || 'Individual';
+
+                    if (!groupMap[groupName]) {
+                        groupMap[groupName] = { count: 0, balance: 0 };
                     }
+                    groupMap[groupName].count += 1;
+                    groupMap[groupName].balance += settlementPosition;
 
-                    // REFINED PENDING LOGIC (Align with Net Balance)
-                    if (Number(exp.payer_id) === Number(userId)) {
-                        // I am the payer: count as 1 task if ANYONE still owes and hasn't appealed
-                        const hasActiveDebt = (exp.participants || []).some(p => !p.is_settled && p.status !== 'cancelled' && p.status !== 'rejected');
-                        if (hasActiveDebt) pendingToCollect++;
-                    } else {
-                        // I am a participant: count as 1 task if I still owe and haven't appealed
-                        const mySplit = (exp.participants || []).find(p => Number(p.user_id) === Number(userId));
-                        if (mySplit && !mySplit.is_settled && mySplit.status !== 'cancelled' && mySplit.status !== 'rejected') {
-                            pendingToPay++;
+                    if (meAsPayer) {
+                        (item.participants || []).forEach(p => {
+                            if (!p.is_settled && p.status !== 'paid' && p.status !== 'rejected') {
+                                netBalance += Number(p.share);
+                                if (p.status === 'rejected') {
+                                    tasks.push({
+                                        title: 'Resolve Appeal',
+                                        desc: `${p.name || 'A member'} appealed a ${formatCurrency(p.share)} split in "${item.description}"`,
+                                        href: 'history.html'
+                                    });
+                                }
+                            }
+                        });
+                    } else if (meAsParticipant) {
+                        if (!meAsParticipant.is_settled && meAsParticipant.status !== 'paid') {
+                            netBalance -= Number(meAsParticipant.share);
+                            if (meAsParticipant.status === 'pending') {
+                                tasks.push({
+                                    title: 'Accept Split',
+                                    desc: `Confirm your ${formatCurrency(meAsParticipant.share)} share in "${item.description}"`,
+                                    href: 'history.html'
+                                });
+                            } else if (meAsParticipant.status === 'accepted' || meAsParticipant.status === 'appealed_acknowledged') {
+                                tasks.push({
+                                    title: 'Pay Outstanding',
+                                    desc: `You owe ${formatCurrency(meAsParticipant.share)} for "${item.description}"`,
+                                    href: 'history.html'
+                                });
+                            }
                         }
                     }
                 });
 
-                // Update UI Stats
-                document.getElementById('netBalanceValue').textContent = formatAmount(totalNetBalance);
-                document.getElementById('netBalanceCaption').textContent = totalNetBalance >= 0 ? 'You are owed overall' : 'You owe across groups';
-                document.getElementById('netBalanceCaption').className = totalNetBalance >= 0 ? 'positive-text' : 'warning-text';
+                // Update Net Card
+                const netEl = document.getElementById('netBalance');
+                const statusEl = document.getElementById('netStatus');
+                netEl.textContent = formatCurrency(netBalance);
+                if (netBalance > 0) {
+                    netEl.style.color = '#8ff0b0';
+                    statusEl.textContent = 'Owed to you (Net)';
+                } else if (netBalance < 0) {
+                    netEl.style.color = '#ff9d9d';
+                    statusEl.textContent = 'You owe to others (Net)';
+                } else {
+                    netEl.style.color = '#fff';
+                    statusEl.textContent = 'You are all settled up';
+                }
 
-                document.getElementById('totalBalanceValue').textContent = formatAmount(totalNetBalance);
-                const tag = document.getElementById('totalBalanceTag');
-                tag.textContent = totalNetBalance >= 0 ? 'Positive' : 'Owed';
-                tag.className = `tag ${totalNetBalance >= 0 ? 'positive' : 'warning'}`;
-
-                document.getElementById('monthlySpendingValue').textContent = formatAmount(monthlyVolume, false);
-                document.getElementById('activeGroupsValue').textContent = groupMap.size;
-                document.getElementById('openExpensesValue').textContent = expenses.length;
-                
-                document.getElementById('toCollectValue').textContent = pendingToCollect;
-                document.getElementById('toPayValue').textContent = pendingToPay;
-
-                // Render Groups
-                groupList.innerHTML = Array.from(groupMap.entries())
-                    .sort((a, b) => b[1].total - a[1].total)
-                    .slice(0, 5)
-                    .map(([name, s]) => `
-                        <div class="group-item">
-                            <div class="group-left">
-                                <div class="group-icon">${escapeHtml(name.charAt(0).toUpperCase())}</div>
-                                <div>
-                                    <h4>${escapeHtml(name)}</h4>
-                                    <p>${s.count} transactions</p>
-                                </div>
+                // Render Tasks
+                document.getElementById('actionCount').textContent = tasks.length;
+                const taskList = document.getElementById('taskList');
+                if (tasks.length === 0) {
+                    taskList.innerHTML = '<p style="opacity:0.5; padding:20px;">You are all caught up! No urgent tasks.</p>';
+                } else {
+                    taskList.innerHTML = tasks.slice(0, 5).map(t => `
+                        <div class="task-item">
+                            <div class="task-info">
+                                <h4>${t.title}</h4>
+                                <p>${t.desc}</p>
                             </div>
-                            <div class="group-right">
-                                <span class="amount ${s.userBalance >= 0 ? 'positive-text' : 'negative-text'}">${formatAmount(s.userBalance)}</span>
-                                <small>${s.userBalance >= 0 ? 'owed to you' : 'you owe'}</small>
+                            <a href="${t.href}" class="btn btn-tiny">Go &rarr;</a>
+                        </div>
+                    `).join('');
+                }
+
+                // Render Groups (Filtered to active only)
+                document.getElementById('groupList').innerHTML = Object.entries(groupMap)
+                    .sort((a,b) => Math.abs(b[1].balance) - Math.abs(a[1].balance))
+                    .slice(0, 4)
+                    .map(([name, stats]) => `
+                        <div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid rgba(255,255,255,0.05);">
+                            <div>
+                                <div>${name}</div>
+                                <small style="opacity:0.6;">${stats.count} tracked records</small>
                             </div>
+                            <small style="opacity:0.85; color:${stats.balance >= 0 ? '#8ff0b0' : '#ff9d9d'};">
+                                ${stats.balance >= 0 ? 'Collect ' : 'Settle '}${formatCurrency(stats.balance)}
+                            </small>
                         </div>
                     `).join('');
 
                 // Render Activity
-                try {
-                    const activityRes = await window.UniSplitApp.apiFetch('/api/activity_logs');
-                    const activityData = await activityRes.json();
-                    const logs = activityData.logs || [];
-
-                    if (logs.length > 0) {
-                        activityList.innerHTML = logs.slice(0, 8).map(log => {
-                            let dotClass = 'activity-dot';
-                            if (log.action_type === 'expense_appealed') dotClass += ' error';
-                            if (log.action_type === 'settlement_recorded') dotClass += ' positive';
-                            
-                            return `
-                                <div class="activity-item">
-                                    <div class="${dotClass}"></div>
-                                    <div style="flex: 1;">
-                                        <h4 style="font-size: 0.95em;">${escapeHtml(log.description)}</h4>
-                                        <p style="font-size: 0.85em; opacity: 0.7;">Action by ${escapeHtml(log.user_name || 'System')}</p>
-                                    </div>
-                                    <span style="font-size: 0.8em; opacity: 0.6; white-space: nowrap;">${(log.created_at || '').slice(5, 16).replace('T', ' ')}</span>
-                                </div>
-                            `;
-                        }).join('');
-                    } else {
-                        activityList.innerHTML = '<div class="empty-state-card"><p>No recent activity logs.</p></div>';
-                    }
-                } catch (e) {
-                    console.error("Activity Log Error:", e);
-                    activityList.innerHTML = '<div class="empty-state-card"><p>Could not load activity feed.</p></div>';
-                }
-
-                // Insight Text
-                const topCat = Array.from(categoryMap.entries()).sort((a, b) => b[1] - a[1])[0];
-                if (topCat) {
-                    const catName = topCat[0].replace('_', ' ');
-                    document.getElementById('expenseInsightText').textContent = `Your highest group spending this period is in ${catName}.`;
-                }
+                document.getElementById('activityLog').innerHTML = logs.length ? logs.map(log => `
+                    <div style="margin-bottom:10px;">
+                        <span style="color:var(--primary-2);">&bull;</span> ${log.description}
+                        <div style="font-size:0.7em; opacity:0.5;">${new Date(log.created_at).toLocaleString()}</div>
+                    </div>
+                `).join('') : '<p style="opacity:0.5;">No recent activity yet.</p>';
 
             } catch (err) {
-                console.error("Dashboard Load Error:", err);
-                dashboardMessage.style.display = 'block';
-                dashboardMessage.textContent = "Failed to load real-time data.";
+                console.error(err);
             }
         }
 
-        window.addEventListener('DOMContentLoaded', loadDashboard);
+        window.addEventListener('DOMContentLoaded', loadDashboardData);
     </script>
 </body>
 </html>

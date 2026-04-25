@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>UniSplit - Financial Reports</title>
+    <title>UniSplit - Advanced Reports</title>
     <link rel="stylesheet" href="./css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <style>
@@ -22,28 +22,30 @@
             padding: 20px;
             position: relative;
         }
-        .loading-overlay {
+        /* VIP Gate Styling */
+        .vip-gate-overlay {
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(18, 18, 24, 0.9);
+            background: rgba(18, 18, 24, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 100;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            z-index: 10;
+            text-align: center;
             border-radius: 12px;
-            display: none;
+            padding: 40px;
         }
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid rgba(255, 255, 255, 0.1);
-            border-top: 3px solid var(--primary-2);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 10px;
+        .vip-badge-big {
+            background: #ffd700;
+            color: #000;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            font-size: 0.9em;
         }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         .filter-bar {
             display: flex;
@@ -56,18 +58,13 @@
             background: rgba(255, 255, 255, 0.05);
             border-radius: 12px;
         }
-        .date-inputs {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+        .date-inputs { display: flex; align-items: center; gap: 15px; }
         .date-field {
             padding: 8px 12px;
             border-radius: 8px;
             background: #2d2d3a;
             color: white;
             border: 1px solid #444;
-            font-family: inherit;
         }
         .btn-filter {
             padding: 8px 24px;
@@ -77,50 +74,27 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            transition: transform 0.1s;
         }
-        .btn-filter:active { transform: scale(0.95); }
-        
-        .summary-cards {
+        .report-kpis {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
             margin-bottom: 20px;
         }
-        .summary-card {
+        .report-kpi {
             background: rgba(255, 255, 255, 0.05);
-            padding: 20px;
             border-radius: 12px;
-            border-bottom: 3px solid var(--primary-2);
+            padding: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        .summary-card h3 { margin: 0; font-size: 0.75em; text-transform: uppercase; opacity: 0.5; letter-spacing: 0.05em; }
-        .summary-card p { margin: 10px 0 0 0; font-size: 1.8em; font-weight: bold; color: #fff; }
-        .summary-card .trend-up { color: #8ff0b0; font-size: 0.4em; vertical-align: middle; margin-left: 5px; }
-
-        /* ApexCharts Toolbar Customization */
-        .apexcharts-toolbar {
-            top: -30px !important;
-            right: 0px !important;
-            opacity: 0.5;
-            transition: opacity 0.2s;
+        .report-kpi small {
+            opacity: 0.6;
+            text-transform: uppercase;
+            font-size: 0.72em;
         }
-        .chart-container:hover .apexcharts-toolbar {
-            opacity: 1;
-        }
-        .apexcharts-menu {
-            background: #2d2d3a !important;
-            border: 1px solid #444 !important;
-            color: white !important;
-        }
-        .apexcharts-menu-item:hover {
-            background: var(--primary-2) !important;
-        }
-        .panel {
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        .panel:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        .report-kpi h3 {
+            margin: 10px 0 0;
+            font-size: 1.9em;
         }
     </style>
 </head>
@@ -131,310 +105,208 @@
     </nav>
 
     <main class="container">
+        <div id="vipGate" class="vip-gate-overlay" style="display: none;">
+            <div class="vip-badge-big">PREMIUM FEATURE</div>
+            <h2>Unlock Advanced Auditing</h2>
+            <p style="max-width: 500px; margin-bottom: 25px;">
+                Upgrade to Premium to access custom date ranges, deep multi-group analysis, and professional CSV/PDF data exports.
+            </p>
+            <div style="display:flex; gap:15px;">
+                <a href="billing.html" class="btn">Upgrade Now</a>
+                <a href="dashboard.html" class="btn btn-secondary">Back to Dashboard</a>
+            </div>
+        </div>
+
         <section class="page-header-card">
-            <span class="hero-badge" id="reportScopeBadge">Analytics</span>
-            <h1>Financial Insights</h1>
-            <p id="reportHeroText">Visualize your spending patterns across groups and categories.</p>
-            <p id="reportStatus" class="inline-status neutral">Initializing charts...</p>
+            <span class="hero-badge" style="background: #ffd700; color: #000;">Premium Access</span>
+            <h1>Advanced Financial Reports</h1>
+            <p>Comprehensive audit of system-wide transactions and multi-dimensional analysis.</p>
         </section>
 
         <div class="filter-bar">
             <div class="date-inputs">
                 <div>
-                    <label style="margin-right:8px; font-size:0.8em; opacity:0.6; text-transform: uppercase;">From</label>
+                    <label style="margin-right:8px; font-size:0.8em; opacity:0.6;">FROM</label>
                     <input type="date" id="startDate" class="date-field">
                 </div>
                 <div>
-                    <label style="margin-right:8px; font-size:0.8em; opacity:0.6; text-transform: uppercase;">To</label>
+                    <label style="margin-right:8px; font-size:0.8em; opacity:0.6;">TO</label>
                     <input type="date" id="endDate" class="date-field">
                 </div>
-                <button id="applyRangeBtn" class="btn-filter">Update Charts</button>
+                <button id="applyRangeBtn" class="btn-filter">Apply Audit Filters</button>
             </div>
-            <button id="exportCsvBtn" class="btn-filter" type="button" style="background:#10b981;">Export Report (CSV)</button>
+            <button id="exportCsvBtn" class="btn-filter" type="button" style="background:#10b981;">Export Audit Data (CSV)</button>
         </div>
 
-        <div class="summary-cards">
-            <div class="summary-card">
-                <h3>Total Expenditure</h3>
-                <p id="statTotal">$0.00</p>
+        <div class="report-kpis">
+            <div class="report-kpi">
+                <small>Total in Range</small>
+                <h3 id="reportTotal">$0.00</h3>
             </div>
-            <div class="summary-card" style="border-color: #6366f1;">
-                <h3>Total Records</h3>
-                <p id="statCount">0</p>
+            <div class="report-kpi">
+                <small>Records</small>
+                <h3 id="reportCount">0</h3>
             </div>
-            <div class="summary-card" style="border-color: #ffd700;">
-                <h3>Average Bill</h3>
-                <p id="statAvg">$0.00</p>
+            <div class="report-kpi">
+                <small>Average Expense</small>
+                <h3 id="reportAverage">$0.00</h3>
             </div>
         </div>
 
         <div class="report-layout">
             <div class="panel">
-                <div class="panel-header">
-                    <h2>Spending by Category</h2>
-                </div>
-                <div class="chart-container">
-                    <div id="loadingPie" class="loading-overlay">
-                        <div class="loading-spinner"></div>
-                        <span>Calculating...</span>
-                    </div>
-                    <div id="pieChart"></div>
-                </div>
+                <div class="panel-header"><h2>Category Matrix</h2></div>
+                <div id="pieChart" class="chart-container"></div>
             </div>
-
             <div class="panel">
-                <div class="panel-header">
-                    <h2>Daily Expense Trend</h2>
-                </div>
-                <div class="chart-container">
-                    <div id="loadingLine" class="loading-overlay">
-                        <div class="loading-spinner"></div>
-                        <span>Analyzing...</span>
-                    </div>
-                    <div id="lineChart"></div>
-                </div>
+                <div class="panel-header"><h2>Historical Spending Flow</h2></div>
+                <div id="lineChart" class="chart-container"></div>
             </div>
-
             <div class="panel full-width-chart">
-                <div class="panel-header">
-                    <h2>Group Expense Distribution</h2>
-                </div>
-                <div class="chart-container" style="min-height: 400px;">
-                    <div id="loadingBar" class="loading-overlay">
-                        <div class="loading-spinner"></div>
-                        <span>Mapping Groups...</span>
-                    </div>
-                    <div id="barChart"></div>
-                </div>
+                <div class="panel-header"><h2>Group Activity & Settlement Contrast</h2></div>
+                <div id="barChart" class="chart-container" style="min-height: 400px;"></div>
             </div>
         </div>
     </main>
 
-    <script src="./js/app.js?v=20"></script>
+    <script src="./js/app.js?v=21"></script>
     <script>
-        const currentUser = window.UniSplitApp.ensureAuthBanner({
-            title: 'Insights',
+        let currentUser = window.UniSplitApp.ensureAuthBanner({
+            title: 'Advanced Reports',
             requireLogin: true
         });
-        
-        const statTotal = document.getElementById('statTotal');
-        const statCount = document.getElementById('statCount');
-        const statAvg = document.getElementById('statAvg');
-        const reportStatus = document.getElementById('reportStatus');
-        const exportCsvBtn = document.getElementById('exportCsvBtn');
 
         let pieChart, lineChart, barChart;
 
-        const CATEGORY_MAP = {
-            'food_dining': 'Food & Dining',
-            'transportation': 'Transportation',
-            'groceries': 'Groceries',
-            'entertainment': 'Entertainment',
-            'other': 'Other'
-        };
+        function formatCurrency(amount) {
+            return `$${Number(amount || 0).toFixed(2)}`;
+        }
 
-        function formatCategory(cat) {
-            return CATEGORY_MAP[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' ') : 'Other');
+        function formatCategory(value) {
+            const map = {
+                food_dining: 'Food & Dining',
+                transportation: 'Transportation',
+                groceries: 'Groceries',
+                entertainment: 'Entertainment',
+                other: 'Other'
+            };
+            return map[value] || String(value || 'Other').replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+        }
+
+        async function initPremiumReports() {
+            currentUser = await window.UniSplitApp.refreshCurrentUser() || currentUser;
+            // VIP Gate Logic
+            if (!currentUser.is_vip && !currentUser.is_admin) {
+                document.getElementById('vipGate').style.display = 'flex';
+                // We still initialize charts with empty/blurred style to show value
+            }
+
+            const baseOptions = {
+                chart: { foreColor: '#ccc', toolbar: { show: true }, background: 'transparent' },
+                theme: { mode: 'dark', palette: 'palette1' },
+                noData: { text: 'Audit scope is currently empty' }
+            };
+
+            pieChart = new ApexCharts(document.querySelector("#pieChart"), {
+                ...baseOptions,
+                chart: { ...baseOptions.chart, type: 'donut', height: 350 },
+                series: [], labels: []
+            });
+            pieChart.render();
+
+            lineChart = new ApexCharts(document.querySelector("#lineChart"), {
+                ...baseOptions,
+                chart: { ...baseOptions.chart, type: 'area', height: 350 },
+                stroke: { curve: 'smooth' },
+                xaxis: { type: 'datetime' },
+                series: [{ name: 'Spending', data: [] }]
+            });
+            lineChart.render();
+
+            barChart = new ApexCharts(document.querySelector("#barChart"), {
+                ...baseOptions,
+                chart: { ...baseOptions.chart, type: 'bar', height: 380 },
+                series: [{ name: 'Total Volume', data: [] }]
+            });
+            barChart.render();
+
+            setDefaultDates();
+            if (currentUser.is_vip || currentUser.is_admin) {
+                await fetchAndRender();
+            }
         }
 
         function setDefaultDates() {
             const end = new Date();
             const start = new Date();
-            start.setMonth(start.getMonth() - 6); // Default to 6 months for more data
-            
+            start.setFullYear(start.getFullYear() - 1); // Default to 1 year for VIPs
             document.getElementById('endDate').value = end.toISOString().split('T')[0];
             document.getElementById('startDate').value = start.toISOString().split('T')[0];
         }
 
-        function toggleLoading(show) {
-            const overlays = document.querySelectorAll('.loading-overlay');
-            overlays.forEach(el => el.style.display = show ? 'flex' : 'none');
-        }
-
-        async function initCharts() {
-            if (!currentUser) return;
-
-            const baseOptions = {
-                chart: { 
-                    foreColor: '#ccc', 
-                    toolbar: { 
-                        show: true,
-                        tools: {
-                            download: true, // This enables PNG, SVG, and CSV export for each chart
-                            selection: true,
-                            zoom: true,
-                            zoomin: true,
-                            zoomout: true,
-                            pan: true,
-                            reset: true
-                        },
-                        autoSelected: 'zoom' 
-                    },
-                    fontFamily: 'system-ui, -apple-system, sans-serif',
-                    background: 'transparent'
-                },
-                theme: { mode: 'dark' },
-                noData: { 
-                    text: 'No data found for this period',
-                    style: { fontSize: '14px', color: '#888' }
-                },
-                tooltip: { theme: 'dark' }
-            };
-
-            // 1. Pie/Donut (Category Distribution)
-            pieChart = new ApexCharts(document.querySelector("#pieChart"), {
-                ...baseOptions,
-                chart: { ...baseOptions.chart, type: 'donut', height: 350 },
-                colors: ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-                plotOptions: { pie: { donut: { size: '75%', labels: { show: true, name: { show: true }, value: { show: true, color: '#fff' } } } } },
-                stroke: { width: 0 },
-                legend: { position: 'bottom' },
-                series: [], labels: []
-            });
-            pieChart.render();
-
-            // 2. Area Chart (Time Trend)
-            lineChart = new ApexCharts(document.querySelector("#lineChart"), {
-                ...baseOptions,
-                chart: { ...baseOptions.chart, type: 'area', height: 350, sparkline: { enabled: false } },
-                stroke: { curve: 'smooth', width: 2 },
-                fill: { type: 'gradient', gradient: { opacityFrom: 0.5, opacityTo: 0 } },
-                xaxis: { type: 'datetime' },
-                yaxis: { labels: { formatter: v => `$${v.toFixed(0)}` } },
-                colors: ['#6366f1'],
-                series: [{ name: 'Daily Spending', data: [] }]
-            });
-            lineChart.render();
-
-            // 3. Bar Chart (Group Comparison)
-            barChart = new ApexCharts(document.querySelector("#barChart"), {
-                ...baseOptions,
-                chart: { ...baseOptions.chart, type: 'bar', height: 380 },
-                plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
-                colors: ['#8b5cf6'],
-                dataLabels: { enabled: false },
-                xaxis: { categories: [] },
-                yaxis: { labels: { formatter: v => `$${v.toFixed(0)}` } },
-                series: [{ name: 'Total Expense', data: [] }]
-            });
-            barChart.render();
-
-            await fetchAndRender();
-        }
-
         async function fetchAndRender() {
+            if (!currentUser.is_vip && !currentUser.is_admin) {
+                return;
+            }
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
-            
-            // limit=0 is now correctly handled by backend as "no limit"
-            const params = new URLSearchParams({ 
-                start_date: start, 
-                end_date: end,
-                limit: '0' 
-            });
+            const params = new URLSearchParams({ start_date: start, end_date: end, limit: '0' });
 
             try {
-                toggleLoading(true);
                 const res = await window.UniSplitApp.apiFetch(`/api/expenses?${params.toString()}`);
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'API Error');
+                const list = window.UniSplitApp.normalizeExpenseList(data.expenses || []);
+                const total = list.reduce((sum, item) => sum + Number(item.amount || 0), 0);
 
-                // Correctly extract the list from { expenses: [...] }
-                const rawList = data.expenses || [];
-                const filtered = window.UniSplitApp.normalizeExpenseList(rawList);
-                
-                if (filtered.length === 0) {
-                    setReportStatus('No records found for the selected date range.', 'neutral');
-                    updateChartsWithEmptyData();
-                    return;
-                }
+                document.getElementById('reportTotal').textContent = formatCurrency(total);
+                document.getElementById('reportCount').textContent = list.length;
+                document.getElementById('reportAverage').textContent = list.length ? formatCurrency(total / list.length) : '$0.00';
 
-                // Update Stats
-                const total = filtered.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-                statTotal.textContent = `$${total.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
-                statCount.textContent = filtered.length;
-                statAvg.textContent = `$${(total / filtered.length).toFixed(2)}`;
-
-                // 1. Update Category Donut
+                // Category Pie
                 const catMap = {};
-                filtered.forEach(e => {
-                    const c = e.category || 'other';
-                    catMap[c] = (catMap[c] || 0) + Number(e.amount || 0);
+                list.forEach(e => {
+                    const category = e.category || 'other';
+                    catMap[category] = (catMap[category] || 0) + Number(e.amount || 0);
                 });
-                pieChart.updateOptions({
-                    labels: Object.keys(catMap).map(formatCategory),
-                    series: Object.values(catMap).map(v => Number(v.toFixed(2)))
-                });
+                pieChart.updateOptions({ labels: Object.keys(catMap).map(formatCategory), series: Object.values(catMap) });
 
-                // 2. Update Trend Area
+                // Spending Flow
                 const dailyMap = {};
-                filtered.forEach(e => {
-                    if (e.date) {
-                        const day = e.date.split('T')[0];
-                        dailyMap[day] = (dailyMap[day] || 0) + Number(e.amount || 0);
-                    }
+                list.forEach(e => {
+                    if (!e.date) return;
+                    const d = e.date.split('T')[0];
+                    dailyMap[d] = (dailyMap[d] || 0) + Number(e.amount || 0);
                 });
-                const trendSeries = Object.entries(dailyMap).map(([x, y]) => ({ x, y: Number(y.toFixed(2)) }))
-                    .sort((a, b) => new Date(a.x) - new Date(b.x));
-                lineChart.updateSeries([{ name: 'Daily Total', data: trendSeries }]);
+                const lineSeries = Object.entries(dailyMap).map(([x, y]) => ({ x, y })).sort((a,b) => new Date(a.x)-new Date(b.x));
+                lineChart.updateSeries([{ name: 'Spending', data: lineSeries }]);
 
-                // 3. Update Group Bar
-                const groupMap = {};
-                filtered.forEach(e => {
-                    const g = e.group_name || 'Personal';
-                    groupMap[g] = (groupMap[g] || 0) + Number(e.amount || 0);
+                // Group Contrast
+                const grpMap = {};
+                list.forEach(e => {
+                    const group = e.group_name || 'Individual';
+                    grpMap[group] = (grpMap[group] || 0) + Number(e.amount || 0);
                 });
-                const sortedGroups = Object.entries(groupMap).sort((a, b) => b[1] - a[1]);
-                barChart.updateOptions({
-                    xaxis: { categories: sortedGroups.map(g => g[0]) }
-                });
-                barChart.updateSeries([{ name: 'Total Expense', data: sortedGroups.map(g => Number(g[1].toFixed(2))) }]);
+                const sortedGrps = Object.entries(grpMap).sort((a,b) => b[1]-a[1]);
+                barChart.updateOptions({ xaxis: { categories: sortedGrps.map(g => g[0]) } });
+                barChart.updateSeries([{ data: sortedGrps.map(g => g[1]) }]);
 
-                reportStatus.className = 'inline-status success';
-                reportStatus.textContent = `Successfully synchronized ${filtered.length} records.`;
-
-            } catch (err) {
-                console.error("Report Sync Error:", err);
-                reportStatus.className = 'inline-status error';
-                reportStatus.textContent = 'Unable to sync report data. Please try again.';
-            } finally {
-                toggleLoading(false);
-            }
-        }
-
-        function updateChartsWithEmptyData() {
-            statTotal.textContent = '$0.00';
-            statCount.textContent = '0';
-            statAvg.textContent = '$0.00';
-            pieChart.updateSeries([]);
-            lineChart.updateSeries([{ data: [] }]);
-            barChart.updateSeries([{ data: [] }]);
-        }
-
-        async function exportCsv() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            const params = new URLSearchParams({ start_date: start, end_date: end });
-
-            try {
-                exportCsvBtn.disabled = true;
-                const response = await window.UniSplitApp.apiFetch(`/api/expenses/export?${params.toString()}`);
-                await window.UniSplitApp.downloadResponseAsFile(response, `unisplit-analytics-${start}-to-${end}.csv`);
-                reportStatus.textContent = 'Report exported successfully.';
-            } catch (err) {
-                reportStatus.textContent = 'Export failed.';
-            } finally {
-                exportCsvBtn.disabled = false;
-            }
+            } catch (err) { console.error(err); }
         }
 
         document.getElementById('applyRangeBtn').addEventListener('click', fetchAndRender);
-        exportCsvBtn.addEventListener('click', exportCsv);
-
-        window.addEventListener('DOMContentLoaded', () => {
-            setDefaultDates();
-            initCharts();
+        document.getElementById('exportCsvBtn').addEventListener('click', async () => {
+            if (!currentUser.is_vip && !currentUser.is_admin) {
+                alert("This feature requires Premium access.");
+                return;
+            }
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const params = new URLSearchParams({ start_date: start, end_date: end });
+            const res = await window.UniSplitApp.apiFetch(`/api/expenses/export?${params.toString()}`);
+            await window.UniSplitApp.downloadResponseAsFile(res, "unisplit_audit.csv");
         });
+
+        window.addEventListener('DOMContentLoaded', initPremiumReports);
     </script>
 </body>
 </html>

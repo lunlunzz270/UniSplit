@@ -5,217 +5,240 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniSplit - Expense Insights</title>
     <link rel="stylesheet" href="./css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        .insights-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .insight-summary {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+        .insight-metric-label {
+            opacity: 0.6;
+            text-transform: uppercase;
+            font-size: 0.7em;
+        }
+        .premium-teaser {
+            grid-column: 1 / -1;
+            background: linear-gradient(90deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .quick-findings {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .finding-card {
+            padding: 16px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
         <div class="logo">UniSplit</div>
-        <div class="nav-links">
-            <!-- Populated by app.js -->
-        </div>
+        <div class="nav-links"></div>
     </nav>
 
     <main class="container">
-        <section class="page-hero">
-            <div>
-                <span class="hero-badge" id="insightScopeBadge">User view</span>
-                <h1>Expense Insights</h1>
-                <p id="insightHeroText">
-                    Loading your financial analysis...
-                </p>
-                <p id="insightScopeNote" class="inline-status neutral">Waiting for your account context...</p>
-            </div>
+        <section class="page-header-card">
+            <span class="hero-badge">30-Day Insights</span>
+            <h1>Where is your money going?</h1>
+            <p>A breakdown of your spending habits and group contributions over the last 30 days.</p>
         </section>
 
-        <section class="insight-stats">
-            <div class="stat-card">
-                <p class="stat-label">Total Volume</p>
-                <h2 id="insightTotalTracked">$0.00</h2>
-                <span id="insightTotalTag" class="tag neutral">Calculating...</span>
-            </div>
-
-            <div class="stat-card">
-                <p class="stat-label">Largest Category</p>
-                <h2 id="insightTopCategory">N/A</h2>
-                <span id="insightTopTag" class="tag warning">0% of total</span>
-            </div>
-
-            <div class="stat-card">
-                <p class="stat-label">Transaction Count</p>
-                <h2 id="insightCount">0</h2>
-                <span class="tag neutral">Records found</span>
-            </div>
-
-            <div class="stat-card">
-                <p class="stat-label">Categories Used</p>
-                <h2 id="insightCategoryCount">0</h2>
-                <span class="tag positive">Diversity</span>
-            </div>
-        </section>
-
-        <section class="insight-layout">
+        <div class="insight-summary">
             <div class="panel">
-                <div class="panel-header">
-                    <h2>Category Breakdown</h2>
-                </div>
-
-                <div class="insight-list" id="categoryBreakdownList">
-                    <div class="empty-state-card">
-                        <p>Fetching real-time data...</p>
-                    </div>
-                </div>
+                <small class="insight-metric-label">30D Spending</small>
+                <h2 id="periodTotal" style="margin:10px 0 0 0; color:#8ff0b0;">$0.00</h2>
             </div>
-
             <div class="panel">
-                <div class="panel-header">
-                    <h2>Spending Analysis</h2>
-                </div>
+                <small class="insight-metric-label">Account Balance</small>
+                <h2 id="walletBalance" style="margin:10px 0 0 0;">$0.00</h2>
+            </div>
+            <div class="panel">
+                <small class="insight-metric-label">Settlement Position</small>
+                <h2 id="settlementBalance" style="margin:10px 0 0 0;">$0.00</h2>
+            </div>
+            <div class="panel">
+                <small class="insight-metric-label">Top Category</small>
+                <h2 id="topCategory" style="margin:10px 0 0 0;">N/A</h2>
+            </div>
+            <div class="panel">
+                <small class="insight-metric-label">Primary Group</small>
+                <h2 id="topGroup" style="margin:10px 0 0 0;">N/A</h2>
+            </div>
+        </div>
 
-                <div id="spendingAnalysisNotes">
-                    <div class="trend-box">
-                        <p>Recording your history to generate trends.</p>
-                    </div>
+        <div class="insights-grid">
+            <div class="panel">
+                <div class="panel-header"><h2>Category Structure</h2></div>
+                <div id="categoryChart" style="min-height: 300px;"></div>
+            </div>
+            <div class="panel">
+                <div class="panel-header"><h2>Quick Findings</h2></div>
+                <div id="quickFindings" class="quick-findings">
+                    <div class="finding-card">Loading your 30-day story...</div>
                 </div>
             </div>
-        </section>
+        </div>
 
-        <section class="panel premium-note" id="premiumNoteSection">
-            <div class="panel-header">
-                <h2>Advanced Analytics</h2>
-            </div>
-            <p>
-                Unlock predictive spending analysis and downloadable PDF reports with Premium.
-            </p>
-            <a href="billing.html" class="btn-primary">View Membership Plans</a>
-        </section>
+        <div class="premium-teaser">
+            <h3>Need deeper analysis?</h3>
+            <p style="opacity:0.8; margin-bottom:15px;">Unlock custom date ranges, multi-month trends, and CSV exports in the Advanced Reports.</p>
+            <a href="report.html" class="btn btn-primary">Open Advanced Reports &rarr;</a>
+        </div>
     </main>
 
-    <script src="./js/app.js?v=19"></script>
+    <script src="./js/app.js?v=21"></script>
     <script>
-        const currentUser = window.UniSplitApp.ensureAuthBanner({
+        let currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Insights access',
-            requireLogin: true,
-            loginHref: 'login.html',
-            dashboardHref: 'dashboard.html'
+            requireLogin: true
         });
-        const insightScopeBadge = document.getElementById('insightScopeBadge');
-        const insightScopeNote = document.getElementById('insightScopeNote');
 
-        function formatAmount(amount) {
-            return `$${Number(amount || 0).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        let catChart;
+
+        function formatCurrency(amount, showSign = false) {
+            const value = Number(amount || 0);
+            const sign = showSign && value > 0 ? '+' : '';
+            return `${sign}$${Math.abs(value).toFixed(2)}`;
         }
 
-        function formatCategory(cat) {
+        function formatCategory(value) {
             const map = {
-                'food_dining': 'Food & Dining',
-                'transportation': 'Transportation',
-                'groceries': 'Groceries',
-                'entertainment': 'Entertainment',
-                'other': 'Other'
+                food_dining: 'Food & Dining',
+                transportation: 'Transportation',
+                groceries: 'Groceries',
+                entertainment: 'Entertainment',
+                other: 'Other'
             };
-            return map[cat] || (cat ? cat.charAt(0).toUpperCase() + cat.slice(1).replace(/_/g, ' ') : 'Other');
+            return map[value] || String(value || 'Other').replaceAll('_', ' ').replace(/\b\w/g, (c) => c.toUpperCase());
         }
 
-        function escapeHtml(value) {
-            return String(value || '')
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#39;');
+        function calculateSettlementPosition(expense, userId) {
+            if (!userId) return 0;
+            let balance = 0;
+            const participants = expense.participants || [];
+            const isPayer = Number(expense.payer_id || expense.paid_by) === Number(userId);
+
+            participants.forEach((participant) => {
+                const isCurrentUser = Number(participant.user_id) === Number(userId);
+                const isOutstanding = !participant.is_settled && participant.status !== 'paid' && participant.status !== 'rejected';
+
+                if (isCurrentUser && isOutstanding) {
+                    balance -= Number(participant.share || 0);
+                }
+
+                if (isPayer && !isCurrentUser && isOutstanding) {
+                    balance += Number(participant.share || 0);
+                }
+            });
+
+            return balance;
         }
 
-        async function loadInsights() {
-            if (!currentUser) return;
+        async function initInsights() {
+            currentUser = await window.UniSplitApp.refreshCurrentUser() || currentUser;
+            const baseOpts = {
+                chart: { foreColor: '#ccc', toolbar: { show: false }, background: 'transparent' },
+                theme: { mode: 'dark' },
+                noData: { text: 'No data for last 30 days' }
+            };
 
-            const heroText = document.getElementById('insightHeroText');
-            const totalTag = document.getElementById('insightTotalTag');
-            
-            // Set initial contextual text
-            if (currentUser.is_admin) {
-                insightScopeBadge.textContent = 'Administrator view';
-                heroText.textContent = 'Global system-wide expense analysis. You are viewing data for all accessible users.';
-                insightScopeNote.textContent = 'Admin analysis includes platform-wide spending patterns and shared group activity.';
-                totalTag.textContent = 'System total';
-                document.getElementById('premiumNoteSection').style.display = 'none';
-            } else {
-                insightScopeBadge.textContent = 'User view';
-                heroText.textContent = 'Review your personal spending patterns and group contributions.';
-                insightScopeNote.textContent = 'This view only includes records you can access as a regular user.';
-                totalTag.textContent = 'Your total';
-            }
+            catChart = new ApexCharts(document.querySelector("#categoryChart"), {
+                ...baseOpts,
+                chart: { ...baseOpts.chart, type: 'donut', height: 320 },
+                labels: [], series: []
+            });
+            catChart.render();
+
+            await loadInsightsData();
+        }
+
+        async function loadInsightsData() {
+            const start = new Date();
+            start.setDate(start.getDate() - 30);
+            const params = new URLSearchParams({
+                start_date: start.toISOString().split('T')[0],
+                limit: '0'
+            });
 
             try {
-                const res = await window.UniSplitApp.apiFetch('/api/expenses/summary');
-                if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.error || 'Server error');
-                }
-                
+                const res = await window.UniSplitApp.apiFetch(`/api/expenses?${params.toString()}`);
                 const data = await res.json();
-                const total = data.total_amount || 0;
-                const count = data.count || 0;
-                const categoryData = data.by_category || {};
+                const list = window.UniSplitApp.normalizeExpenseList(data);
+                const userRes = await window.UniSplitApp.apiFetch('/api/me');
+                const userData = await userRes.json();
+
+                // Calculations
+                const total = list.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+                document.getElementById('periodTotal').textContent = formatCurrency(total);
+                document.getElementById('walletBalance').textContent = formatCurrency(userData.balance || 0);
+
+                const catMap = {};
+                const grpMap = {};
+                let settlementPosition = 0;
+                list.forEach(e => {
+                    const c = e.category || 'other';
+                    const g = e.group_name || 'Individual';
+                    catMap[c] = (catMap[c] || 0) + Number(e.amount);
+                    grpMap[g] = (grpMap[g] || 0) + Number(e.amount);
+                    settlementPosition += calculateSettlementPosition(e, userData.id || currentUser?.id);
+                });
+                const settlementEl = document.getElementById('settlementBalance');
+                settlementEl.textContent = formatCurrency(settlementPosition, true);
+                settlementEl.style.color = settlementPosition >= 0 ? '#8ff0b0' : '#ff9d9d';
+
+                // Update Top Stats
+                const sortedCats = Object.entries(catMap).sort((a,b) => b[1] - a[1]);
+                const sortedGrps = Object.entries(grpMap).sort((a,b) => b[1] - a[1]);
                 
-                if (count === 0) {
-                    document.getElementById('insightCount').textContent = '0';
-                    document.getElementById('categoryBreakdownList').innerHTML = `
-                        <div class="empty-state-card">
-                            <h3>No transactions yet</h3>
-                            <p>${currentUser.is_admin ? 'No system records are available for this range.' : 'Once you add expenses in groups, your spending breakdown will appear here.'}</p>
-                            <a href="add_expense.html" class="btn" style="margin-top:10px; display:inline-block;">Add First Expense</a>
-                        </div>`;
-                    return;
-                }
+                document.getElementById('topCategory').textContent = sortedCats[0] ? formatCategory(sortedCats[0][0]) : 'N/A';
+                document.getElementById('topGroup').textContent = sortedGrps[0] ? sortedGrps[0][0] : 'N/A';
 
-                // Sort categories by amount
-                const sortedCats = Object.entries(categoryData).sort((a, b) => b[1] - a[1]);
-                const topCat = sortedCats[0];
+                catChart.updateOptions({
+                    labels: sortedCats.map(c => formatCategory(c[0])),
+                    series: sortedCats.map(c => Number(c[1].toFixed(2)))
+                });
+                const topCategoryShare = total > 0 && sortedCats[0] ? ((sortedCats[0][1] / total) * 100).toFixed(1) : '0.0';
+                const findings = [
+                    sortedCats[0]
+                        ? `<strong>${formatCategory(sortedCats[0][0])}</strong> drives ${topCategoryShare}% of your last-30-day spend.`
+                        : 'Start adding expenses to unlock category insights.',
+                    sortedGrps[0]
+                        ? `<strong>${sortedGrps[0][0]}</strong> is the most active group in this window.`
+                        : 'You do not have a dominant group yet.',
+                    settlementPosition < 0
+                        ? `Your wallet currently covers <strong>${Math.min(100, ((Number(userData.balance || 0) / Math.abs(settlementPosition || 1)) * 100)).toFixed(0)}%</strong> of what you still owe.`
+                        : 'You are not under settlement pressure right now.',
+                    currentUser?.is_vip
+                        ? 'Premium is active, so you can use Reports for longer date ranges and exportable analysis.'
+                        : 'Need more than a 30-day snapshot? Upgrade for custom ranges and exports in Reports.'
+                ];
+                document.getElementById('quickFindings').innerHTML = findings.map((item) => `
+                    <div class="finding-card">${item}</div>
+                `).join('');
 
-                // Update UI Stats
-                document.getElementById('insightTotalTracked').textContent = formatAmount(total);
-                document.getElementById('insightCount').textContent = count;
-                document.getElementById('insightTopCategory').textContent = formatCategory(topCat[0]);
-                document.getElementById('insightTopTag').textContent = `${((topCat[1]/total)*100).toFixed(1)}% of total volume`;
-                document.getElementById('insightCategoryCount').textContent = Object.keys(categoryData).length;
-
-                // Update Detailed List
-                document.getElementById('categoryBreakdownList').innerHTML = sortedCats.map(([name, amt]) => {
-                    const percentage = total > 0 ? ((amt / total) * 100).toFixed(1) : 0;
-                    return `
-                        <div class="insight-row">
-                            <div>
-                                <h4>${escapeHtml(formatCategory(name))}</h4>
-                                <p>${percentage}% of volume</p>
-                            </div>
-                            <span>${formatAmount(amt)}</span>
-                        </div>
-                    `;
-                }).join('');
-
-                // Update Summary Note
-                document.getElementById('spendingAnalysisNotes').innerHTML = `
-                    <div class="trend-box">
-                        <div class="trend-bar"><span style="width: 100%;"></span></div>
-                        <p><strong>Primary Driver:</strong> Your highest spending is in <strong>${escapeHtml(formatCategory(topCat[0]))}</strong>.</p>
-                    </div>
-                    <div class="trend-box">
-                        <div class="trend-bar"><span style="width: ${Math.min(100, (count/5)*100)}%;"></span></div>
-                        <p><strong>Database Activity:</strong> Total of ${count} records processed for this view.</p>
-                    </div>
-                `;
-
-            } catch (error) {
-                console.error("Insights Error:", error);
-                document.getElementById('categoryBreakdownList').innerHTML = `
-                    <div class="empty-state-card">
-                        <p style="color: #ffb3b3;">Error loading data: ${error.message}</p>
-                        <button onclick="location.reload()" class="btn-secondary">Retry</button>
-                    </div>`;
-                insightScopeNote.textContent = 'The analysis endpoint returned an error. You can retry after the backend recovers.';
+            } catch (err) {
+                console.error(err);
             }
         }
 
-        window.addEventListener('DOMContentLoaded', loadInsights);
+        window.addEventListener('DOMContentLoaded', initInsights);
     </script>
 </body>
 </html>

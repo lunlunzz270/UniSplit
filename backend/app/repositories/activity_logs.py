@@ -33,3 +33,20 @@ class ActivityLogRepository:
             .order_by(ActivityLog.created_at.desc())
             .all()
         )
+
+    def get_user_logs(self, user_id: int, is_admin: bool = False, limit: int = 10, offset: int = 0):
+        from ..models.groups import GroupMember
+        query = self.db.query(ActivityLog)
+        
+        if not is_admin:
+            # Get group IDs the user belongs to
+            user_group_ids = self.db.query(GroupMember.group_id).filter(GroupMember.user_id == user_id).all()
+            user_group_ids = [g[0] for g in user_group_ids]
+            query = query.filter(ActivityLog.group_id.in_(user_group_ids))
+            
+        return (
+            query.order_by(ActivityLog.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+            .all()
+        )

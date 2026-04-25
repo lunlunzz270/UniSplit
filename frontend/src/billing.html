@@ -220,7 +220,7 @@
         </section>
     </main>
 
-    <script src="./js/app.js?v=20"></script>
+    <script src="./js/app.js?v=21"></script>
     <script>
         const currentUser = window.UniSplitApp.ensureAuthBanner({
             title: 'Billing & Membership',
@@ -324,6 +324,7 @@
                     throw new Error(data.error || 'Failed to load billing status');
                 }
                 const user = data;
+                window.UniSplitApp.setCurrentUser(user);
                 
                 if (user.is_admin) {
                     // Admin View Logic

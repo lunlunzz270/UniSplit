@@ -20,6 +20,10 @@ function normalizeUser(user) {
         role,
         session_token: user.session_token || user.token || session?.token || '',
         session_expires_at: user.session_expires_at || user.expires_at || session?.expires_at || '',
+        balance: Number(user.balance || 0),
+        is_active: user.is_active !== false,
+        is_vip: Boolean(user.is_vip),
+        vip_expiry: user.vip_expiry || null,
     };
 }
 
@@ -406,6 +410,24 @@ function clearAuthAndRedirect(redirectTo = DEFAULT_LOGIN_REDIRECT) {
     window.location.href = redirectTo;
 }
 
+async function refreshCurrentUser() {
+    const sessionToken = getCurrentSessionToken();
+    if (!sessionToken) {
+        return null;
+    }
+
+    try {
+        const response = await apiFetch('/api/me');
+        const payload = await response.json().catch(() => ({}));
+        if (!response.ok) {
+            throw new Error(payload.error || 'Unable to refresh user session');
+        }
+        return setCurrentUser(payload);
+    } catch (error) {
+        return getCurrentUser();
+    }
+}
+
 async function apiFetch(path, options = {}) {
     const headers = new Headers(options.headers || {});
     const sessionToken = getCurrentSessionToken();
@@ -601,6 +623,7 @@ window.UniSplitApp = {
     ensureAuthBanner,
     requireCurrentUser,
     clearAuthAndRedirect,
+    refreshCurrentUser,
     apiUrl,
     apiFetch,
     downloadResponseAsFile,
