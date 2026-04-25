@@ -92,7 +92,14 @@ def get_expense_history():
     group_name = request.args.get("group_name", "").strip()
     start_date = request.args.get("start_date", "").strip()
     end_date = request.args.get("end_date", "").strip()
-    limit = request.args.get("limit", 10, type=int)
+    
+    limit_val = request.args.get("limit")
+    if limit_val == '0':
+        limit = None
+    elif limit_val and limit_val.isdigit():
+        limit = int(limit_val)
+    else:
+        limit = 10
     offset = request.args.get("offset", 0, type=int)
     
     expenses = list_expenses_service(
