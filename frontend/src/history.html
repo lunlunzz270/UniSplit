@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UniSplit - History</title>
     <link rel="stylesheet" href="./css/style.css">
+    <style>
+        #formStatus {
+            color: #ffb3b3 !important; /* Force red for visibility */
+            font-weight: bold;
+        }
+    </style>
 </head>
 <body>
     <nav class="navbar">
@@ -85,7 +91,7 @@
         </section>
     </main>
 
-    <script src="./js/app.js?v=19"></script>
+    <script src="./js/app.js?v=20"></script>
     <script>
         const historyList = document.getElementById('historyList');
         const historyMessage = document.getElementById('historyMessage');
@@ -149,12 +155,28 @@
         function renderHistoryItem(item) {
             const currentUser = window.UniSplitApp.getCurrentUser();
             const meAsParticipant = item.participants.find(p => p.user_id === currentUser.id);
+            const isPayer = item.payer_id === currentUser.id;
             
             let actionButtons = '';
             let statusLabel = '';
+            let summaryAmountHtml = '';
+            let splitDetailsHtml = '';
+
+            // Check if the entire bill is settled (everyone either paid OR their appeal was acknowledged)
+            const isFullySettled = item.participants.length > 0 && item.participants.every(p => 
+                p.is_settled || p.status === 'paid' || p.status === 'appealed_acknowledged'
+            );
 
             if (meAsParticipant) {
-                if (meAsParticipant.status === 'pending') {
+                // Main Status for me as a participant
+                if (meAsParticipant.is_settled || meAsParticipant.status === 'paid') {
+                    statusLabel = '<span class="status positive">Settled</span>';
+                } else if (meAsParticipant.status === 'appealed_acknowledged') {
+                    statusLabel = '<span class="status warning">Appeal Acknowledged</span>';
+                    actionButtons = `
+                        <p style="font-size:0.85em; opacity:0.8; margin-bottom:8px;">Your appeal was acknowledged by the payer. No further action needed at this time.</p>
+                    `;
+                } else if (meAsParticipant.status === 'pending') {
                     statusLabel = '<span class="status warning">Pending Action</span>';
                     actionButtons = `
                         <div class="button-row" style="margin-top: 10px;">
@@ -177,72 +199,97 @@
                             <button class="btn btn-small" onclick="handleResponse(${item.id}, 'accepted')">Re-Accept</button>
                         </div>
                     `;
-                } else if (meAsParticipant.status === 'paid' || meAsParticipant.is_settled) {
-                    statusLabel = '<span class="status positive">Paid</span>';
                 }
-            } else if (item.payer_id === currentUser.id) {
-                statusLabel = '<span class="status positive">You Paid</span>';
+
+                // Participant ONLY sees their own share, NO total bill
+                summaryAmountHtml = `
+                    <div style="text-align: right;">
+                        <small style="display:block; opacity:0.6; font-size:0.75em; text-transform:uppercase;">My Share</small>
+                        <span style="font-size:1.4em; font-weight:bold; color:var(--text);">${formatAmount(meAsParticipant.share)}</span>
+                    </div>
+                `;
+            } else if (isPayer) {
+                if (isFullySettled) {
+                    statusLabel = '<span class="status positive">Settled (All Received)</span>';
+                } else {
+                    statusLabel = '<span class="status positive">You Paid</span>';
+                }
+
+                const totalOthersOwe = item.participants.reduce((sum, p) => sum + Number(p.share), 0);
+                
+                summaryAmountHtml = `
+                    <div style="display:flex; gap:20px; align-items:center;">
+                        <div style="text-align: right; border-right: 1px solid rgba(255,255,255,0.1); padding-right:20px;">
+                            <small style="display:block; opacity:0.6; font-size:0.75em; text-transform:uppercase;">Total Bill</small>
+                            <span style="font-size:1.1em; opacity:0.9;">${formatAmount(item.amount)}</span>
+                        </div>
+                        <div style="text-align: right;">
+                            <small style="display:block; opacity:0.6; font-size:0.75em; text-transform:uppercase;">Total Receivable</small>
+                            <span style="font-size:1.4em; font-weight:bold; color:#8ff0b0;">${formatAmount(totalOthersOwe)}</span>
+                        </div>
+                    </div>
+                `;
+
+                splitDetailsHtml = `
+                    <div class="participants-list" style="margin-top:12px; padding:10px; background: rgba(255,255,255,0.05); border-radius:8px;">
+                        <strong style="display:block; margin-bottom:6px; font-size:0.95em;">Split Details (Receivables):</strong>
+                        <div style="display:grid; gap:8px;">
+                            ${item.participants.map(p => {
+                                let badge = '';
+                                let reasonText = '';
+                                let payerAction = '';
+
+                                if (p.status === 'paid' || p.is_settled) {
+                                    badge = '<span class="status positive" style="font-size:0.8em; padding:2px 6px;">Settled</span>';
+                                } else if (p.status === 'rejected') {
+                                    badge = '<span class="status error" style="font-size:0.8em; padding:2px 6px;">Appealed</span>';
+                                    reasonText = `<div style="font-size:0.85em; color:#ff9d9d; margin-top:2px;">Reason: ${p.appeal_reason || 'No message'}</div>`;
+                                    payerAction = `<button class="btn btn-tiny" style="margin-top:4px;" onclick="handleResolveAppeal(${item.id}, ${p.user_id}, 'acknowledge')">Acknowledge</button>`;
+                                } else if (p.status === 'appealed_acknowledged') {
+                                    badge = '<span class="status warning" style="font-size:0.8em; padding:2px 6px;">Acknowledged</span>';
+                                    reasonText = `<div style="font-size:0.85em; opacity:0.9; margin-top:2px; color: #ffcc00;">Appeal Acknowledged by You</div>`;
+                                } else if (p.status === 'accepted') {
+                                    badge = '<span class="status warning" style="font-size:0.8em; padding:2px 6px;">Awaiting Payment</span>';
+                                } else {
+                                    badge = '<span class="status" style="font-size:0.8em; padding:2px 6px; opacity:0.6;">Pending</span>';
+                                }
+
+                                return `
+                                    <div style="display:flex; flex-direction:column; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
+                                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                                            <span style="font-size:0.9em;">${p.name} (${p.email || 'N/A'})</span>
+                                            <div style="display:flex; align-items:center; gap:8px;">
+                                                <span style="font-weight:bold; font-size:0.9em;">${formatAmount(p.share)}</span>
+                                                ${badge}
+                                            </div>
+                                        </div>
+                                        ${reasonText}
+                                        ${payerAction}
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
             }
 
             return `
                 <div class="history-item">
                     <div class="history-main">
-                        <div class="history-top-row">
-                            <h3>${item.description || 'Untitled Expense'}</h3>
-                            <div style="display:flex; align-items:center; gap:10px;">
+                        <div class="history-top-row" style="display:flex; justify-content:space-between; align-items:flex-start;">
+                            <div>
+                                <h3 style="margin-bottom:4px;">${item.description || 'Untitled Expense'}</h3>
                                 ${statusLabel}
-                                <span class="history-amount">${formatAmount(item.amount)}</span>
                             </div>
+                            ${summaryAmountHtml}
                         </div>
-                        <div class="history-meta">
+                        <div class="history-meta" style="margin-top:10px;">
                             <span>Category: ${formatCategory(item.category)}</span>
                             <span>Group: ${item.group_name || 'N/A'}</span>
-                            <span>Paid by: ${item.payer || 'Unknown'}</span>
+                            <span>Paid by: ${item.payer_email} (${isPayer ? 'You' : item.payer || 'Unknown'})</span>
                             <span>Date: ${item.date || 'N/A'}</span>
                         </div>
-                        <div class="participants-list" style="margin-top:12px; padding:10px; background: rgba(255,255,255,0.05); border-radius:8px;">
-                            <strong style="display:block; margin-bottom:6px; font-size:0.95em;">Split Details:</strong>
-                            <div style="display:grid; gap:8px;">
-                                ${item.participants.map(p => {
-                                    let badge = '';
-                                    let reasonText = '';
-                                    let payerAction = '';
-
-                                    if (p.status === 'paid' || p.is_settled) {
-                                        badge = '<span class="status positive" style="font-size:0.8em; padding:2px 6px;">Paid</span>';
-                                    } else if (p.status === 'rejected') {
-                                        badge = '<span class="status error" style="font-size:0.8em; padding:2px 6px;">Appealed</span>';
-                                        reasonText = `<div style="font-size:0.85em; color:#ff9d9d; margin-top:2px;">Reason: ${p.appeal_reason || 'No message'}</div>`;
-                                        
-                                        // If I am the payer, show Acknowledge button
-                                        if (item.payer_id === currentUser.id) {
-                                            payerAction = `<button class="btn btn-tiny" style="margin-top:4px;" onclick="handleResolveAppeal(${item.id}, ${p.user_id}, 'acknowledge')">Acknowledge</button>`;
-                                        }
-                                    } else if (p.status === 'appealed_acknowledged') {
-                                        badge = '<span class="status warning" style="font-size:0.8em; padding:2px 6px;">Acknowledged</span>';
-                                        reasonText = `<div style="font-size:0.85em; opacity:0.9; margin-top:2px; color: #ffcc00;">Appeal Acknowledged by Payer</div>`;
-                                    } else if (p.status === 'accepted') {
-                                        badge = '<span class="status warning" style="font-size:0.8em; padding:2px 6px;">Accepted</span>';
-                                    } else {
-                                        badge = '<span class="status" style="font-size:0.8em; padding:2px 6px; opacity:0.6;">Pending</span>';
-                                    }
-
-                                    return `
-                                        <div style="display:flex; flex-direction:column; border-bottom:1px solid rgba(255,255,255,0.05); padding-bottom:4px;">
-                                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                                <span style="font-size:0.9em;">${p.name} (${p.email || 'N/A'})</span>
-                                                <div style="display:flex; align-items:center; gap:8px;">
-                                                    <span style="font-weight:bold; font-size:0.9em;">${formatAmount(p.share)}</span>
-                                                    ${badge}
-                                                </div>
-                                            </div>
-                                            ${reasonText}
-                                            ${payerAction}
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
+                        ${splitDetailsHtml}
                         ${actionButtons}
                     </div>
                 </div>
@@ -392,6 +439,7 @@
                 nextBtn.disabled = records.length < PAGE_LIMIT;
 
             } catch (error) {
+                console.error(error);
                 historyList.innerHTML = '';
                 setHistoryMessage('Could not connect to the server.');
             }

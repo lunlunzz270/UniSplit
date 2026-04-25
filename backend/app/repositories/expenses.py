@@ -148,6 +148,7 @@ class ExpenseRepository:
                 "group_id": e.group_id,
                 "payer_id": e.paid_by,
                 "payer": e.payer.full_name if e.payer else "Unknown",
+                "payer_email": e.payer.email if e.payer else "N/A",
                 "date": e.created_at.isoformat() if e.created_at else None,
                 "participants": [
                     {
@@ -194,5 +195,21 @@ class ExpenseRepository:
         if not p: return False
         p.status = status
         if status == "rejected": p.appeal_reason = appeal_reason
+        self.db.commit()
+        return True
+
+    def resolve_appeal(self, expense_id: int, user_id: int, action: str):
+        p = self.db.query(ExpenseParticipant).filter_by(expense_id=expense_id, user_id=user_id).first()
+        if not p:
+            return False
+        
+        if action == "acknowledge":
+            # Payer acknowledges the error
+            p.status = "appealed_acknowledged"
+        elif action == "dismiss":
+            # Payer dismisses the appeal, forcing acceptance
+            p.status = "accepted"
+            p.appeal_reason = None
+            
         self.db.commit()
         return True
