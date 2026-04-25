@@ -149,3 +149,122 @@ def test_record_expense_deduplicates_participants(monkeypatch):
     assert len(saved_expense.participants) == 1
     verify_db.close()
     db.close()
+
+
+def test_expense_precision_splitting(monkeypatch):
+    session_factory = _build_test_sessionmaker()
+    monkeypatch.setattr("backend.app.services.expenses.SessionLocal", session_factory)
+
+    db = session_factory()
+    repo = UserRepository(db)
+    payer = repo.create_user(UserCreate(full_name="Payer", email="payer_prec@example.com", password="pwd"))
+    p1 = repo.create_user(UserCreate(full_name="P1", email="p1@example.com", password="pwd"))
+    p2 = repo.create_user(UserCreate(full_name="P2", email="p2@example.com", password="pwd"))
+
+    # $10.00 split by 3 people = 3.33, 3.33, 3.34
+    expense = record_expense(
+        group_name="Precision Test",
+        description="Uneven Split",
+        amount=Decimal("10.00"),
+        category="Food",
+        payer_email=payer.email,
+        participant_emails=[payer.email, p1.email, p2.email],
+    )
+
+    verify_db = session_factory()
+    saved = verify_db.query(Expense).filter_by(id=expense.id).first()
+    # Payer is excluded from DB participant records, so we should have 2 records (p1, p2)
+    # The shares should be 3.33 and 3.34 (the remainder goes to the last person in participant_emails list)
+    shares = sorted([float(p.share) for p in saved.participants])
+    assert shares == [3.33, 3.34]
+    assert sum(shares) + 3.33 == 10.00 # total includes the payer's implied share
+    verify_db.close()
+    db.close()
+
+
+def test_admin_financial_isolation(monkeypatch):
+    session_factory = _build_test_sessionmaker()
+    monkeypatch.setattr("backend.app.services.expenses.SessionLocal", session_factory)
+
+    db = session_factory()
+    repo = UserRepository(db)
+    admin = repo.create_user(UserCreate(full_name="Admin", email="admin@unisplit.com", password="pwd"), is_admin=True)
+    user = repo.create_user(UserCreate(full_name="User", email="user@example.com", password="pwd"))
+
+    # Case 1: Admin cannot pay
+    import pytest
+    with pytest.raises(ValueError, match="Administrative users are not allowed"):
+        record_expense(
+            group_name="Admin Group",
+            description="Forbidden",
+            amount=Decimal("10.00"),
+            category="Test",
+            payer_email=admin.email,
+            participant_emails=[admin.email, user.email],
+        )
+
+    # Case 2: Admin cannot be a participant
+    with pytest.raises(ValueError, match="is an administrator and cannot be added"):
+        record_expense(
+            group_name="Admin Group",
+            description="Forbidden",
+            amount=Decimal("10.00"),
+            category="Test",
+            payer_email=user.email,
+            participant_emails=[user.email, admin.email],
+        )
+    db.close()
+
+
+def test_auto_settlement_heartbeat(monkeypatch):
+    # This tests the "Auto-payment heartbeat" in get_current_user_from_token
+    session_factory = _build_test_sessionmaker()
+    monkeypatch.setattr("backend.app.services.auth.SessionLocal", session_factory)
+    monkeypatch.setattr("backend.app.services.expenses.SessionLocal", session_factory)
+    monkeypatch.setattr("backend.app.services.settlements.SessionLocal", session_factory)
+
+    db = session_factory()
+    repo = UserRepository(db)
+    payer = repo.create_user(UserCreate(full_name="Payer", email="payer_auto@example.com", password="pwd"))
+    debtor = repo.create_user(UserCreate(full_name="Debtor", email="debtor_auto@example.com", password="pwd"))
+    
+    # Give debtor some balance to pay with
+    debtor.balance = Decimal("50.00")
+    db.commit()
+
+    # Create an expense
+    expense = record_expense(
+        group_name="Auto Group",
+        description="Timed Bill",
+        amount=Decimal("20.00"),
+        category="Test",
+        payer_email=payer.email,
+        participant_emails=[payer.email, debtor.email],
+    )
+
+    # Manually backdate the expense and split in DB to > 24h ago
+    from datetime import datetime, timedelta
+    old_time = datetime.now() - timedelta(hours=25)
+    
+    from backend.app.models.expenses import ExpenseParticipant
+    db.query(Expense).filter_by(id=expense.id).update({"created_at": old_time})
+    db.query(ExpenseParticipant).filter_by(expense_id=expense.id).update({"status": "accepted"})
+    db.commit()
+
+    # Trigger heartbeat via auth service
+    from backend.app.services.auth import create_session_for_user, get_current_user_from_token
+    session = create_session_for_user(debtor.id)
+    
+    # This call should trigger auto_process_payments(debtor.id)
+    get_current_user_from_token(session.token)
+
+    # Verify settlement happened
+    db.expire_all()
+    debtor_after = repo.get_user_by_id(debtor.id)
+    payer_after = repo.get_user_by_id(payer.id)
+    split = db.query(ExpenseParticipant).filter_by(expense_id=expense.id).first()
+
+    assert debtor_after.balance == Decimal("40.00") # 50 - 10
+    assert payer_after.balance == Decimal("10.00")  # 0 + 10
+    assert split.is_settled is True
+    db.close()

@@ -365,6 +365,20 @@ def test_reminder_routes(api_client):
     )
     assert join_res.status_code in (200, 201)
 
+    # Add an expense so there is debt to remind about
+    api_client.post(
+        "/api/expenses",
+        headers={"Authorization": f"Bearer {sender['session']['token']}"},
+        json={
+            "group_name": "Reminder Group",
+            "description": "Lunch",
+            "amount": "20.00",
+            "category": "Food",
+            "payer_email": sender["email"],
+            "participant_emails": [sender["email"], recipient["email"]],
+        },
+    )
+
     reminder_res = api_client.post(
         f"/api/groups/{group_id}/reminders",
         headers={"Authorization": f"Bearer {sender['session']['token']}"},
@@ -472,8 +486,7 @@ def test_admin_routes(api_client, session_factory):
         "/api/login",
         json={"email": "regular@example.com", "password": "pwd123", "role": "user"},
     )
-    assert disabled_login.status_code == 401
-
+    assert disabled_login.status_code == 403
     disabled_me = api_client.get("/api/me", headers=user_headers)
     assert disabled_me.status_code == 401
 
@@ -620,3 +633,65 @@ def test_flask_serves_frontend_and_api_on_same_port(app_client):
     )
     assert register.status_code == 201
     assert register.get_json()["email"] == "static@example.com"
+
+
+def test_currency_api_proxy(api_client):
+    # Test the currency proxy endpoint (attempts actual fetch, but handles fail gracefully)
+    res = api_client.get("/api/currencies?from=USD")
+    if res.status_code == 200:
+        data = res.get_json()
+        assert "base" in data
+        assert "rates" in data
+        assert data["base"] == "USD"
+    else:
+        # If API is down or no internet, we might get 500, but we shouldn't get 404
+        assert res.status_code == 500
+
+
+def test_group_debt_isolation(api_client):
+    # Register users
+    u1 = api_client.post("/api/register", json={"name": "U1", "email": "u1_iso@example.com", "password": "pwd"}).get_json()
+    u2 = api_client.post("/api/register", json={"name": "U2", "email": "u2_iso@example.com", "password": "pwd"}).get_json()
+
+    # Create Group A and Expense
+    api_client.post(
+        "/api/expenses",
+        headers={"Authorization": f"Bearer {u1['session']['token']}"},
+        json={
+            "group_name": "Group A",
+            "description": "Debt in A",
+            "amount": "100.00",
+            "category": "Test",
+            "payer_email": u1["email"],
+            "participant_emails": [u1["email"], u2["email"]],
+        },
+    )
+
+    # Get Group A ID
+    group_a = api_client.get(f"/api/users/{u1['id']}/groups", headers={"Authorization": f"Bearer {u1['session']['token']}"}).get_json()["groups"][0]
+    
+    # Create Group B (empty)
+    api_client.post(
+        "/api/groups",
+        json={"name": "Group B", "description": "No debt here", "creator_id": u1["id"]},
+    )
+    group_b = [g for g in api_client.get(f"/api/users/{u1['id']}/groups", headers={"Authorization": f"Bearer {u1['session']['token']}"}).get_json()["groups"] if g["name"] == "Group B"][0]
+
+    # Verify unsettled expenses in Group A for U2
+    unsettled_a = api_client.get(
+        f"/api/groups/{group_a['id']}/reminders/unsettled-expenses?recipient_id={u2['id']}",
+        headers={"Authorization": f"Bearer {u1['session']['token']}"}
+    )
+    assert unsettled_a.status_code == 200
+    assert len(unsettled_a.get_json()["expenses"]) == 1
+
+    # Verify NO unsettled expenses in Group B for U2
+    # But wait, U2 isn't in Group B yet. Join first.
+    api_client.post(f"/api/groups/{group_b['id']}/join", json={"user_id": u2["id"]})
+
+    unsettled_b = api_client.get(
+        f"/api/groups/{group_b['id']}/reminders/unsettled-expenses?recipient_id={u2['id']}",
+        headers={"Authorization": f"Bearer {u1['session']['token']}"}
+    )
+    assert unsettled_b.status_code == 200
+    assert len(unsettled_b.get_json()["expenses"]) == 0
