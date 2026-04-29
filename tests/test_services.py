@@ -268,3 +268,35 @@ def test_auto_settlement_heartbeat(monkeypatch):
     assert payer_after.balance == Decimal("10.00")  # 0 + 10
     assert split.is_settled is True
     db.close()
+
+
+def test_currency_service_fallback_and_conversion():
+    from backend.app.integrations.currency import CurrencyService
+    service = CurrencyService(cache_ttl_seconds=10)
+    
+    # Test fallback retrieval
+    rates = service.get_rates(base="USD")
+    assert rates["base"] == "USD"
+    assert "EUR" in rates["rates"]
+    assert "CNY" in rates["rates"]
+
+    # Test conversion accuracy
+    amount = Decimal("100.00")
+    converted_self = service.convert(amount, "USD", "USD")
+    assert converted_self == Decimal("100.00")
+
+    converted_eur = service.convert(amount, "USD", "EUR")
+    assert converted_eur > Decimal("0.00")
+
+
+def test_reconcile_ledger_balances_no_crash(monkeypatch):
+    import logging
+    from backend.main import reconcile_ledger_balances
+    session_factory = _build_test_sessionmaker()
+    db = session_factory()
+    test_logger = logging.getLogger("test_security")
+    
+    # Should run smoothly on empty or populated test database
+    reconcile_ledger_balances(db, test_logger)
+    db.close()
+

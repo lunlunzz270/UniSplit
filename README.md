@@ -1,92 +1,120 @@
 # UniSplit
 
-UniSplit is a web application for managing shared expenses. The project currently uses a single-container deployment model:
+A multi-currency expense sharing and ledger management web application built with Python (Flask), SQLAlchemy, and Docker.
 
-- Flask serves both the backend API and the frontend static pages
-- Docker Compose starts one service only
-- For local development, the backend and frontend can also be started separately
+Originally developed for Duke FinTech 512, UniSplit provides shared expense tracking for roommates, travel groups, and student teams. It handles multi-currency conversion, penny-accurate bill splitting, automated payment reminders, and transaction exports.
 
-## Requirements
+---
 
-- Python 3.11+
-- Docker / Docker Compose
+## Architecture
 
-## Docker Compose
+The project follows a standard layered architecture:
 
-This is the recommended way to run the project. It builds the backend image and exposes the application on port `3000` on your machine.
+```text
+[Frontend Client] (HTML5 / Vanilla JS / CSS)
+       │
+       ▼  HTTP / REST API (JWT Authenticated)
+[Flask Backend]
+  ├── Routers          (/api/auth, /api/expenses, /api/settlements, /api/currencies)
+  ├── Security Layer   (PyJWT verification, bcrypt hashing, request audit logging)
+  ├── Services Layer   (Split calculations, currency conversions, reconciliation)
+  └── Repositories     (SQLAlchemy ORM with transaction commit/rollback)
+       │
+       ├──► [Database] (MySQL in staging/production, SQLite in local container & tests)
+       └──► [Audit Log] (logs/unisplit_security.log)
 
-The Compose file maps the host port to the container port with:
+[Background Daemon]
+  └── Runs every hour to check for 24h unsettled bills and verify ledger consistency
+```
 
-- `3000:5000`
+---
 
-If you want to change the local port, edit the first number. For example, `3001:5000` exposes the app on port `3001` while keeping Flask inside the container on `5000`.
+## Features
 
-The database location is controlled by `DATABASE_URL`. By default, the container uses:
+- **Bill Splitting & Ledger Integrity**: Supports equal and custom split amounts. Uses decimal quantization and remainder allocation (`_equal_split`) to avoid one-cent rounding errors. All multi-step ledger updates run inside atomic SQLAlchemy transactions that roll back on failure.
+- **Multi-Currency Support**: Fetches live exchange rates via the Frankfurter API with an in-memory TTL cache and built-in offline fallback rates (USD, EUR, GBP, CAD, CNY, JPY, AUD) so currency lookups remain responsive even if external services fail.
+- **Background Daemon Worker**: A non-blocking daemon thread runs independently of request cycles, checking for unsettled debts older than 24 hours, sending automated reminders, and auditing ledger balances.
+- **Security & Auditing**: Stateless authentication via PyJWT, passwords hashed with `bcrypt`, and request-level security logs tracking IP and user actions in `logs/unisplit_security.log`.
+- **Spending Analytics & Export**: 30-day category breakdown, balance summaries, and one-click CSV export (`/api/expenses/export`).
 
-- `sqlite:////app/backend/instance/unisplit.db`
+---
 
-This path is mounted to the named Docker volume `backend-instance`, so the database survives container restarts. If you want to store the SQLite file somewhere else, update `DATABASE_URL` in `docker-compose.yml`.
+## Tech Stack
+
+- **Backend**: Python 3.11, Flask, SQLAlchemy, PyJWT, bcrypt, PyMySQL
+- **Frontend**: HTML5, Vanilla JavaScript, CSS3
+- **Database**: MySQL (production / Duke VCM), SQLite (local container & tests)
+- **DevOps**: Docker, Docker Compose, GitLab CI/CD, GitHub Actions, Pytest
+
+---
+
+## REST API Overview
+
+| Route | Method | Description |
+| :--- | :--- | :--- |
+| `/api/register` | `POST` | Register a new user |
+| `/api/login` | `POST` | Authenticate and obtain JWT token |
+| `/api/me` | `GET` | Get current user profile and balance |
+| `/api/expenses` | `GET` | List expenses (supports search, category, and date filters) |
+| `/api/expenses` | `POST` | Record a new group expense and split shares |
+| `/api/expenses/summary` | `GET` | Get spending statistics and category breakdowns |
+| `/api/expenses/export` | `GET` | Export expense history as CSV |
+| `/api/expenses/:id/respond`| `POST` | Accept or dispute an expense split |
+| `/api/groups/:id/settlements` | `POST` | Record repayment and update balances |
+| `/api/currencies` | `GET` | Get current exchange rates with fallback |
+
+---
+
+## Getting Started
+
+### 1. Docker Compose (Recommended)
+
+Run the full application in a single container exposed on port `3000`:
 
 ```bash
 docker compose up -d --build
 ```
 
-After startup, open:
+- Web App: `http://localhost:3000`
+- API Base: `http://localhost:3000/api/...`
 
-- Application: `http://localhost:3000`
-- API: `http://localhost:3000/api/...`
-
-Stop the service with:
-
+To stop:
 ```bash
 docker compose down
 ```
 
-## Backend
+### 2. Local Development
 
-If you want to run only the backend service locally, run the following from the `backend/` directory:
-
+**Backend:**
 ```bash
 cd backend
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 python main.py
+# Runs on http://127.0.0.1:5000
 ```
 
-The backend listens on:
-
-- `http://127.0.0.1:5000`
-
-## Frontend
-
-The frontend pages live under `frontend/src/`. If you want to view the static pages separately, you can use Python's built-in static server:
-
+**Frontend:**
 ```bash
 cd frontend/src
 python -m http.server 8000
+# Open http://localhost:8000 in your browser
 ```
 
-Then open:
+---
 
-- `http://localhost:8000`
+## Testing & CI/CD
 
-Notes:
-
-- This local static setup expects the backend to be available at `http://127.0.0.1:5000`
-- The current frontend script defaults to that backend address
-
-## Project Structure
-
-- `backend/` - Flask application, business logic, database layer, and Docker build files
-- `frontend/src/` - Static HTML, CSS, and JavaScript pages
-- `docker-compose.yml` - Single-container deployment configuration
-- `tests/` - Automated tests
-
-## Tests
-
-Run the test suite with:
+The test suite covers repositories, business logic, authentication, and REST routes.
 
 ```bash
-pytest
+# Run unit and integration tests
+pytest -v
+
+# Run backend smoke test
+python .gitlab/ci/smoke_backend.py
 ```
+
+- **GitHub Actions**: Configured in `.github/workflows/ci.yml` to run tests automatically on pushes and pull requests.
+- **GitLab CI**: Configured in `.gitlab-ci.yml` with `test`, `smoke`, and `deploy` stages for Duke VCM.
